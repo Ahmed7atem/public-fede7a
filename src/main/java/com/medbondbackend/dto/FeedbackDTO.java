@@ -3,12 +3,13 @@ package com.medbondbackend.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class FeedbackDTO {
-    private Long id;
+    private UUID id;
     private String message;
     private LocalDateTime timestamp;
     private boolean resolved;
-    private Long employeeId; // ID of the employee who submitted the feedback
+    private UUID employeeId; // ID of the employee who submitted the feedback
 }

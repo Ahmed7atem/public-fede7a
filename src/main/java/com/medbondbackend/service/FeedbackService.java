@@ -8,6 +8,7 @@ import com.medbondbackend.repository.FeedbackRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,14 +29,14 @@ public class FeedbackService {
         return feedbackMapper.toDTO(savedFeedback);
     }
 
-    public List<FeedbackDTO> getFeedbackByEmployeeId(Long employeeId) {
+    public List<FeedbackDTO> getFeedbackByEmployeeId(UUID employeeId) {
         List<Feedback> feedbackList = feedbackRepository.findByEmployeeId(employeeId);
         return feedbackList.stream()
                 .map(feedbackMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public void resolveFeedback(Long id) {
+public void resolveFeedback(UUID id) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Feedback not found with id: " + id));
         feedback.setResolved(true);

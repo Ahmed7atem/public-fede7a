@@ -1,5 +1,6 @@
 package com.medbondbackend.controller;
 
+import com.medbondbackend.model.Employee;
 import com.medbondbackend.dto.EmployeeDTO;
 import com.medbondbackend.service.EmployeeService;
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -28,7 +30,7 @@ public class EmployeeController {
 
     // Get employee by ID
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
+    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable UUID id) {
         EmployeeDTO employee = employeeService.getEmployeeById(id);
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
@@ -42,15 +44,20 @@ public class EmployeeController {
 
     // Update an employee
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable UUID id, @RequestBody EmployeeDTO employeeDTO) {
         EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
         return new ResponseEntity<>(updatedEmployee, HttpStatus.OK);
     }
 
     // Delete an employee
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEmployee(@PathVariable UUID id) {
         employeeService.deleteEmployee(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Employee> getEmployeeByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(employeeService.getEmployeeByEmail(email));
     }
 }

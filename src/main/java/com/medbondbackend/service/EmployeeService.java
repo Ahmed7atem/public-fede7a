@@ -8,6 +8,7 @@ import com.medbondbackend.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +32,7 @@ public class EmployeeService {
     }
 
     // Get employee by ID
-    public EmployeeDTO getEmployeeById(Long id) {
+    public EmployeeDTO getEmployeeById(UUID id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
         return employeeMapper.toDTO(employee); // Use MapStruct for mapping
@@ -45,7 +46,7 @@ public class EmployeeService {
     }
 
     // Update an employee
-    public EmployeeDTO updateEmployee(Long id, EmployeeDTO employeeDTO) {
+    public EmployeeDTO updateEmployee(UUID id, EmployeeDTO employeeDTO) {
         Employee existingEmployee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
 
@@ -62,9 +63,13 @@ public class EmployeeService {
     }
 
     // Delete an employee
-    public void deleteEmployee(Long id) {
+    public void deleteEmployee(UUID id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
         employeeRepository.delete(employee);
+    }
+    public Employee getEmployeeByEmail(String email) {
+        return employeeRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Employee not found with email: " + email));
     }
 }

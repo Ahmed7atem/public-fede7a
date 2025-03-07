@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/feedback")
@@ -25,13 +26,13 @@ public class FeedbackController {
     }
 
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<FeedbackDTO>> getFeedbackByEmployeeId(@PathVariable Long employeeId) {
+    public ResponseEntity<List<FeedbackDTO>> getFeedbackByEmployeeId(@PathVariable UUID employeeId) {
         List<FeedbackDTO> feedbackList = feedbackService.getFeedbackByEmployeeId(employeeId);
         return new ResponseEntity<>(feedbackList, HttpStatus.OK);
     }
 
     @PutMapping("/{id}/resolve")
-    public ResponseEntity<Void> resolveFeedback(@PathVariable Long id) {
+    public ResponseEntity<Void> resolveFeedback(@PathVariable UUID id) {
         feedbackService.resolveFeedback(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

@@ -3,15 +3,18 @@ package com.medbondbackend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 @Entity
 public class Employee {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
+    private UUID id; // UUID mapped from Patient_ID
 
     private String name;
+    @Column(unique = true, nullable = false, length = 255)
     private String email;
     private String role;
     private String department;
