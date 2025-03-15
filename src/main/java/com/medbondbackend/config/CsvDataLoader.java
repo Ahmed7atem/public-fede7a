@@ -20,7 +20,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -65,7 +67,6 @@ public class CsvDataLoader implements CommandLineRunner {
 
             reader.readNext(); // Skip header
             List<Employee> employeesToSave = new ArrayList<>();
-            List<HealthData> healthDataToSave = new ArrayList<>();
             int batchSize = 1000;
             int rowCount = 0;
 
@@ -74,27 +75,24 @@ public class CsvDataLoader implements CommandLineRunner {
                 rowCount++;
                 Employee employee = parseEmployee(row);
                 HealthData healthData = parseHealthData(row, employee);
+                // Link HealthData to Employee for cascading
+                employee.setHealthData(Collections.singletonList(healthData));
 
                 employeesToSave.add(employee);
-                healthDataToSave.add(healthData);
 
                 if (rowCount % batchSize == 0) {
                     employeeRepository.saveAll(employeesToSave);
-                    healthDataRepository.saveAll(healthDataToSave);
                     employeesToSave.clear();
-                    healthDataToSave.clear();
                     logger.info("Processed {} patient rows", rowCount);
                 }
             }
 
             if (!employeesToSave.isEmpty()) {
                 employeeRepository.saveAll(employeesToSave);
-                healthDataRepository.saveAll(healthDataToSave);
             }
             logger.info("Finished loading patient data. Total rows: {}", rowCount);
         }
     }
-
     public void loadSleepData() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/data/sleep_data.csv");
         if (inputStream == null) {
@@ -286,12 +284,26 @@ public class CsvDataLoader implements CommandLineRunner {
     }
 
     private LocalDateTime parseSleepDate(String startTime) {
-        return LocalDateTime.parse(startTime, TIME_FORMATTER)
-                .withYear(LocalDate.now().getYear());
+        try {
+            // Parse time-only string and combine with today's date
+            LocalTime time = LocalTime.parse(startTime, TIME_FORMATTER);
+            return LocalDate.now().atTime(time);
+        } catch (DateTimeParseException e) {
+            logger.error("Failed to parse sleep date '{}': {}", startTime, e.getMessage());
+            // Fallback: Use current date/time if parsing fails
+            return LocalDateTime.now();
+        }
     }
 
     private LocalDateTime parseSleepTime(String time) {
-        return LocalDateTime.parse(time, TIME_FORMATTER)
-                .withYear(LocalDate.now().getYear());
+        try {
+            // Parse time-only string and combine with today's date
+            LocalTime localTime = LocalTime.parse(time, TIME_FORMATTER);
+            return LocalDate.now().atTime(localTime);
+        } catch (DateTimeParseException e) {
+            logger.error("Failed to parse sleep time '{}': {}", time, e.getMessage());
+            // Fallback: Use current date/time if parsing fails
+            return LocalDateTime.now();
+        }
     }
 }
