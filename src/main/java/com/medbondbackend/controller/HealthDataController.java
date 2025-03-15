@@ -2,6 +2,8 @@ package com.medbondbackend.controller;
 
 import com.medbondbackend.dto.HealthDataDTO;
 import com.medbondbackend.mapper.HealthDataMapper;
+import com.medbondbackend.dto.WearableLogDTO;
+import com.medbondbackend.service.WearableLogService;
 import com.medbondbackend.model.Employee;
 import com.medbondbackend.model.HealthData;
 import com.medbondbackend.repository.EmployeeRepository;

@@ -2,8 +2,10 @@ package com.medbondbackend.config;
 
 import com.medbondbackend.model.Employee;
 import com.medbondbackend.model.HealthData;
+import com.medbondbackend.model.WearableLog;
 import com.medbondbackend.repository.EmployeeRepository;
 import com.medbondbackend.repository.HealthDataRepository;
+import com.medbondbackend.repository.WearableLogRepository;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -17,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class CsvDataLoader implements CommandLineRunner {
@@ -26,12 +30,181 @@ public class CsvDataLoader implements CommandLineRunner {
 
     private final HealthDataRepository healthDataRepository;
     private final EmployeeRepository employeeRepository;
+    private final WearableLogRepository wearableLogRepository;
 
-    public CsvDataLoader(HealthDataRepository healthDataRepository, EmployeeRepository employeeRepository) {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm:ss a");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
+
+    public CsvDataLoader(HealthDataRepository healthDataRepository,
+                         EmployeeRepository employeeRepository,
+                         WearableLogRepository wearableLogRepository) {
         this.healthDataRepository = healthDataRepository;
         this.employeeRepository = employeeRepository;
+        this.wearableLogRepository = wearableLogRepository;
     }
 
+    @Override
+    @Transactional
+    public void run(String... args) throws Exception {
+        loadPatientData();
+        loadSleepData();
+        loadAppleWatchData();
+    }
+
+    private void loadPatientData() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/data/GP-2025-full-data.csv");
+        if (inputStream == null) {
+            logger.error("Patient CSV file not found: /data/GP-2025-full-data.csv");
+            return;
+        }
+        logger.info("Loading patient data from /data/GP-2025-full-data.csv");
+
+        CSVParser parser = new CSVParserBuilder().withSeparator(',').withIgnoreQuotations(false).build();
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(inputStream))
+                .withCSVParser(parser)
+                .build()) {
+
+            reader.readNext(); // Skip header
+            List<Employee> employeesToSave = new ArrayList<>();
+            List<HealthData> healthDataToSave = new ArrayList<>();
+            int batchSize = 1000;
+            int rowCount = 0;
+
+            String[] row;
+            while ((row = reader.readNext()) != null) {
+                rowCount++;
+                Employee employee = parseEmployee(row);
+                HealthData healthData = parseHealthData(row, employee);
+
+                employeesToSave.add(employee);
+                healthDataToSave.add(healthData);
+
+                if (rowCount % batchSize == 0) {
+                    employeeRepository.saveAll(employeesToSave);
+                    healthDataRepository.saveAll(healthDataToSave);
+                    employeesToSave.clear();
+                    healthDataToSave.clear();
+                    logger.info("Processed {} patient rows", rowCount);
+                }
+            }
+
+            if (!employeesToSave.isEmpty()) {
+                employeeRepository.saveAll(employeesToSave);
+                healthDataRepository.saveAll(healthDataToSave);
+            }
+            logger.info("Finished loading patient data. Total rows: {}", rowCount);
+        }
+    }
+
+    private void loadSleepData() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/data/sleep_data.csv");
+        if (inputStream == null) {
+            logger.error("Sleep CSV file not found: /data/sleep_data.csv");
+            return;
+        }
+        logger.info("Loading sleep data from /data/sleep_data.csv");
+
+        List<Employee> employees = employeeRepository.findAll();
+        if (employees.isEmpty()) {
+            logger.error("No employees found to assign wearable sleep data!");
+            return;
+        }
+
+        CSVParser parser = new CSVParserBuilder().withSeparator(',').withIgnoreQuotations(false).build();
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(inputStream))
+                .withCSVParser(parser)
+                .build()) {
+
+            reader.readNext(); // Skip header
+            List<WearableLog> logsToSave = new ArrayList<>();
+            int batchSize = 1000;
+            int rowCount = 0;
+            Random random = new Random();
+
+            String[] row;
+            while ((row = reader.readNext()) != null) {
+                rowCount++;
+                WearableLog log = new WearableLog();
+                Employee randomEmployee = employees.get(random.nextInt(employees.size()));
+                log.setPatientId(randomEmployee.getId().toString());
+                log.setLogDate(parseSleepDate(row[0]));
+                log.setSleepStart(parseSleepTime(row[0]));
+                log.setSleepEnd(parseSleepTime(row[1]));
+                log.setSleepQuality(row[2]);
+                log.setTimeInBed(row[3]);
+                log.setSleepNotes(row[4].isEmpty() ? null : row[4]);
+                log.setHeartRateSleep(parseIntSafe(row[5]));
+                logsToSave.add(log);
+
+                if (rowCount % batchSize == 0) {
+                    wearableLogRepository.saveAll(logsToSave);
+                    logsToSave.clear();
+                    logger.info("Processed {} sleep rows", rowCount);
+                }
+            }
+
+            if (!logsToSave.isEmpty()) {
+                wearableLogRepository.saveAll(logsToSave);
+            }
+            logger.info("Finished loading sleep data. Total rows: {}", rowCount);
+        }
+    }
+
+    private void loadAppleWatchData() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/data/apple_watch_data.csv");
+        if (inputStream == null) {
+            logger.error("Apple Watch CSV file not found: /data/apple_watch_data.csv");
+            return;
+        }
+        logger.info("Loading Apple Watch data from /data/apple_watch_data.csv");
+
+        List<Employee> employees = employeeRepository.findAll();
+        if (employees.isEmpty()) {
+            logger.error("No employees found to assign wearable data!");
+            return;
+        }
+
+        CSVParser parser = new CSVParserBuilder().withSeparator(',').withIgnoreQuotations(false).build();
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(inputStream))
+                .withCSVParser(parser)
+                .build()) {
+
+            reader.readNext(); // Skip header
+            List<WearableLog> logsToSave = new ArrayList<>();
+            int batchSize = 1000;
+            int rowCount = 0;
+            Random random = new Random();
+
+            String[] row;
+            while ((row = reader.readNext()) != null) {
+                rowCount++;
+                WearableLog log = new WearableLog();
+                Employee randomEmployee = employees.get(random.nextInt(employees.size()));
+                log.setPatientId(randomEmployee.getId().toString());
+                log.setLogDate(LocalDate.parse(row[0], DATE_FORMATTER).atStartOfDay());
+                log.setActiveEnergyKj(parseDoubleSafe(row[1]));
+                log.setExerciseTimeMin(parseIntSafe(row[2]));
+                log.setStandHours(parseIntSafe(row[3]));
+                log.setStepCount(parseIntSafe(row[15]));
+                log.setWalkingRunningDistanceKm(parseDoubleSafe(row[16]));
+                log.setHeartRateAvg(parseDoubleSafe(row[10]));
+                logsToSave.add(log);
+
+                if (rowCount % batchSize == 0) {
+                    wearableLogRepository.saveAll(logsToSave);
+                    logsToSave.clear();
+                    logger.info("Processed {} Apple Watch rows", rowCount);
+                }
+            }
+
+            if (!logsToSave.isEmpty()) {
+                wearableLogRepository.saveAll(logsToSave);
+            }
+            logger.info("Finished loading Apple Watch data. Total rows: {}", rowCount);
+        }
+    }
+
+    // Existing parse methods (unchanged)
     private Employee parseEmployee(String[] row) {
         Employee employee = new Employee();
         String patientId = row[0].trim();
@@ -46,59 +219,6 @@ public class CsvDataLoader implements CommandLineRunner {
         employee.setDepartment("Default");
         return employee;
     }
-    @Override
-    @Transactional
-    public void run(String... args) throws Exception {
-        InputStream inputStream = getClass().getResourceAsStream("/data/GP-2025-full-data.csv");
-        if (inputStream == null) {
-            System.err.println("CSV file not found!");
-            return;
-        }
-        System.out.println("CSV file found, starting data load...");
-
-        CSVParser parser = new CSVParserBuilder().withSeparator(',').withIgnoreQuotations(false).build();
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(inputStream))
-                .withCSVParser(parser)
-                .build()) {
-
-            reader.readNext(); // Skip header
-
-            List<Employee> employeesToSave = new ArrayList<>();
-            List<HealthData> healthDataToSave = new ArrayList<>();
-
-            int batchSize = 1000; // Save every 1000 rows
-            int rowCount = 0;
-
-            String[] row;
-            while ((row = reader.readNext()) != null) {
-                rowCount++;
-                Employee employee = parseEmployee(row);
-                HealthData healthData = parseHealthData(row, employee);
-
-                employeesToSave.add(employee);
-                healthDataToSave.add(healthData);
-
-                if (rowCount % batchSize == 0) {
-                    employeeRepository.saveAll(employeesToSave); // Save employees in bulk
-                    healthDataRepository.saveAll(healthDataToSave); // Save health data in bulk
-                    employeesToSave.clear();
-                    healthDataToSave.clear();
-                    System.out.println("Processed " + rowCount + " rows...");
-                }
-            }
-
-            // Save remaining records
-            if (!employeesToSave.isEmpty()) {
-                employeeRepository.saveAll(employeesToSave);
-                healthDataRepository.saveAll(healthDataToSave);
-            }
-
-            System.out.println("Finished loading CSV. Total rows: " + rowCount);
-        } catch (Exception e) {
-            System.err.println("Error reading CSV: " + e.getMessage());
-        }
-    }
-
 
     private HealthData parseHealthData(String[] row, Employee employee) {
         HealthData healthData = new HealthData();
@@ -165,5 +285,15 @@ public class CsvDataLoader implements CommandLineRunner {
             logger.warn("Invalid integer format: {}", value);
             return 0;
         }
+    }
+
+    private LocalDateTime parseSleepDate(String startTime) {
+        return LocalDateTime.parse(startTime, TIME_FORMATTER)
+                .withYear(LocalDate.now().getYear());
+    }
+
+    private LocalDateTime parseSleepTime(String time) {
+        return LocalDateTime.parse(time, TIME_FORMATTER)
+                .withYear(LocalDate.now().getYear());
     }
 }
