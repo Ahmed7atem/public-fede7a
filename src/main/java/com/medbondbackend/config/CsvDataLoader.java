@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -51,7 +50,7 @@ public class CsvDataLoader implements CommandLineRunner {
         loadAppleWatchData();
     }
 
-    private void loadPatientData() throws Exception {
+    public void loadPatientData() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/data/GP-2025-full-data.csv");
         if (inputStream == null) {
             logger.error("Patient CSV file not found: /data/GP-2025-full-data.csv");
@@ -96,7 +95,7 @@ public class CsvDataLoader implements CommandLineRunner {
         }
     }
 
-    private void loadSleepData() throws Exception {
+    public void loadSleepData() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/data/sleep_data.csv");
         if (inputStream == null) {
             logger.error("Sleep CSV file not found: /data/sleep_data.csv");
@@ -106,7 +105,7 @@ public class CsvDataLoader implements CommandLineRunner {
 
         List<Employee> employees = employeeRepository.findAll();
         if (employees.isEmpty()) {
-            logger.error("No employees found to assign wearable sleep data!");
+            logger.error("No employees found to assign Sleep wearable data!");
             return;
         }
 
@@ -150,7 +149,7 @@ public class CsvDataLoader implements CommandLineRunner {
         }
     }
 
-    private void loadAppleWatchData() throws Exception {
+    public void loadAppleWatchData() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/data/apple_watch_data.csv");
         if (inputStream == null) {
             logger.error("Apple Watch CSV file not found: /data/apple_watch_data.csv");
@@ -204,7 +203,7 @@ public class CsvDataLoader implements CommandLineRunner {
         }
     }
 
-    // Existing parse methods (unchanged)
+    // [Rest of the methods - parseEmployee, parseHealthData, etc. - remain unchanged]
     private Employee parseEmployee(String[] row) {
         Employee employee = new Employee();
         String patientId = row[0].trim();
@@ -223,7 +222,6 @@ public class CsvDataLoader implements CommandLineRunner {
     private HealthData parseHealthData(String[] row, Employee employee) {
         HealthData healthData = new HealthData();
         healthData.setEmployee(employee);
-        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
 
         healthData.setAge(parseIntSafe(row[1]));
         healthData.setGender(row[2].trim());
@@ -238,7 +236,7 @@ public class CsvDataLoader implements CommandLineRunner {
         healthData.setBloodSugar(parseDoubleSafe(row[12]));
         healthData.setCreatinine(parseDoubleSafe(row[13]));
         healthData.setCoverageDetails(row[16].trim());
-        healthData.setClaimedAmount(parseCurrencySafe(row[19], currencyFormat));
+        healthData.setClaimedAmount(parseCurrencySafe(row[19]));
 
         return healthData;
     }
@@ -250,7 +248,7 @@ public class CsvDataLoader implements CommandLineRunner {
         return value.split(",").length;
     }
 
-    private double parseCurrencySafe(String value, NumberFormat format) {
+    private double parseCurrencySafe(String value) {
         if (value == null || value.trim().isEmpty()) {
             return 0.0;
         }
