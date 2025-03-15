@@ -4,7 +4,6 @@ import com.medbondbackend.model.Employee;
 import com.medbondbackend.model.HealthData;
 import com.medbondbackend.model.WearableLog;
 import com.medbondbackend.repository.EmployeeRepository;
-import com.medbondbackend.repository.HealthDataRepository;
 import com.medbondbackend.repository.WearableLogRepository;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -29,17 +28,15 @@ import java.util.*;
 public class CsvDataLoader implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(CsvDataLoader.class);
 
-    private final HealthDataRepository healthDataRepository;
     private final EmployeeRepository employeeRepository;
     private final WearableLogRepository wearableLogRepository;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm:ss a");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public CsvDataLoader(HealthDataRepository healthDataRepository,
-                         EmployeeRepository employeeRepository,
+    public CsvDataLoader(EmployeeRepository employeeRepository,
                          WearableLogRepository wearableLogRepository) {
-        this.healthDataRepository = healthDataRepository;
         this.employeeRepository = employeeRepository;
         this.wearableLogRepository = wearableLogRepository;
     }
@@ -75,7 +72,6 @@ public class CsvDataLoader implements CommandLineRunner {
                 rowCount++;
                 Employee employee = parseEmployee(row);
                 HealthData healthData = parseHealthData(row, employee);
-                // Link HealthData to Employee for cascading
                 employee.setHealthData(Collections.singletonList(healthData));
 
                 employeesToSave.add(employee);
@@ -93,6 +89,7 @@ public class CsvDataLoader implements CommandLineRunner {
             logger.info("Finished loading patient data. Total rows: {}", rowCount);
         }
     }
+
     public void loadSleepData() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/data/sleep_data.csv");
         if (inputStream == null) {
@@ -123,13 +120,13 @@ public class CsvDataLoader implements CommandLineRunner {
                 rowCount++;
                 WearableLog log = new WearableLog();
                 Employee randomEmployee = employees.get(random.nextInt(employees.size()));
-                log.setPatientId(randomEmployee.getId().toString());
+                log.setPatientId(randomEmployee.getId());
                 log.setLogDate(parseSleepDate(row[0]));
                 log.setSleepStart(parseSleepTime(row[0]));
                 log.setSleepEnd(parseSleepTime(row[1]));
                 log.setSleepQuality(row[2]);
-                log.setTimeInBed(row[3]);
-                log.setSleepNotes(row[4].isEmpty() ? null : row[4]);
+                log.setTimeInBed(parseTimeToMinutes(row[3]));
+                log.setNotes(row[4].isEmpty() ? null : row[4]);
                 log.setHeartRateSleep(parseIntSafe(row[5]));
                 logsToSave.add(log);
 
@@ -177,8 +174,8 @@ public class CsvDataLoader implements CommandLineRunner {
                 rowCount++;
                 WearableLog log = new WearableLog();
                 Employee randomEmployee = employees.get(random.nextInt(employees.size()));
-                log.setPatientId(randomEmployee.getId().toString());
-                log.setLogDate(LocalDate.parse(row[0], DATE_FORMATTER).atStartOfDay());
+                log.setPatientId(randomEmployee.getId());
+                log.setLogDate(LocalDate.parse(row[0], DATE_FORMATTER));
                 log.setActiveEnergyKj(parseDoubleSafe(row[1]));
                 log.setExerciseTimeMin(parseIntSafe(row[2]));
                 log.setStandHours(parseIntSafe(row[3]));
@@ -201,7 +198,6 @@ public class CsvDataLoader implements CommandLineRunner {
         }
     }
 
-    // [Rest of the methods - parseEmployee, parseHealthData, etc. - remain unchanged]
     private Employee parseEmployee(String[] row) {
         Employee employee = new Employee();
         String patientId = row[0].trim();
@@ -283,27 +279,55 @@ public class CsvDataLoader implements CommandLineRunner {
         }
     }
 
-    private LocalDateTime parseSleepDate(String startTime) {
+    private int parseTimeToMinutes(String time) {
+        if (time == null || time.trim().isEmpty()) {
+            return 0;
+        }
         try {
-            // Parse time-only string and combine with today's date
-            LocalTime time = LocalTime.parse(startTime, TIME_FORMATTER);
-            return LocalDate.now().atTime(time);
-        } catch (DateTimeParseException e) {
-            logger.error("Failed to parse sleep date '{}': {}", startTime, e.getMessage());
-            // Fallback: Use current date/time if parsing fails
-            return LocalDateTime.now();
+            String[] parts = time.split(":");
+            if (parts.length == 2) {
+                int hours = Integer.parseInt(parts[0].trim());
+                int minutes = Integer.parseInt(parts[1].trim());
+                return (hours * 60) + minutes;
+            } else {
+                logger.warn("Invalid time format '{}', expected HH:MM", time);
+                return 0;
+            }
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            logger.warn("Failed to parse time '{}': {}", time, e.getMessage());
+            return 0;
         }
     }
 
-    private LocalDateTime parseSleepTime(String time) {
+    private LocalDate parseSleepDate(String startTime) {
         try {
-            // Parse time-only string and combine with today's date
-            LocalTime localTime = LocalTime.parse(time, TIME_FORMATTER);
-            return LocalDate.now().atTime(localTime);
+            // Try to parse as a time-only string first
+            LocalTime time = LocalTime.parse(startTime, TIME_FORMATTER);
+            logger.warn("No date provided in '{}', using current date as fallback", startTime);
+            return LocalDate.now();
         } catch (DateTimeParseException e) {
-            logger.error("Failed to parse sleep time '{}': {}", time, e.getMessage());
-            // Fallback: Use current date/time if parsing fails
-            return LocalDateTime.now();
+            try {
+                // Fallback to date-time parsing in case a date is included
+                LocalDateTime dateTime = LocalDateTime.parse(startTime, DATE_TIME_FORMATTER);
+                return dateTime.toLocalDate();
+            } catch (DateTimeParseException ex) {
+                logger.error("Failed to parse sleep date '{}': {}", startTime, ex.getMessage());
+                return LocalDate.now();
+            }
+        }
+    }
+
+    private LocalTime parseSleepTime(String time) {
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(time, DATE_TIME_FORMATTER);
+            return dateTime.toLocalTime();
+        } catch (DateTimeParseException e) {
+            try {
+                return LocalTime.parse(time, TIME_FORMATTER);
+            } catch (DateTimeParseException ex) {
+                logger.error("Failed to parse sleep time '{}': {}", time, e.getMessage());
+                return LocalTime.now();
+            }
         }
     }
 }

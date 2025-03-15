@@ -1,33 +1,42 @@
 package com.medbondbackend.service;
 
-import com.medbondbackend.dto.WearableLogDTO;
 import com.medbondbackend.model.WearableLog;
+import com.medbondbackend.dto.WearableSummaryDTO;
 import com.medbondbackend.repository.WearableLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WearableLogService {
 
-    @Autowired
-    private WearableLogRepository wearableLogRepository;
+    private final WearableLogRepository wearableLogRepository;
 
-    public void syncWearableData(WearableLogDTO dto) {
-        WearableLog log = new WearableLog();
-        log.setPatientId(dto.getPatientId());
-        log.setLogDate(dto.getLogDate());
-        log.setSleepStart(dto.getSleepStart());
-        log.setSleepEnd(dto.getSleepEnd());
-        log.setSleepQuality(dto.getSleepQuality());
-        log.setTimeInBed(dto.getTimeInBed());
-        log.setSleepNotes(dto.getSleepNotes());
-        log.setHeartRateSleep(dto.getHeartRateSleep());
-        log.setActiveEnergyKj(dto.getActiveEnergyKj());
-        log.setExerciseTimeMin(dto.getExerciseTimeMin());
-        log.setStandHours(dto.getStandHours());
-        log.setStepCount(dto.getStepCount());
-        log.setWalkingRunningDistanceKm(dto.getWalkingRunningDistanceKm());
-        log.setHeartRateAvg(dto.getHeartRateAvg());
-        wearableLogRepository.save(log);
+    public WearableLogService(WearableLogRepository wearableLogRepository) {
+        this.wearableLogRepository = wearableLogRepository;
+    }
+
+    public List<WearableLog> getWearableLogsByPatientId(UUID patientId) {
+        return wearableLogRepository.findByPatientId(patientId);
+    }
+
+    public void saveWearableLogs(List<WearableLog> logs) {
+        wearableLogRepository.saveAll(logs);
+    }
+
+    public WearableSummaryDTO getWearableSummary(UUID patientId) {
+        List<WearableLog> logs = wearableLogRepository.findByPatientId(patientId);
+        if (logs.isEmpty()) {
+            return new WearableSummaryDTO(0.0, 0);
+        }
+        double avgHeartRate = logs.stream()
+                .mapToDouble(WearableLog::getHeartRateAvg)
+                .average()
+                .orElse(0.0);
+        int totalSteps = logs.stream()
+                .mapToInt(WearableLog::getStepCount)
+                .sum();
+        return new WearableSummaryDTO(avgHeartRate, totalSteps);
     }
 }

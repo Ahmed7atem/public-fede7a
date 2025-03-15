@@ -1,23 +1,28 @@
 package com.medbondbackend.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 public class WearableLogDTO {
-    private String patientId;
-    private LocalDateTime logDate;
-    private LocalDateTime sleepStart;
-    private LocalDateTime sleepEnd;
+    private Long id;
+    private UUID patientId;
+    private LocalDate logDate;
+    private LocalTime sleepStart;
+    private LocalTime sleepEnd;
     private String sleepQuality;
-    private String timeInBed;
-    private String sleepNotes;
-    private Integer heartRateSleep;
-    private Double activeEnergyKj;
-    private Integer exerciseTimeMin;
-    private Integer standHours;
-    private Integer stepCount;
-    private Double walkingRunningDistanceKm;
-    private Double heartRateAvg;
+    private int timeInBed;
+    private String notes;
+    private int heartRateSleep;
+    private double activeEnergyKj;
+    private int exerciseTimeMin;
+    private int standHours;
+    private int stepCount;
+    private double walkingRunningDistanceKm;
+    private double heartRateAvg;
 }
