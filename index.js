@@ -132,6 +132,32 @@ app.get('/api/all-data', authenticateToken, async (req, res) => {
   }
 });
 
+// API to submit feedback
+app.post('/api/feedback', authenticateToken, async (req, res) => {
+  try {
+    const { message, rating } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    const employeeId = Buffer.from(req.user.id.replace(/-/g, ''), 'hex'); // Convert UUID from JWT to BINARY(16)
+    const [result] = await pool.query(
+      'INSERT INTO feedback (employee_id, message, rating) VALUES (?, ?, ?)',
+      [employeeId, message, rating || null]
+    );
+
+    const feedback = {
+      id: result.insertId.toString(),
+      employee_id: req.user.id,
+      message,
+      rating: rating || null,
+      submitted_at: new Date().toISOString(),
+      status: 'pending'
+    };
+    res.status(201).json(feedback);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Import routes
 const employeeRoutes = require('./routes/employeeRoutes');
 const healthDataRoutes = require('./routes/healthDataRoutes');
