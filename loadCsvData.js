@@ -1,7 +1,7 @@
 const fastcsv = require('fast-csv');
 const fs = require('fs');
 const pool = require('./config/database');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { parseDate, parseTime, getCurrentTimestamp } = require('./utils');
 
 async function loadCsvData() {
