@@ -172,15 +172,10 @@ app.use('/api/wearable-logs', authenticateToken, wearableLogRoutes);
 app.use('/api/reports', authenticateToken, reportRoutes);
 app.use('/api/auth', authRoutes);
 
-// Load CSV data on startup (wrapped in an async IIFE to fix SyntaxError)
-(async () => {
-  try {
-    await loadCsvData();
-    console.log('CSV data loading completed.');
-  } catch (error) {
-    console.error('Failed to load CSV data:', error.stack);
-  }
-})();
+// Load CSV data in the background (without blocking startup)
+loadCsvData()
+  .then(() => console.log('CSV data loading completed.'))
+  .catch((error) => console.error('Failed to load CSV data:', error.stack));
 
 // Export the app as a serverless function
 module.exports = serverless(app);
