@@ -91,7 +91,9 @@ app.post('/api/health-data', authenticateToken, async (req, res) => {
       'SELECT COUNT(*) as count FROM health_data WHERE employee_id = ?',
       [employeeIdBinary]
     );
-    if (countResult[0].count >= 30) {
+    if (countResult[
+
+0].count >= 30) {
       await pool.query(
         'DELETE FROM health_data WHERE employee_id = ? ORDER BY recorded_at ASC LIMIT 1',
         [employeeIdBinary]
