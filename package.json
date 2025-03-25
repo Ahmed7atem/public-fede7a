@@ -1,9 +1,9 @@
 {
   "name": "medbond-node",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node api/index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +16,8 @@
     "express": "^4.21.2",
     "fast-csv": "^5.0.2",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.13.0"
+    "mysql2": "^3.13.0",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
