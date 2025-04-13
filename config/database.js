@@ -11,9 +11,16 @@ const connectDB = async () => {
     }
 
     console.log('Attempting to connect to MongoDB...');
-    console.log('Connection URI:', process.env.MONGODB_URI ? 'URI exists' : 'URI is missing');
+    
+    // Check for both environment variable names
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI;
+    console.log('Connection URI:', mongoUri ? 'URI exists' : 'URI is missing');
+    
+    if (!mongoUri) {
+      throw new Error('MongoDB connection URI is missing');
+    }
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
       maxPoolSize: 10,
       minPoolSize: 5,

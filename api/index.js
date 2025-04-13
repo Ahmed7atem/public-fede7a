@@ -24,6 +24,13 @@ const initializeDB = async () => {
   if (!dbConnectionAttempted) {
     try {
       console.log('Initializing database connection...');
+      // Check for both environment variable names
+      const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI;
+      if (!mongoUri) {
+        console.error('MongoDB connection URI is missing');
+        dbConnectionAttempted = true;
+        return null;
+      }
       dbConnection = await connectDB();
       dbConnectionAttempted = true;
       console.log('Database connection initialized:', !!dbConnection);
@@ -56,7 +63,8 @@ app.get('/health', async (req, res) => {
     status: 'ok', 
     dbConnection: !!dbStatus,
     dbConnectionAttempted,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    mongoUriExists: !!(process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI)
   });
 });
 
@@ -68,7 +76,8 @@ app.get('/', async (req, res) => {
     message: 'Health Prediction API is running',
     dbConnection: !!dbStatus,
     dbConnectionAttempted,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    mongoUriExists: !!(process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI)
   });
 });
 
