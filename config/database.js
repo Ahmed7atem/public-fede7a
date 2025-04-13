@@ -14,11 +14,15 @@ const connectDB = async () => {
     
     // Check for both environment variable names
     const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI;
-    console.log('Connection URI:', mongoUri ? 'URI exists' : 'URI is missing');
+    console.log('Connection URI exists:', !!mongoUri);
     
     if (!mongoUri) {
       throw new Error('MongoDB connection URI is missing');
     }
+
+    // Log connection attempt without exposing credentials
+    const sanitizedUri = mongoUri.replace(/(mongodb\+srv:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
+    console.log('Connecting to:', sanitizedUri);
 
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
@@ -59,6 +63,13 @@ const connectDB = async () => {
       code: error.code,
       codeName: error.codeName
     });
+    
+    // Check for authentication errors
+    if (error.code === 8000 || error.message.includes('authentication failed')) {
+      console.error('Authentication failed. Please check your MongoDB credentials.');
+      console.error('Make sure your username and password are correct.');
+      console.error('If your password contains special characters, make sure they are properly encoded in the connection string.');
+    }
     
     // Don't throw the error, just log it and return null
     // This allows the app to start even if the database connection fails
