@@ -11,6 +11,9 @@ const app = express();
 // Load environment variables
 require('dotenv').config();
 
+// Trust the proxy - this is needed for Vercel
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
 // Connect to MongoDB
@@ -37,6 +40,15 @@ const feedbackRoutes = require('../routes/feedbackRoutes');
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', dbConnection: !!dbConnection });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Health Prediction API is running',
+    dbConnection: !!dbConnection 
+  });
 });
 
 // Use routes with appropriate rate limiting

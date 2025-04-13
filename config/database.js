@@ -10,10 +10,15 @@ const connectDB = async () => {
     }
 
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
       maxPoolSize: 10,
       minPoolSize: 5,
       socketTimeoutMS: 45000,
+      retryWrites: true,
+      retryReads: true,
+      w: 'majority',
+      ssl: true,
+      authSource: 'admin'
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -36,7 +41,9 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    throw error;
+    // Don't throw the error, just log it and return null
+    // This allows the app to start even if the database connection fails
+    return null;
   }
 };
 
