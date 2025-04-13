@@ -1,11 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const employeeController = require('../controllers/employeeController');
+const { auth, adminAuth } = require('../middleware/auth');
+const checkRole = require('../middleware/roleCheck');
+const { validate, schemas } = require('../middleware/validate');
+const {
+  getAllEmployees,
+  getEmployeeById,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee
+} = require('../controllers/employeeController');
 
-router.get('/', employeeController.getAllEmployees);
-router.get('/:id', employeeController.getEmployeeById);
-router.post('/', employeeController.createEmployee);
-router.put('/:id', employeeController.updateEmployee);
-router.delete('/:id', employeeController.deleteEmployee);
+// Apply authentication to all routes
+router.use(auth);
+
+// Get all employees (admin only)
+router.get('/', adminAuth, getAllEmployees);
+
+// Get employee by ID (admin or self)
+router.get('/:id', auth, getEmployeeById);
+
+// Create new employee (admin only)
+router.post('/', adminAuth, validate(schemas.employee), createEmployee);
+
+// Update employee (admin only)
+router.put('/:id', adminAuth, validate(schemas.employee), updateEmployee);
+
+// Delete employee (admin only)
+router.delete('/:id', adminAuth, deleteEmployee);
 
 module.exports = router;

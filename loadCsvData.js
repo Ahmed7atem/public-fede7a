@@ -27,12 +27,13 @@ async function loadCsvData() {
                 console.warn('Skipping incomplete row (missing Patient_ID, Age, or Gender):', row);
                 return;
               }
-              const employeeId = Buffer.from(row.Patient_ID.replace(/-/g, ''), 'hex');
+              // Convert UUID to ObjectId by taking first 24 chars after removing hyphens
+              const employeeId = row.Patient_ID.replace(/-/g, '').substring(0, 24);
               const password = require('crypto').randomBytes(8).toString('hex');
               const hashedPassword = bcrypt.hashSync(password, 10);
 
               employees.push({
-                id: employeeId,
+                _id: employeeId, // Use _id instead of id
                 name: `Employee ${row.Patient_ID}`,
                 email: `employee${row.Patient_ID.replace(/-/g, '')}@example.com`,
                 age: parseInt(row.Age) || 0,
@@ -64,7 +65,7 @@ async function loadCsvData() {
               if (employees.length > 0) {
                 const [result] = await pool.query(
                   'INSERT IGNORE INTO employee (id, name, email, age, gender, password, children, smoker, role) VALUES ?',
-                  [employees.map(e => [e.id, e.name, e.email, e.age, e.gender, e.password, e.children, e.smoker, e.role])]
+                  [employees.map(e => [e._id, e.name, e.email, e.age, e.gender, e.password, e.children, e.smoker, e.role])]
                 );
                 console.log(`Inserted ${result.affectedRows} employees`);
               }
