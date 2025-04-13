@@ -2,29 +2,20 @@ const { WearableData } = require('../models/schemas');
 const { getEmployeeWearableData, saveWearableData, getAggregatedWearableData } = require('../services/dataService');
 const mongoose = require('mongoose');
 
-// Helper function to convert UUID to ObjectId
-const convertToObjectId = (id) => {
-  try {
-    // If it's already a valid ObjectId, return it
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      return id;
-    }
-    
-    // If it's a UUID, convert it to a consistent ObjectId
-    // We'll use the first 24 characters of the UUID (removing hyphens)
-    const uuidWithoutHyphens = id.replace(/-/g, '');
-    const objectIdString = uuidWithoutHyphens.substring(0, 24);
-    
-    // Ensure it's a valid hex string
-    if (!/^[0-9a-fA-F]{24}$/.test(objectIdString)) {
-      throw new Error('Invalid ID format');
-    }
-    
-    return new mongoose.Types.ObjectId(objectIdString);
-  } catch (error) {
-    throw new Error(`Invalid ID format: ${error.message}`);
+// Helper function to normalize IDs for comparison
+function normalizeId(id) {
+  if (!id) return null;
+  
+  // If it's an ObjectId, convert to string
+  if (typeof id === 'object' && id._id) {
+    id = id._id.toString();
+  } else if (typeof id === 'object') {
+    id = id.toString();
   }
-};
+
+  // Remove hyphens and preserve full length
+  return id.replace(/-/g, '');
+}
 
 exports.getWearableData = async (req, res) => {
   try {
@@ -42,8 +33,8 @@ exports.getWearableData = async (req, res) => {
         return res.status(400).json({ error: 'Employee ID is required for admin users' });
       }
       try {
-        const objectId = convertToObjectId(employeeId);
-        const wearableData = await getEmployeeWearableData(objectId, parseInt(days));
+        const normalizedId = normalizeId(employeeId);
+        const wearableData = await getEmployeeWearableData(normalizedId, parseInt(days));
         return res.json(wearableData);
       } catch (error) {
         return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
@@ -52,8 +43,8 @@ exports.getWearableData = async (req, res) => {
     
     // Regular employees can only view their own data
     try {
-      const objectId = convertToObjectId(req.employee._id);
-      const wearableData = await getEmployeeWearableData(objectId, parseInt(days));
+      const normalizedId = normalizeId(req.employee._id);
+      const wearableData = await getEmployeeWearableData(normalizedId, parseInt(days));
       res.json(wearableData);
     } catch (error) {
       return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
@@ -77,8 +68,8 @@ exports.createWearableData = async (req, res) => {
     }
     
     try {
-      const objectId = convertToObjectId(req.employee._id);
-      const wearableData = await saveWearableData(objectId, req.body);
+      const normalizedId = normalizeId(req.employee._id);
+      const wearableData = await saveWearableData(normalizedId, req.body);
       res.status(201).json(wearableData);
     } catch (error) {
       return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
@@ -105,9 +96,8 @@ exports.getAggregatedData = async (req, res) => {
         return res.status(400).json({ error: 'Employee ID is required for admin users' });
       }
       try {
-        const objectId = convertToObjectId(employeeId);
-        const aggregatedData = await getAggregatedWearableData(objectId, parseInt(days));
-        if (!aggregatedData) return res.status(404).json({ error: 'No wearable data found' });
+        const normalizedId = normalizeId(employeeId);
+        const aggregatedData = await getAggregatedWearableData(normalizedId, parseInt(days));
         return res.json(aggregatedData);
       } catch (error) {
         return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
@@ -116,9 +106,8 @@ exports.getAggregatedData = async (req, res) => {
     
     // Regular employees can only view their own data
     try {
-      const objectId = convertToObjectId(req.employee._id);
-      const aggregatedData = await getAggregatedWearableData(objectId, parseInt(days));
-      if (!aggregatedData) return res.status(404).json({ error: 'No wearable data found' });
+      const normalizedId = normalizeId(req.employee._id);
+      const aggregatedData = await getAggregatedWearableData(normalizedId, parseInt(days));
       res.json(aggregatedData);
     } catch (error) {
       return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
