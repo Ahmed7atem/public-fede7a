@@ -1,13 +1,35 @@
-const pool = require('../config/database');
+const { Employee } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
+
+// Helper function to convert UUID to ObjectId
+const convertToObjectId = (id) => {
+  try {
+    // If it's already a valid ObjectId, return it
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      return id;
+    }
+    
+    // If it's a UUID, convert it to a consistent ObjectId
+    // We'll use the first 24 characters of the UUID (removing hyphens)
+    const uuidWithoutHyphens = id.replace(/-/g, '');
+    const objectIdString = uuidWithoutHyphens.substring(0, 24);
+    
+    // Ensure it's a valid hex string
+    if (!/^[0-9a-fA-F]{24}$/.test(objectIdString)) {
+      throw new Error('Invalid ID format');
+    }
+    
+    return new mongoose.Types.ObjectId(objectIdString);
+  } catch (error) {
+    throw new Error(`Invalid ID format: ${error.message}`);
+  }
+};
 
 exports.getAllEmployees = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT HEX(id) AS id, name, email, age, gender, children, smoker, role FROM employee');
-    res.json(rows.map(row => ({
-      ...row,
-      id: row.id ? `${row.id.match(/.{1,8}/g).join('-')}` : null
-    })));
+    const employees = await Employee.find().select('-password');
+    res.json(employees);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -15,13 +37,9 @@ exports.getAllEmployees = async (req, res) => {
 
 exports.getEmployeeById = async (req, res) => {
   try {
-    const employeeId = Buffer.from(req.params.id.replace(/-/g, ''), 'hex');
-    const [rows] = await pool.query('SELECT HEX(id) AS id, name, email, age, gender, children, smoker, role FROM employee WHERE id = ?', [employeeId]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Employee not found' });
-    res.json({
-      ...rows[0],
-      id: rows[0].id ? `${rows[0].id.match(/.{1,8}/g).join('-')}` : null
-    });
+    const employee = await Employee.findById(req.params.id).select('-password');
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    res.json(employee);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -29,36 +47,34 @@ exports.getEmployeeById = async (req, res) => {
 
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, age, gender, children, smoker, role } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
-    const id = Buffer.from(require('crypto').randomUUID().replace(/-/g, ''), 'hex');
-    const password = require('crypto').randomBytes(8).toString('hex');
+    const { name, email, password, age, gender, role, _id } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+
+    // Check if email already exists
+    const existingEmployee = await Employee.findOne({ email });
+    if (existingEmployee) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query(
-      'INSERT INTO employee (id, name, email, age, gender, password, children, smoker, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [
-        id,
-        name,
-        email,
-        age || 0,
-        gender || 'Unknown',
-        hashedPassword,
-        children || 0,
-        smoker != null ? (smoker ? 1 : 0) : 0,
-        role || 'employee'
-      ]
-    );
-    res.status(201).json({
-      id: `${id.toString('hex').match(/.{1,8}/g).join('-')}`,
+
+    const employee = new Employee({
+      _id: _id || new mongoose.Types.ObjectId().toString(), // Use provided ID or generate a new one
       name,
       email,
+      password: hashedPassword,
       age: age || 0,
       gender: gender || 'Unknown',
-      children: children || 0,
-      smoker: smoker != null ? (smoker ? 1 : 0) : 0,
-      role: role || 'employee',
-      password
+      role: role || 'employee'
     });
+
+    await employee.save();
+
+    const response = employee.toObject();
+    delete response.password;
+    res.status(201).json(response);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,33 +82,35 @@ exports.createEmployee = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
   try {
-    const employeeId = Buffer.from(req.params.id.replace(/-/g, ''), 'hex');
-    const { name, email, age, gender, children, smoker, role } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
-    const [result] = await pool.query(
-      'UPDATE employee SET name = ?, email = ?, age = ?, gender = ?, children = ?, smoker = ?, role = ? WHERE id = ?',
-      [
-        name,
-        email,
-        age || 0,
-        gender || 'Unknown',
-        children || 0,
-        smoker != null ? (smoker ? 1 : 0) : 0,
-        role || 'employee',
-        employeeId
-      ]
-    );
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
-    res.json({
-      id: req.params.id,
-      name,
-      email,
-      age: age || 0,
-      gender: gender || 'Unknown',
-      children: children || 0,
-      smoker: smoker != null ? (smoker ? 1 : 0) : 0,
-      role: role || 'employee'
-    });
+    const { name, email, age, gender, role } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email !== employee.email) {
+      const existingEmployee = await Employee.findOne({ email });
+      if (existingEmployee) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    }
+
+    employee.name = name;
+    employee.email = email;
+    employee.age = age || 0;
+    employee.gender = gender || 'Unknown';
+    employee.role = role || 'employee';
+
+    await employee.save();
+
+    const response = employee.toObject();
+    delete response.password;
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -100,11 +118,10 @@ exports.updateEmployee = async (req, res) => {
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    const employeeId = Buffer.from(req.params.id.replace(/-/g, ''), 'hex');
-    await pool.query('SET FOREIGN_KEY_CHECKS = 0;');
-    const [result] = await pool.query('DELETE FROM employee WHERE id = ?', [employeeId]);
-    await pool.query('SET FOREIGN_KEY_CHECKS = 1;');
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
+    const employee = await Employee.findByIdAndDelete(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
