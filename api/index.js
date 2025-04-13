@@ -18,13 +18,25 @@ app.use(express.json());
 
 // Connect to MongoDB
 let dbConnection;
-(async () => {
-  try {
-    dbConnection = await connectDB();
-  } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+let dbConnectionAttempted = false;
+
+const initializeDB = async () => {
+  if (!dbConnectionAttempted) {
+    try {
+      console.log('Initializing database connection...');
+      dbConnection = await connectDB();
+      dbConnectionAttempted = true;
+      console.log('Database connection initialized:', !!dbConnection);
+    } catch (error) {
+      console.error('Failed to initialize database connection:', error);
+      dbConnectionAttempted = true;
+    }
   }
-})();
+  return dbConnection;
+};
+
+// Initialize database connection
+initializeDB().catch(console.error);
 
 // Apply general rate limiting to all routes
 app.use(apiLimiter);
@@ -38,16 +50,25 @@ const authRoutes = require('../routes/authRoutes');
 const feedbackRoutes = require('../routes/feedbackRoutes');
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', dbConnection: !!dbConnection });
+app.get('/health', async (req, res) => {
+  const dbStatus = await initializeDB();
+  res.status(200).json({ 
+    status: 'ok', 
+    dbConnection: !!dbStatus,
+    dbConnectionAttempted,
+    environment: process.env.NODE_ENV
+  });
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+  const dbStatus = await initializeDB();
   res.status(200).json({ 
     status: 'ok', 
     message: 'Health Prediction API is running',
-    dbConnection: !!dbConnection 
+    dbConnection: !!dbStatus,
+    dbConnectionAttempted,
+    environment: process.env.NODE_ENV
   });
 });
 
