@@ -8,16 +8,23 @@ const { auth, adminAuth } = require('../middleware/auth');
 
 const app = express();
 
+// Load environment variables
+require('dotenv').config();
+
 app.use(express.json());
 
 // Connect to MongoDB
-connectDB().catch(console.error);
+let dbConnection;
+(async () => {
+  try {
+    dbConnection = await connectDB();
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+  }
+})();
 
 // Apply general rate limiting to all routes
 app.use(apiLimiter);
-
-// Load environment variables
-require('dotenv').config();
 
 // Import routes
 const employeeRoutes = require('../routes/employeeRoutes');
@@ -26,6 +33,11 @@ const wearableLogRoutes = require('../routes/wearableLogRoutes');
 const reportRoutes = require('../routes/reportRoutes');
 const authRoutes = require('../routes/authRoutes');
 const feedbackRoutes = require('../routes/feedbackRoutes');
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', dbConnection: !!dbConnection });
+});
 
 // Use routes with appropriate rate limiting
 app.use('/api/auth', authLimiter, authRoutes);
@@ -58,6 +70,7 @@ app.post('/api/predict/:employeeId', auth, async (req, res) => {
     const result = await predict(req.employee._id);
     res.json(result);
   } catch (error) {
+    console.error('Prediction error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -68,12 +81,23 @@ app.get('/api/all-data', adminAuth, async (req, res) => {
     const data = await getAllEmployeesData();
     res.json(data);
   } catch (error) {
+    console.error('Error fetching all data:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something broke!' });
 });
+
+// Only start the server if we're not in a serverless environment
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

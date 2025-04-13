@@ -5,8 +5,15 @@ let indexesCreated = false;
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/health_prediction', {
-      serverSelectionTimeoutMS: 5000
+    if (mongoose.connection.readyState === 1) {
+      return mongoose.connection;
+    }
+
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      socketTimeoutMS: 45000,
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -29,7 +36,7 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    throw error;
   }
 };
 
