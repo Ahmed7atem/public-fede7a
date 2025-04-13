@@ -13,8 +13,8 @@ function normalizeId(id) {
     id = id.toString();
   }
 
-  // Remove hyphens and preserve full length
-  return id.replace(/-/g, '');
+  // Return the ID as is, preserving hyphens for UUIDs
+  return id;
 }
 
 exports.getWearableData = async (req, res) => {

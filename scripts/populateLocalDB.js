@@ -8,8 +8,8 @@ require('dotenv').config();
 // Import schemas
 const { Employee, HealthData, WearableData } = require('../models/schemas');
 
-// MongoDB Atlas connection string
-const MONGODB_URI = 'mongodb+srv://ahmedhatem:Rk23610359@cluster0.wz0tern.mongodb.net/health_prediction?retryWrites=true&w=majority';
+// Local MongoDB connection string
+const MONGODB_URI = 'mongodb://localhost:27017/health_prediction';
 
 // Helper function to convert time string (HH:MM) to minutes
 function convertTimeToMinutes(timeStr) {
@@ -46,11 +46,11 @@ function formatSleepNotes(notes) {
   return notes.split(',').map(note => note.trim()).join(', ');
 }
 
-async function populateAtlasDB() {
+async function populateLocalDB() {
   try {
-    // Connect to MongoDB Atlas
+    // Connect to local MongoDB
     await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB Atlas');
+    console.log('Connected to local MongoDB');
 
     // Clear existing data
     await Employee.deleteMany({ role: { $ne: 'admin' } }); // Preserve admin users
@@ -214,7 +214,7 @@ async function populateAtlasDB() {
 
     console.log('Database population completed successfully');
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB Atlas');
+    console.log('Disconnected from local MongoDB');
 
   } catch (error) {
     console.error('Error populating database:', error);
@@ -224,4 +224,4 @@ async function populateAtlasDB() {
 }
 
 // Run the population script
-populateAtlasDB(); 
+populateLocalDB(); 
