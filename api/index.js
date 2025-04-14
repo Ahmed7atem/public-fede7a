@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { getAllEmployeesData } = require('../services/dataService');
 const { predict } = require('../services/predictionService');
 const { getCurrentTimestamp } = require('../utils');
@@ -13,6 +14,23 @@ require('dotenv').config();
 
 // Trust the proxy - this is needed for Vercel
 app.set('trust proxy', 1);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL_PROD] 
+    : [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
