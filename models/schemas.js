@@ -6,6 +6,7 @@ const employeeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   age: { type: Number, required: true },
+  ageGroup: { type: String, required: true },
   gender: { type: String, required: true },
   password: { type: String, required: true },
   children: { type: Number, required: true, default: 0 },
@@ -14,7 +15,15 @@ const employeeSchema = new mongoose.Schema({
   planName: { type: String },
   coverageDetails: { type: String },
   startDate: { type: Date },
-  endDate: { type: Date }
+  endDate: { type: Date },
+  department: { type: String },
+  education: { type: String },
+  recruitmentChannel: { type: String },
+  noOfTrainings: { type: Number },
+  previousYearRating: { type: Number },
+  lengthOfService: { type: Number },
+  kpisMet80: { type: Boolean },
+  avgTrainingScore: { type: Number }
 }, { timestamps: true });
 
 // Health Data Schema
@@ -29,7 +38,20 @@ const healthDataSchema = new mongoose.Schema({
   bloodSugar: { type: Number },
   creatinine: { type: Number },
   chronicDisease: String,
-  familyMedicalHistory: String
+  chronicDiseaseCount: { type: Number },
+  familyMedicalHistory: String,
+  claimedAmount: { type: Number },
+  insuranceScore: { type: Number },
+  smokerScore: { type: Number },
+  familyScore: { type: Number },
+  lifestyleScore: { type: Number },
+  bmiScore: { type: Number },
+  hemoglobinScore: { type: Number },
+  sugarScore: { type: Number },
+  cholesterolScore: { type: Number },
+  creatinineScore: { type: Number },
+  physicalScore: { type: Number },
+  wellnessScore: { type: Number }
 }, { timestamps: true });
 
 // Wearable Data Schema
