@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
@@ -25,8 +26,30 @@ const employeeSchema = new mongoose.Schema({
   previousYearRating: { type: Number },
   lengthOfService: { type: Number },
   kpisMet80: { type: Boolean },
-  avgTrainingScore: { type: Number }
-}, { timestamps: true });
+  avgTrainingScore: { type: Number },
+  version: { type: String, default: '1.0' }
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true } 
+});
+
+// Ensure id and _id are always in sync
+employeeSchema.pre('save', function(next) {
+  if (this.isModified('_id')) {
+    this.id = this._id;
+  }
+  next();
+});
+
+// Method to compare password
+employeeSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error('Error comparing passwords: ' + error.message);
+  }
+};
 
 // Health Data Schema
 const healthDataSchema = new mongoose.Schema({

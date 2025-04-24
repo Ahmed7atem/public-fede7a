@@ -6,32 +6,46 @@ const mongoose = require('mongoose');
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
 
+    // Find employee by email
     const employee = await Employee.findOne({ email });
-    if (!employee) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!employee) {
+      console.log(`Employee with email ${email} not found`);
+      return res.status(404).json({ message: 'Invalid credentials' });
+    }
 
-    const isValidPassword = await bcrypt.compare(password, employee.password);
-    if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    // Check if password matches
+    const isMatch = await employee.comparePassword(password);
+    if (!isMatch) {
+      console.log(`Password does not match for employee with email ${email}`);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
-    // Log employee details to debug
-    console.log('Login successful for:', {
-      email: employee.email,
-      role: employee.role,
-      _id: employee._id
-    });
-
+    // Generate token using _id (not id)
     const token = jwt.sign(
       { employee: employee._id, role: employee.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
     );
 
-    const response = employee.toObject();
-    delete response.password;
-    res.json({ employee: response, token });
+    console.log(`Login successful for employee: ${employee._id}, role: ${employee.role}`);
+    
+    res.json({
+      success: true,
+      token,
+      employee: {
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(`Login error: ${error.message}`);
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
@@ -39,46 +53,31 @@ exports.register = async (req, res) => {
   try {
     // Validate request body
     if (!req.body || typeof req.body !== 'object') {
-      return res.status(400).json({ 
-        error: 'Invalid request body',
-        detail: 'Request body must be a valid JSON object'
-      });
+      return res.status(400).json({ message: 'Invalid request body - Must be a valid JSON object' });
     }
 
     const { name, email, password, role, age, gender, children, smoker } = req.body;
     
     // Validate required fields
     if (!name || !email || !password) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        detail: 'Name, email and password are required'
-      });
+      return res.status(400).json({ message: 'Missing required fields - Name, email and password are required' });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
-        error: 'Invalid email format',
-        detail: 'Please provide a valid email address'
-      });
+      return res.status(400).json({ message: 'Invalid email format - Please provide a valid email address' });
     }
 
     // Validate password length
     if (password.length < 6) {
-      return res.status(400).json({ 
-        error: 'Password too short',
-        detail: 'Password must be at least 6 characters long'
-      });
+      return res.status(400).json({ message: 'Password too short - Must be at least 6 characters long' });
     }
 
     // Check for existing employee
     const existingEmployee = await Employee.findOne({ email });
     if (existingEmployee) {
-      return res.status(400).json({ 
-        error: 'Email already registered',
-        detail: 'This email address is already in use'
-      });
+      return res.status(400).json({ message: 'Email already registered - This email address is already in use' });
     }
 
     // Hash password
@@ -89,92 +88,92 @@ exports.register = async (req, res) => {
     const employee = new Employee({
       name,
       email,
-      password: hashedPassword,
-      role: role || 'employee',
       age,
       ageGroup: getAgeGroup(age),
       gender,
+      password: hashedPassword,
       children: children || 0,
-      smoker: smoker || false
+      smoker: smoker || false,
+      role: role || 'employee'
     });
 
     await employee.save();
 
-    // Generate token
+    // Generate token using _id (not id)
     const token = jwt.sign(
       { employee: employee._id, role: employee.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
     );
 
+    console.log(`Registration successful for employee: ${employee._id}, role: ${employee.role}`);
+
     // Prepare response
-    const response = employee.toObject();
+    const response = employee.toObject ? employee.toObject() : JSON.parse(JSON.stringify(employee));
     delete response.password;
     
     res.status(201).json({ 
-      employee: {
-        _id: employee._id,
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        age: employee.age,
-        ageGroup: employee.ageGroup,
-        gender: employee.gender,
-        children: employee.children,
-        smoker: employee.smoker,
-        role: employee.role
-      },
+      success: true,
       token,
-      message: 'Registration successful'
+      employee: response
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ 
-      error: 'Registration failed',
-      detail: error.message
-    });
+    console.error(`Registration error: ${error.message}`);
+    
+    // Check for duplicate email error
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+    
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.getProfile = async (req, res) => {
   try {
-    console.log('Request object in getProfile:', {
-      employee: req.employee,
-      token: req.token
-    });
+    console.log('getProfile called with req.employee:', req.employee);
     
     if (!req.employee || !req.employee._id) {
-      console.error('No employee or employee._id in request');
-      return res.status(401).json({ error: 'No employee information in request' });
+      console.log('No employee found in request object');
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    // User is already attached to req.employee from the auth middleware
-    // No need to query the database again
+    // Since auth middleware already fetched the employee and attached to req.employee,
+    // we can just use that directly instead of fetching again
     const employee = req.employee;
     
-    // Convert to object and remove password field
-    const employeeData = employee.toObject ? employee.toObject() : { ...employee };
-    delete employeeData.password;
+    if (!employee) {
+      console.log(`Employee with id ${req.employee._id} not found`);
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    console.log(`Profile retrieved for employee: ${employee._id}`);
     
-    console.log('Returning employee profile:', employeeData);
-    res.json(employeeData);
+    // Return employee without password
+    const employeeObj = employee.toObject();
+    delete employeeObj.password;
+    
+    res.json({
+      success: true,
+      employee: employeeObj
+    });
   } catch (error) {
-    console.error('Error in getProfile:', error);
-    res.status(500).json({ error: error.message });
+    console.error(`Get profile error: ${error.message}`);
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.updateProfile = async (req, res) => {
   try {
     const { name, email, currentPassword, newPassword } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
+    if (!name || !email) return res.status(400).json({ message: 'Name and email are required' });
 
     const employee = await Employee.findById(req.employee._id);
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    if (!employee) return res.status(404).json({ message: 'Employee not found' });
 
     if (currentPassword && newPassword) {
       const isValidPassword = await bcrypt.compare(currentPassword, employee.password);
-      if (!isValidPassword) return res.status(401).json({ error: 'Current password is incorrect' });
+      if (!isValidPassword) return res.status(401).json({ message: 'Current password is incorrect' });
       employee.password = await bcrypt.hash(newPassword, 10);
     }
 
@@ -184,9 +183,12 @@ exports.updateProfile = async (req, res) => {
 
     const response = employee.toObject();
     delete response.password;
-    res.json(response);
+    res.json({
+      success: true,
+      employee: response
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 

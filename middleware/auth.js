@@ -1,112 +1,66 @@
 const jwt = require('jsonwebtoken');
 const { Employee } = require('../models/schemas');
+const mongoose = require('mongoose');
 
 const auth = async (req, res, next) => {
   try {
     // Get token from header
     const authHeader = req.header('Authorization');
     if (!authHeader) {
-      return res.status(401).json({ 
-        error: 'Authentication required', 
-        detail: 'No Authorization header provided' 
-      });
+      return res.status(401).json({ message: 'Authentication required - No Authorization header provided' });
     }
 
     // Extract token from Bearer scheme
     const token = authHeader.replace('Bearer ', '');
     if (!token) {
-      return res.status(401).json({ 
-        error: 'Authentication required', 
-        detail: 'No token provided in Authorization header' 
-      });
+      return res.status(401).json({ message: 'Authentication required - No token provided' });
     }
 
     try {
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Log decoded token
+      // Log decoded token for debugging
       console.log('Decoded token:', decoded);
       
       // Ensure decoded object has required properties
       if (!decoded || !decoded.employee || !decoded.role) {
-        return res.status(401).json({ 
-          error: 'Invalid token', 
-          detail: 'Token payload is invalid or incomplete' 
-        });
+        return res.status(401).json({ message: 'Invalid authentication token - Missing required token data' });
       }
       
-      // Find employee using either _id or id
-      const employee = await Employee.findOne({ 
-        $or: [
-          { _id: decoded.employee },
-          { id: decoded.employee }
-        ]
-      });
+      // Find employee by _id
+      const employee = await Employee.findById(decoded.employee);
 
       if (!employee) {
-        console.error('Employee not found for ID:', decoded.employee);
-        return res.status(401).json({ 
-          error: 'Invalid authentication token', 
-          detail: 'Employee not found in database' 
-        });
+        console.error(`Employee not found for ID: ${decoded.employee}`);
+        return res.status(401).json({ message: 'Invalid authentication token - Employee not found' });
       }
       
-      // Check if token role matches employee role
-      console.log('Employee roles:', {
-        tokenRole: decoded.role,
-        employeeRole: employee.role,
-        employeeId: employee._id
-      });
-      
+      // Verify the role matches
       if (decoded.role !== employee.role) {
-        console.error('Role mismatch:', {
-          tokenRole: decoded.role,
-          employeeRole: employee.role
-        });
-        return res.status(403).json({
-          error: 'Role verification failed',
-          detail: 'Token role does not match employee role'
-        });
+        console.warn(`Role mismatch in token. Token role: ${decoded.role}, Employee role: ${employee.role}`);
+        return res.status(401).json({ message: 'Invalid authentication token - Role mismatch' });
       }
 
-      // Attach employee to request
+      // Attach employee and token to request
       req.employee = employee;
       req.token = token;
       
-      // Add debug info (remove in production)
-      req.tokenInfo = {
-        id: decoded.employee,
-        role: decoded.role,
-        exp: new Date(decoded.exp * 1000).toISOString()
-      };
-
+      console.log(`Authentication successful for employee: ${employee._id}, role: ${employee.role}`);
       next();
     } catch (jwtError) {
       // Handle specific JWT errors
       if (jwtError.name === 'TokenExpiredError') {
-        return res.status(401).json({ 
-          error: 'Authentication expired', 
-          detail: 'Token has expired, please login again' 
-        });
+        return res.status(401).json({ message: 'Authentication expired - Please login again' });
       } else if (jwtError.name === 'JsonWebTokenError') {
-        return res.status(401).json({ 
-          error: 'Invalid token', 
-          detail: 'Token signature verification failed' 
-        });
+        return res.status(401).json({ message: 'Invalid token - Verification failed' });
       }
       console.error('JWT verification error:', jwtError);
-      return res.status(401).json({ 
-        error: 'Authentication failed', 
-        detail: jwtError.message 
-      });
+      return res.status(401).json({ message: `Authentication failed - ${jwtError.message}` });
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    res.status(500).json({ 
-      error: 'Authentication error', 
-      detail: error.message 
-    });
+    return res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
@@ -114,36 +68,25 @@ const adminAuth = async (req, res, next) => {
   try {
     // Make sure we have a valid employee from previous auth
     if (!req.employee) {
-      return res.status(401).json({ 
-        error: 'Authentication required', 
-        detail: 'No employee found in request' 
-      });
+      console.error('No employee object in request for adminAuth');
+      return res.status(401).json({ message: 'Authentication required - No employee information' });
     }
     
-    // Log employee role information
-    console.log('Admin auth check:', {
-      employeeId: req.employee._id,
-      employeeRole: req.employee.role,
-      isAdmin: req.employee.role === 'admin'
-    });
+    // Log employee role information for debugging
+    console.log(`Admin auth check for employee: ${req.employee._id}, role: ${req.employee.role}`);
     
     // Check if role is admin
-    if (req.employee.role !== 'admin') {
-      return res.status(403).json({ 
-        error: 'Access denied', 
-        detail: 'Admin privileges required' 
-      });
+    if (!req.employee.role || req.employee.role !== 'admin') {
+      console.error(`Admin access denied for: ${req.employee.email}`);
+      return res.status(403).json({ message: 'Access denied - Admin privileges required' });
     }
     
     // If we reach here, the user is an admin
-    console.log('Admin access granted to:', req.employee.email);
+    console.log(`Admin access granted to: ${req.employee.email}`);
     next();
   } catch (error) {
     console.error('Admin auth middleware error:', error);
-    res.status(500).json({ 
-      error: 'Authentication failed', 
-      detail: error.message 
-    });
+    return res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
