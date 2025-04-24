@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const healthData = await HealthData.findOne({ employeeId: id });
+    const healthData = await HealthData.findOne({ _id: id });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }

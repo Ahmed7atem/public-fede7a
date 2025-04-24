@@ -5,6 +5,9 @@ const { Employee, HealthData, WearableData, SleepData, Claim, Policy, Provider, 
 
 // Helper function to convert string ID to ObjectId if needed
 const convertToObjectId = (id) => {
+  if (!id) {
+    throw new Error('ID is required');
+  }
   if (mongoose.Types.ObjectId.isValid(id)) {
     return new mongoose.Types.ObjectId(id);
   }
@@ -49,118 +52,103 @@ const calculateHealthRisk = (healthData, wearableData) => {
 // Get comprehensive employee analytics
 router.get('/employee/:id', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
-    const employee = await Employee.findById(id);
+    const employeeId = convertToObjectId(req.params.id);
+    
+    // Get all related data
+    const [employee, healthData, wearableData, sleepData, claims, policy] = await Promise.all([
+      Employee.findById(employeeId),
+      HealthData.find({ employeeId }),
+      WearableData.find({ employeeId }),
+      SleepData.find({ employeeId }),
+      Claim.find({ employeeId }),
+      Policy.findOne({ employeeId })
+    ]);
+
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    const healthData = await HealthData.find({ employee: id }).sort({ recordDate: -1 });
-    const wearableData = await WearableData.find({ employee: id }).sort({ recordDate: -1 });
-    const sleepData = await SleepData.find({ employee: id }).sort({ date: -1 });
-    const claims = await Claim.find({ employeeId: id });
-    const policy = await Policy.findOne({ employee: id });
+    // Calculate health metrics
+    const latestHealth = healthData[0] || {};
+    const bmi = latestHealth.weight && latestHealth.height ? 
+      (latestHealth.weight / ((latestHealth.height / 100) ** 2)).toFixed(2) : null;
 
-    // Calculate trends
-    const bmiTrend = healthData.map(h => ({ date: h.recordDate, value: h.bmi }));
-    const stepTrend = wearableData.map(w => ({ date: w.recordDate, value: w.stepCount }));
-    const sleepTrend = sleepData.map(s => ({ date: s.date, value: s.sleepDuration }));
+    // Calculate wearable metrics
+    const wearableStats = wearableData.reduce((acc, data) => ({
+      totalSteps: (acc.totalSteps || 0) + (data.steps || 0),
+      totalCalories: (acc.totalCalories || 0) + (data.caloriesBurned || 0),
+      avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
+      count: (acc.count || 0) + 1
+    }), {});
 
-    // Calculate averages
-    const avgSteps = wearableData.reduce((sum, w) => sum + w.stepCount, 0) / wearableData.length;
-    const avgSleep = sleepData.reduce((sum, s) => sum + s.sleepDuration, 0) / sleepData.length;
-    const avgHeartRate = wearableData.reduce((sum, w) => sum + w.heartRate, 0) / wearableData.length;
+    // Calculate sleep metrics
+    const sleepStats = sleepData.reduce((acc, data) => ({
+      totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepHours || 0),
+      avgSleepQuality: ((acc.avgSleepQuality || 0) + (data.sleepQuality || 0)) / (acc.count || 1),
+      count: (acc.count || 0) + 1
+    }), {});
 
-    // Get latest health data
-    const latestHealth = healthData[0];
-    const latestWearable = wearableData[0];
-    const latestSleep = sleepData[0];
-
-    // Calculate risk score
-    const riskScore = calculateHealthRisk(latestHealth, latestWearable);
+    // Calculate health risk
+    const healthRisk = calculateHealthRisk(latestHealth, wearableData[0]);
 
     res.json({
-      personalInfo: {
-        id: employee._id,
+      employee: {
+        _id: employee._id,
         name: employee.name,
         email: employee.email,
-        phone: employee.phone,
-        address: employee.address,
-        dateOfBirth: employee.dateOfBirth,
-        gender: employee.gender,
-        age: employee.age,
-        ageGroup: getAgeGroup(employee.age),
-        maritalStatus: employee.maritalStatus,
-        emergencyContact: employee.emergencyContact
-      },
-      employmentInfo: {
-        employeeId: employee.employeeId,
-        department: employee.department,
         role: employee.role,
-        joiningDate: employee.joiningDate,
-        employmentType: employee.employmentType,
-        status: employee.status
+        department: employee.department,
+        joinDate: employee.joinDate
       },
-      healthMetrics: {
-        height: latestHealth?.height,
-        weight: latestHealth?.weight,
-        bmi: latestHealth?.bmi,
-        bmiCategory: latestHealth?.bmi ? getBMICategory(latestHealth.bmi) : null,
-        bloodPressure: latestHealth?.bloodPressure,
-        bloodSugar: latestHealth?.bloodSugar,
-        cholesterol: latestHealth?.cholesterol,
-        hemoglobin: latestHealth?.hemoglobin,
-        creatinine: latestHealth?.creatinine,
-        lastCheckup: latestHealth?.recordDate
+      health: {
+        latest: {
+          weight: latestHealth.weight,
+          height: latestHealth.height,
+          bmi: bmi,
+          bloodPressure: latestHealth.bloodPressure,
+          cholesterol: latestHealth.cholesterol,
+          bloodSugar: latestHealth.bloodSugar,
+          lastUpdated: latestHealth.updatedAt
+        },
+        riskScore: healthRisk
       },
-      activityMetrics: {
-        averageSteps: avgSteps,
-        averageSleep: avgSleep,
-        averageHeartRate: avgHeartRate,
-        currentSteps: latestWearable?.stepCount,
-        currentHeartRate: latestWearable?.heartRate,
-        currentSleep: latestSleep?.sleepDuration
+      wearable: {
+        summary: {
+          totalSteps: wearableStats.totalSteps,
+          totalCalories: wearableStats.totalCalories,
+          avgHeartRate: wearableStats.avgHeartRate ? wearableStats.avgHeartRate.toFixed(2) : null,
+          lastUpdated: wearableData[0]?.date
+        }
       },
-      trends: {
-        bmi: bmiTrend,
-        steps: stepTrend,
-        sleep: sleepTrend
+      sleep: {
+        summary: {
+          totalSleepHours: sleepStats.totalSleepHours,
+          avgSleepQuality: sleepStats.avgSleepQuality ? sleepStats.avgSleepQuality.toFixed(2) : null,
+          lastUpdated: sleepData[0]?.date
+        }
       },
-      riskAssessment: {
-        score: riskScore,
-        level: riskScore < 2 ? 'Low' : riskScore < 4 ? 'Medium' : 'High',
-        factors: [
-          ...(latestHealth?.bmi && (latestHealth.bmi < 18.5 || latestHealth.bmi >= 25) ? ['BMI'] : []),
-          ...(latestHealth?.bloodPressure ? ['Blood Pressure'] : []),
-          ...(latestWearable?.stepCount < 5000 ? ['Low Activity'] : []),
-          ...(latestWearable?.heartRate > 100 ? ['Elevated Heart Rate'] : []),
-          ...(latestSleep?.sleepDuration < 6 ? ['Insufficient Sleep'] : [])
-        ]
-      },
-      insuranceInfo: {
-        policyNumber: policy?.policyNumber,
-        coverageType: policy?.coverageType,
-        startDate: policy?.startDate,
-        endDate: policy?.endDate,
-        status: policy?.status
-      },
-      claimsHistory: {
-        total: claims.length,
-        approved: claims.filter(c => c.status === 'Approved').length,
-        pending: claims.filter(c => c.status === 'Submitted').length,
-        totalAmount: claims.reduce((sum, c) => sum + c.claimAmount, 0),
-        recentClaims: claims.slice(0, 5).map(claim => ({
-          id: claim._id,
-          claimId: claim.claimId,
-          status: claim.status,
-          amount: claim.claimAmount,
-          submissionDate: claim.submissionDate,
-          provider: claim.provider
+      insurance: {
+        policy: policy ? {
+          policyNumber: policy.policyNumber,
+          coverageType: policy.coverageType,
+          startDate: policy.startDate,
+          endDate: policy.endDate
+        } : null,
+        claims: claims.map(c => ({
+          claimId: c._id,
+          date: c.date,
+          type: c.type,
+          amount: c.amount,
+          status: c.status
         }))
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error in employee analytics:', error);
+    res.status(500).json({ 
+      message: 'Error fetching comprehensive employee data',
+      error: error.message 
+    });
   }
 });
 

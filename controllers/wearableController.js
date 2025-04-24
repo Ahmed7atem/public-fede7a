@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const wearableData = await WearableData.findOne({ employeeId: id });
+    const wearableData = await WearableData.findOne({ _id: id });
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }

@@ -171,8 +171,12 @@ const calculateHealthRisk = (healthData, wearableData) => {
 // Get user profile
 router.get('/profile', async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.user.id);
-    
+    // Get the employee ID from the request
+    const employeeId = req.user?.id;
+    if (!employeeId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     // Get all related data
     const [employee, healthData, wearableData, sleepData, claims, policy] = await Promise.all([
       Employee.findById(employeeId),
