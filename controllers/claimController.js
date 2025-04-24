@@ -1,123 +1,190 @@
-const Claim = require('../models/Claim');
-const fileUploadService = require('../services/fileUploadService');
-const Attachment = require('../models/Attachment');
-const { v4: uuidv4 } = require('uuid');
+const { Claim } = require('../models/schemas');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-class ClaimController {
-  async submitClaim(req, res) {
-    try {
-      // Create the claim with fields matching the model
-      const claim = await Claim.create({
-        claimId: uuidv4(), // Generate a unique ID
-        status: 'Pending',
-        provider: req.body.provider,
-        patient: req.employee._id,
-        claimAmount: req.body.claimAmount,
-        claimDate: req.body.claimDate || new Date(),
-        patientAge: req.body.patientAge,
-        providerSpecialty: req.body.providerSpecialty,
-        patientIncome: req.body.patientIncome,
-        patientMaritalStatus: req.body.patientMaritalStatus || 'Single',
-        patientEmploymentStatus: req.body.patientEmploymentStatus || 'Employed',
-        claimType: req.body.claimType || 'Routine',
-        claimSubmissionMethod: 'Online',
-        diagnosisDescription: req.body.diagnosisDescription || 'Not provided',
-        procedureDescription: req.body.procedureDescription || 'Not provided'
+// Get all claims (admin sees all, employees see only their own)
+const getClaims = async (req, res) => {
+  try {
+    let query = {};
+    
+    // If not admin, only show claims belonging to the user
+    if (req.user.role !== 'admin') {
+      query.employeeId = req.user.id;
+    }
+    
+    const claims = await Claim.find(query).sort({ createdAt: -1 });
+    res.json(claims);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching claims', error: error.message });
+  }
+};
+
+// Get claim history (all claims for the current user)
+const getClaimHistory = async (req, res) => {
+  try {
+    const claims = await Claim.find({ employeeId: req.user.id }).sort({ createdAt: -1 });
+    
+    res.json(claims);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching claim history', error: error.message });
+  }
+};
+
+// Get a specific claim by ID
+const getClaimById = async (req, res) => {
+  try {
+    const claim = await Claim.findById(req.params.id);
+    
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    
+    // Check if the user has access to this claim
+    if (req.user.role !== 'admin' && claim.employeeId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    res.json(claim);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching claim details', error: error.message });
+  }
+};
+
+// Submit a new claim
+const submitClaim = async (req, res) => {
+  try {
+    const { providerType, claimDescription } = req.body;
+    
+    if (!providerType || !claimDescription) {
+      return res.status(400).json({ message: 'Provider type and claim description are required' });
+    }
+    
+    // Process file uploads if any
+    const documents = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        documents.push(file.path);
       });
-
-      // Handle file attachments if any
-      if (req.files && req.files.length > 0) {
-        const documents = [];
-        for (const file of req.files) {
-          const uploadResult = await fileUploadService.uploadFile(file, {
-            uploadedBy: req.employee._id,
-            type: 'claim',
-            referenceId: claim._id
-          });
-
-          documents.push({
-            url: `/api/files/${uploadResult.fileId}`,
-            fileName: uploadResult.filename,
-            uploadDate: new Date()
-          });
-        }
-        claim.documents = documents;
-        await claim.save();
-      }
-
-      res.status(201).json(claim);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
     }
+    
+    // Create new claim
+    const newClaim = new Claim({
+      employeeId: req.user.id,
+      provider: providerType,
+      patient: req.user.name,
+      claimAmount: req.body.claimAmount || 0,
+      patientAge: req.user.age,
+      providerSpecialty: req.body.providerSpecialty || '',
+      patientMaritalStatus: req.body.patientMaritalStatus || '',
+      patientEmploymentStatus: req.body.patientEmploymentStatus || '',
+      claimType: req.body.claimType || 'General',
+      diagnosisDescription: req.body.diagnosisDescription || claimDescription,
+      procedureDescription: req.body.procedureDescription || '',
+      documents: documents
+    });
+    
+    await newClaim.save();
+    
+    res.status(201).json({ 
+      message: 'Claim submitted successfully', 
+      claim: newClaim 
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error submitting claim', error: error.message });
   }
+};
 
-  // Get all claims (for admin) or user's claims
-  async getClaims(req, res) {
-    try {
-      // If admin, get all claims, otherwise only get user's claims
-      const filter = req.employee.role === 'admin' ? {} : { patient: req.employee._id };
-      
-      const claims = await Claim.find(filter)
-        .populate('provider', 'name address specialty')
-        .sort({ createdAt: -1 });
-      
-      res.json(claims);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+// Submit a claim pre-approval
+const submitPreApproval = async (req, res) => {
+  try {
+    const { providerType, category, dateTime, additionalDetails } = req.body;
+    
+    if (!providerType || !category || !dateTime) {
+      return res.status(400).json({ 
+        message: 'Provider type, category, and date/time are required' 
+      });
     }
-  }
-
-  // Get claim by ID
-  async getClaimById(req, res) {
-    try {
-      const claim = await Claim.findById(req.params.id)
-        .populate('provider', 'name address specialty');
-      
-      if (!claim) {
-        return res.status(404).json({ message: 'Claim not found' });
-      }
-      
-      // If not admin and not the claim owner, deny access
-      if (req.employee.role !== 'admin' && claim.patient.toString() !== req.employee._id.toString()) {
-        return res.status(403).json({ message: 'Not authorized to view this claim' });
-      }
-      
-      res.json(claim);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    
+    // Process file uploads if any
+    const documents = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        documents.push(file.path);
+      });
     }
+    
+    // Create new pre-approval claim
+    const newClaim = new Claim({
+      employeeId: req.user.id,
+      provider: providerType,
+      patient: req.user.name,
+      claimAmount: 0, // Will be determined later
+      patientAge: req.user.age,
+      providerSpecialty: category,
+      claimType: 'Pre-Approval',
+      claimDate: new Date(dateTime),
+      diagnosisDescription: additionalDetails || 'Pre-approval request',
+      documents: documents,
+      status: 'In Review'
+    });
+    
+    await newClaim.save();
+    
+    res.status(201).json({ 
+      message: 'Pre-approval request submitted successfully', 
+      claim: newClaim 
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error submitting pre-approval', error: error.message });
   }
+};
 
-  // Update claim status
-  async updateClaimStatus(req, res) {
-    try {
-      // Only admin can update claim status
-      if (req.employee.role !== 'admin') {
-        return res.status(403).json({ message: 'Not authorized to update claim status' });
-      }
-      
-      const { status } = req.body;
-      
-      if (!status || !['Pending', 'Approved', 'Rejected', 'Processing', 'Denied'].includes(status)) {
-        return res.status(400).json({ message: 'Valid status is required' });
-      }
-      
-      const claim = await Claim.findById(req.params.id);
-      
-      if (!claim) {
-        return res.status(404).json({ message: 'Claim not found' });
-      }
-      
-      claim.status = status;
-      claim.updatedAt = new Date();
-      
-      await claim.save();
-      
-      res.json(claim);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+// Update claim status (admin only)
+const updateClaimStatus = async (req, res) => {
+  try {
+    // Only admins can update claim status
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
     }
+    
+    const { status, notes } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+    
+    const validStatuses = ['Submitted', 'In Review', 'Approved', 'Rejected', 'Additional Information Required'];
+    
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+    
+    const claim = await Claim.findById(req.params.id);
+    
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    
+    claim.status = status;
+    // Optionally add notes or other updates
+    
+    await claim.save();
+    
+    res.json({ 
+      message: 'Claim status updated successfully', 
+      claim: claim 
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating claim status', error: error.message });
   }
-}
+};
 
-module.exports = new ClaimController(); 
+module.exports = {
+  getClaims,
+  getClaimHistory,
+  getClaimById,
+  submitClaim,
+  submitPreApproval,
+  updateClaimStatus
+}; 

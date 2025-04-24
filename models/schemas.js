@@ -134,22 +134,111 @@ const predictionSchema = new mongoose.Schema({
   version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
+// Policy Schema
+const policySchema = new mongoose.Schema({
+  _id: { type: String, default: () => uuidv4() },
+  policyNumber: { type: String, required: true, unique: true },
+  companyName: { type: String, required: true },
+  policyType: { type: String, enum: ['Gold', 'Silver', 'Bronze', 'Platinum'], required: true },
+  status: { type: String, enum: ['Active', 'Suspended', 'Inactive'], default: 'Active' },
+  startDate: { type: Date, required: true },
+  renewalDate: { type: Date, required: true },
+  areaOfCover: { type: String, required: true },
+  healthcarePlans: [{ type: String }],
+  employeeId: { type: String, required: true },
+  version: { type: String, default: '1.0' }
+}, { timestamps: true });
+
 // Policy Document Schema
 const policyDocumentSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  content: { type: String, required: true },
+  type: { 
+    type: String, 
+    enum: ['table-of-benefits', 'benefit-guide', 'insurance-certificate', 
+           'membership-card', 'treatment-guarantee-form', 'additional-information'], 
+    required: true 
+  },
+  policyId: { type: String, required: true },
+  fileUrl: { type: String, required: true },
+  fileType: { type: String, default: 'application/pdf' },
   isActive: { type: Boolean, default: true },
   version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
-// Feedback Schema
-const feedbackSchema = new mongoose.Schema({
-  employee: { type: String, required: true },
-  message: { type: String, required: true },
-  rating: { type: Number, min: 1, max: 5 },
-  status: { type: String, enum: ['pending', 'resolved', 'closed'], default: 'pending' },
-  response: String,
-  submittedAt: { type: Date, default: Date.now }
+// Claim Schema
+const claimSchema = new mongoose.Schema({
+  _id: { type: String, default: () => uuidv4() },
+  claimId: { type: String, unique: true, default: () => `CLM-${Date.now().toString().slice(-6)}` },
+  status: { 
+    type: String, 
+    enum: ['Submitted', 'In Review', 'Approved', 'Rejected', 'Additional Information Required'], 
+    default: 'Submitted' 
+  },
+  employeeId: { type: String, required: true, ref: 'Employee' },
+  provider: { type: String, required: true },
+  patient: { type: String, required: true },
+  claimAmount: { type: Number, required: true },
+  claimDate: { type: Date, default: Date.now },
+  patientAge: { type: Number },
+  providerSpecialty: { type: String },
+  patientIncome: { type: Number },
+  patientMaritalStatus: { type: String },
+  patientEmploymentStatus: { type: String },
+  claimType: { type: String },
+  claimSubmissionMethod: { type: String, default: 'Online' },
+  diagnosisDescription: { type: String },
+  procedureDescription: { type: String },
+  documents: [{ type: String }],
+  version: { type: String, default: '1.0' }
+}, { timestamps: true });
+
+// Provider Schema
+const providerSchema = new mongoose.Schema({
+  _id: { type: String, default: () => uuidv4() },
+  name: { type: String, required: true },
+  type: { type: String, enum: ['Hospital', 'Clinic', 'Labs'], required: true },
+  category: { type: String, required: true },
+  location: { 
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    country: { type: String, required: true },
+    coordinates: {
+      latitude: { type: Number },
+      longitude: { type: Number }
+    }
+  },
+  availability: {
+    days: [{ type: String }],
+    hours: { type: String }
+  },
+  ratings: { type: Number, default: 0 },
+  experienceYears: { type: Number },
+  contactInformation: {
+    phone: { type: String },
+    email: { type: String },
+    website: { type: String }
+  },
+  isActive: { type: Boolean, default: true },
+  version: { type: String, default: '1.0' }
+}, { timestamps: true });
+
+// Complaint Ticket Schema
+const complaintTicketSchema = new mongoose.Schema({
+  _id: { type: String, default: () => uuidv4() },
+  ticketId: { type: String, unique: true, default: () => `TKT-${Date.now().toString().slice(-6)}` },
+  subject: { type: String, required: true },
+  category: { type: String, enum: ['Claim', 'Policy', 'Others'], required: true },
+  description: { type: String, required: true },
+  status: { type: String, enum: ['Open', 'In Progress', 'Resolved', 'Closed'], default: 'Open' },
+  attachments: [{ type: String }],
+  employeeId: { type: String, required: true, ref: 'Employee' },
+  submitDate: { type: Date, default: Date.now },
+  responseNotes: [{ 
+    text: { type: String },
+    createdBy: { type: String },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
 // Create models
@@ -158,7 +247,11 @@ const HealthData = mongoose.model('HealthData', healthDataSchema);
 const SleepData = mongoose.model('SleepData', sleepDataSchema);
 const WearableData = mongoose.model('WearableData', wearableDataSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
+const Policy = mongoose.model('Policy', policySchema);
 const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
+const Claim = mongoose.model('Claim', claimSchema);
+const Provider = mongoose.model('Provider', providerSchema);
+const ComplaintTicket = mongoose.model('ComplaintTicket', complaintTicketSchema);
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 module.exports = {
@@ -167,6 +260,10 @@ module.exports = {
   SleepData,
   WearableData,
   Prediction,
+  Policy,
   PolicyDocument,
+  Claim,
+  Provider,
+  ComplaintTicket,
   Feedback
 }; 
