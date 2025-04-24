@@ -349,25 +349,45 @@ router.get('/alerts', async (req, res) => {
 // Get comprehensive data for all employees
 router.get('/all-data', async (req, res) => {
   try {
-    // Get all employees
-    const employees = await Employee.find();
+    // Get all employees with more fields
+    const employees = await Employee.find().select('name email role department joinDate age gender');
     
     // Get all related data
     const [healthData, wearableData, sleepData, claims, policies] = await Promise.all([
-      HealthData.find(),
-      WearableData.find(),
-      SleepData.find(),
-      Claim.find(),
-      Policy.find()
+      HealthData.find().select('employeeId weight height bloodPressure cholesterol bloodSugar date'),
+      WearableData.find().select('employeeId steps heartRate sleepHours caloriesBurned date'),
+      SleepData.find().select('employeeId sleepHours sleepQuality date'),
+      Claim.find().select('employeeId claimAmount status date type'),
+      Policy.find().select('employeeId policyNumber coverageType startDate endDate')
     ]);
 
     // Organize data by employee
     const employeeData = employees.map(employee => {
-      const employeeHealth = healthData.filter(h => h.employeeId === employee._id.toString());
-      const employeeWearable = wearableData.filter(w => w.employeeId === employee._id.toString());
-      const employeeSleep = sleepData.filter(s => s.employeeId === employee._id.toString());
-      const employeeClaims = claims.filter(c => c.employeeId === employee._id.toString());
-      const employeePolicy = policies.find(p => p.employeeId === employee._id.toString());
+      const employeeHealth = healthData.filter(h => h.employeeId.toString() === employee._id.toString());
+      const employeeWearable = wearableData.filter(w => w.employeeId.toString() === employee._id.toString());
+      const employeeSleep = sleepData.filter(s => s.employeeId.toString() === employee._id.toString());
+      const employeeClaims = claims.filter(c => c.employeeId.toString() === employee._id.toString());
+      const employeePolicy = policies.find(p => p.employeeId.toString() === employee._id.toString());
+
+      // Calculate BMI if we have weight and height
+      const latestHealth = employeeHealth[0] || {};
+      const bmi = latestHealth.weight && latestHealth.height ? 
+        (latestHealth.weight / ((latestHealth.height / 100) ** 2)).toFixed(2) : null;
+
+      // Calculate wearable stats
+      const wearableStats = employeeWearable.reduce((acc, data) => ({
+        totalSteps: (acc.totalSteps || 0) + (data.steps || 0),
+        totalCalories: (acc.totalCalories || 0) + (data.caloriesBurned || 0),
+        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
+        count: (acc.count || 0) + 1
+      }), {});
+
+      // Calculate sleep stats
+      const sleepStats = employeeSleep.reduce((acc, data) => ({
+        totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepHours || 0),
+        avgSleepQuality: ((acc.avgSleepQuality || 0) + (data.sleepQuality || 0)) / (acc.count || 1),
+        count: (acc.count || 0) + 1
+      }), {});
 
       return {
         employee: {
@@ -376,23 +396,81 @@ router.get('/all-data', async (req, res) => {
           email: employee.email,
           role: employee.role,
           department: employee.department,
-          joinDate: employee.joinDate
+          joinDate: employee.joinDate,
+          age: employee.age,
+          gender: employee.gender
         },
         health: {
-          latest: employeeHealth[0] || {},
-          history: employeeHealth
+          latest: {
+            weight: latestHealth.weight,
+            height: latestHealth.height,
+            bmi: bmi,
+            bloodPressure: latestHealth.bloodPressure,
+            cholesterol: latestHealth.cholesterol,
+            bloodSugar: latestHealth.bloodSugar,
+            lastUpdated: latestHealth.date
+          },
+          history: employeeHealth.map(h => ({
+            weight: h.weight,
+            height: h.height,
+            bloodPressure: h.bloodPressure,
+            cholesterol: h.cholesterol,
+            bloodSugar: h.bloodSugar,
+            date: h.date
+          }))
         },
         wearable: {
-          latest: employeeWearable[0] || {},
-          history: employeeWearable
+          latest: employeeWearable[0] ? {
+            steps: employeeWearable[0].steps,
+            heartRate: employeeWearable[0].heartRate,
+            sleepHours: employeeWearable[0].sleepHours,
+            caloriesBurned: employeeWearable[0].caloriesBurned,
+            date: employeeWearable[0].date
+          } : {},
+          history: employeeWearable.map(w => ({
+            steps: w.steps,
+            heartRate: w.heartRate,
+            sleepHours: w.sleepHours,
+            caloriesBurned: w.caloriesBurned,
+            date: w.date
+          })),
+          stats: {
+            totalSteps: wearableStats.totalSteps,
+            totalCalories: wearableStats.totalCalories,
+            avgHeartRate: wearableStats.avgHeartRate ? wearableStats.avgHeartRate.toFixed(2) : null,
+            totalDays: wearableStats.count
+          }
         },
         sleep: {
-          latest: employeeSleep[0] || {},
-          history: employeeSleep
+          latest: employeeSleep[0] ? {
+            sleepHours: employeeSleep[0].sleepHours,
+            sleepQuality: employeeSleep[0].sleepQuality,
+            date: employeeSleep[0].date
+          } : {},
+          history: employeeSleep.map(s => ({
+            sleepHours: s.sleepHours,
+            sleepQuality: s.sleepQuality,
+            date: s.date
+          })),
+          stats: {
+            totalSleepHours: sleepStats.totalSleepHours,
+            avgSleepQuality: sleepStats.avgSleepQuality ? sleepStats.avgSleepQuality.toFixed(2) : null,
+            totalDays: sleepStats.count
+          }
         },
         insurance: {
-          policy: employeePolicy || null,
-          claims: employeeClaims
+          policy: employeePolicy ? {
+            policyNumber: employeePolicy.policyNumber,
+            coverageType: employeePolicy.coverageType,
+            startDate: employeePolicy.startDate,
+            endDate: employeePolicy.endDate
+          } : null,
+          claims: employeeClaims.map(c => ({
+            claimAmount: c.claimAmount,
+            status: c.status,
+            type: c.type,
+            date: c.date
+          }))
         }
       };
     });
