@@ -6,13 +6,35 @@ const mongoose = require('mongoose');
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ 
+        error: 'Missing credentials',
+        detail: 'Email and password are required'
+      });
+    }
 
     const employee = await Employee.findOne({ email });
-    if (!employee) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!employee) {
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        detail: 'No employee found with this email'
+      });
+    }
 
-    const isValidPassword = await bcrypt.compare(password, employee.password);
-    if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    const isValidPassword = await employee.comparePassword(password);
+    if (!isValidPassword) {
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        detail: 'Incorrect password'
+      });
+    }
+
+    // Log employee details to debug
+    console.log('Login successful for:', {
+      email: employee.email,
+      role: employee.role,
+      _id: employee._id
+    });
 
     const token = jwt.sign(
       { employee: employee._id, role: employee.role },
@@ -20,11 +42,17 @@ exports.login = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    const response = employee.toObject();
-    delete response.password;
-    res.json({ employee: response, token });
+    // Return response with virtuals enabled
+    res.json({ 
+      employee: employee.toJSON(), // This will include the virtual 'id' field
+      token 
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      error: 'Login failed',
+      detail: error.message 
+    });
   }
 };
 
@@ -95,7 +123,7 @@ exports.register = async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { employee: employee.id, role: employee.role },
+      { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -122,25 +150,24 @@ exports.getProfile = async (req, res) => {
   try {
     console.log('Request object in getProfile:', {
       employee: req.employee,
-      token: req.token,
-      tokenInfo: req.tokenInfo
+      token: req.token
     });
     
-    if (!req.employee || !req.employee.id) {
-      console.error('No employee or employee.id in request');
+    if (!req.employee || !req.employee._id) {
+      console.error('No employee or employee._id in request');
       return res.status(401).json({ error: 'No employee information in request' });
     }
 
-    console.log('Looking for employee with ID:', req.employee.id);
-    const employee = await Employee.findOne({ id: req.employee.id }).select('-password');
+    // User is already attached to req.employee from the auth middleware
+    // No need to query the database again
+    const employee = req.employee;
     
-    if (!employee) {
-      console.error('Employee not found for ID:', req.employee.id);
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-
-    console.log('Found employee:', employee);
-    res.json(employee);
+    // Convert to object and remove password field
+    const employeeData = employee.toObject ? employee.toObject() : { ...employee };
+    delete employeeData.password;
+    
+    console.log('Returning employee profile:', employeeData);
+    res.json(employeeData);
   } catch (error) {
     console.error('Error in getProfile:', error);
     res.status(500).json({ error: error.message });

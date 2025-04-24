@@ -1,19 +1,21 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
   _id: { type: String, default: () => uuidv4() },
-  id: { type: String, required: true, unique: true, default: function() { return this._id; } },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  age: { type: Number, required: true },
-  ageGroup: { type: String, required: true },
-  gender: { type: String, required: true },
   password: { type: String, required: true },
-  children: { type: Number, required: true, default: 0 },
-  smoker: { type: Boolean, required: true, default: false },
-  role: { type: String, enum: ['employee', 'admin'], default: 'employee' },
+  role: { type: String, enum: ['admin', 'employee'], default: 'employee' },
+  age: { type: Number },
+  ageGroup: { type: String },
+  gender: { type: String, enum: ['male', 'female', 'other'] },
+  children: { type: Number, default: 0 },
+  smoker: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
   planName: { type: String },
   coverageDetails: { type: String },
   startDate: { type: Date },
@@ -26,7 +28,34 @@ const employeeSchema = new mongoose.Schema({
   lengthOfService: { type: Number },
   kpisMet80: { type: Boolean },
   avgTrainingScore: { type: Number }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Add virtual for id
+employeeSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+// Hash password before saving
+employeeSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare password
+employeeSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 // Health Data Schema
 const healthDataSchema = new mongoose.Schema({

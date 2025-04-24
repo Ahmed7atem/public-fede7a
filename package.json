@@ -4,7 +4,6 @@
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
-    "postinstall": "npm install bcrypt --build-from-source",
     "migrate": "node scripts/migrateToMongo.js"
   },
   "keywords": [],

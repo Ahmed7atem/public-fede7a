@@ -25,53 +25,52 @@ const auth = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       
+      // Log decoded token
+      console.log('Decoded token:', decoded);
+      
       // Ensure decoded object has required properties
       if (!decoded || !decoded.employee || !decoded.role) {
-        return res.status(401).json({ message: 'Invalid authentication token' });
+        return res.status(401).json({ 
+          error: 'Invalid token', 
+          detail: 'Token payload is invalid or incomplete' 
+        });
       }
       
-      // Find employee using UUID
-      console.log('Looking for employee with decoded.employee:', decoded.employee);
-      const employee = await Employee.findOne({ id: decoded.employee });
-      
+      // Find employee by _id
+      const employee = await Employee.findById(decoded.employee);
+
       if (!employee) {
         console.error('Employee not found for ID:', decoded.employee);
-        console.error('Available employees:', await Employee.find({}, '_id id name email'));
         return res.status(401).json({ 
           error: 'Invalid authentication token', 
           detail: 'Employee not found in database' 
         });
       }
-      console.log('Found employee:', { _id: employee._id, id: employee.id });
-
-      // Verify that the role in the token matches the employee's role
+      
+      // Check if token role matches employee role
+      console.log('Employee roles:', {
+        tokenRole: decoded.role,
+        employeeRole: employee.role,
+        employeeId: employee._id
+      });
+      
       if (decoded.role !== employee.role) {
-        console.error('Role mismatch:', decoded.role, 'vs', employee.role);
-        return res.status(401).json({ 
-          error: 'Invalid authentication token', 
-          detail: 'Token role does not match employee role' 
+        console.error('Role mismatch:', {
+          tokenRole: decoded.role,
+          employeeRole: employee.role
+        });
+        return res.status(403).json({
+          error: 'Role verification failed',
+          detail: 'Token role does not match employee role'
         });
       }
 
       // Attach employee to request
-      const employeeObj = employee.toObject();
-      console.log('Employee after toObject:', employeeObj);
-      req.employee = employeeObj;
+      req.employee = employee;
       req.token = token;
       
-      // Add debug info (remove in production)
-      req.tokenInfo = {
-        id: employeeObj.id,
-        _id: employeeObj._id,
-        role: employeeObj.role,
-        exp: new Date(decoded.exp * 1000).toISOString()
-      };
-
-      console.log('Request employee after attach:', req.employee);
-
       next();
     } catch (jwtError) {
-      // Handle specific JWT errors
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({ 
           error: 'Authentication expired', 
@@ -100,12 +99,31 @@ const auth = async (req, res, next) => {
 
 const adminAuth = async (req, res, next) => {
   try {
-    if (!req.employee || req.employee.role !== 'admin') {
+    // Make sure we have a valid employee from previous auth
+    if (!req.employee) {
+      return res.status(401).json({ 
+        error: 'Authentication required', 
+        detail: 'No employee found in request' 
+      });
+    }
+    
+    // Log employee role information
+    console.log('Admin auth check:', {
+      employeeId: req.employee._id,
+      employeeRole: req.employee.role,
+      isAdmin: req.employee.role === 'admin'
+    });
+    
+    // Check if role is admin
+    if (req.employee.role !== 'admin') {
       return res.status(403).json({ 
         error: 'Access denied', 
         detail: 'Admin privileges required' 
       });
     }
+    
+    // If we reach here, the user is an admin
+    console.log('Admin access granted to:', req.employee.email);
     next();
   } catch (error) {
     console.error('Admin auth middleware error:', error);

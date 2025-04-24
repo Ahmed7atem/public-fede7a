@@ -84,9 +84,20 @@ const startServer = async () => {
 
     // Only start the server if we're not in a serverless environment
     if (process.env.NODE_ENV !== 'production') {
-      const PORT = process.env.PORT || 3000;
-      app.listen(PORT, () => {
+      let PORT = process.env.PORT || 3000;
+      // Try to start server on port 3000, if that fails try 3001
+      const server = app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
+      }).on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.log(`Port ${PORT} is in use, trying port 3001...`);
+          PORT = 3001;
+          app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+          });
+        } else {
+          console.error('Failed to start server:', err);
+        }
       });
     }
   } catch (error) {
