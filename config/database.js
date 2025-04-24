@@ -38,9 +38,7 @@ const connectDB = async () => {
       retryReads: true,
       w: 'majority',
       ssl: true,
-      authSource: 'admin',
-      keepAlive: true,
-      keepAliveInitialDelay: 300000 // 5 minutes
+      authSource: 'admin'
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
