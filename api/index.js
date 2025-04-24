@@ -111,9 +111,23 @@ const claimRoutes = require('../routes/claimRoutes');
 const providerRoutes = require('../routes/providerRoutes');
 const ticketRoutes = require('../routes/ticketRoutes');
 const fileRoutes = require('../routes/fileRoutes');
+const attachmentRoutes = require('../routes/attachmentRoutes');
+const adminRoutes = require('../routes/adminRoutes');
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
+  const dbStatus = await initializeDB();
+  res.status(200).json({ 
+    status: 'ok', 
+    dbConnection: !!dbStatus,
+    dbConnectionAttempted,
+    environment: process.env.NODE_ENV,
+    mongoUriExists: !!(process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI)
+  });
+});
+
+// Add alias for health endpoint
+app.get('/api/health', async (req, res) => {
   const dbStatus = await initializeDB();
   res.status(200).json({ 
     status: 'ok', 
@@ -149,6 +163,8 @@ app.use('/api/claims', auth, claimRoutes);
 app.use('/api/providers', auth, providerRoutes);
 app.use('/api/tickets', auth, ticketRoutes);
 app.use('/api/files', auth, fileRoutes);
+app.use('/api/attachments', auth, attachmentRoutes);
+app.use('/api/admin', auth, adminRoutes);
 
 // Add a route for getting health data by employee ID
 app.get('/api/health-data/:id', auth, (req, res, next) => {
