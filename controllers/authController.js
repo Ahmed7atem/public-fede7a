@@ -169,7 +169,7 @@ const calculateHealthRisk = (healthData, wearableData) => {
 };
 
 // Get user profile
-router.get('/profile', async (req, res) => {
+router.get('/profile', auth, async (req, res) => {
   try {
     // Get the employee ID from the request
     const employeeId = req.user?.id;
@@ -276,7 +276,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // Update profile route
-router.put('/profile', async (req, res) => {
+router.put('/profile', auth, async (req, res) => {
   try {
     const { name, email } = req.body;
     if (!name || !email) {

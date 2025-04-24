@@ -27,6 +27,11 @@ router.get('/', async (req, res) => {
   try {
     let query = {};
     
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
     // If not admin, only show claims belonging to the user
     if (req.user.role !== 'admin') {
       query.employeeId = req.user.id;

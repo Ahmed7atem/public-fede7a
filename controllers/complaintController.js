@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { Complaint } = require('../models/schemas');
+const { ComplaintTicket } = require('../models/schemas');
 
 // Helper function to convert string ID to ObjectId if needed
 const convertToObjectId = (id) => {
@@ -14,7 +14,7 @@ const convertToObjectId = (id) => {
 // Get all complaints
 router.get('/', async (req, res) => {
   try {
-    const complaints = await Complaint.find();
+    const complaints = await ComplaintTicket.find();
     res.json(complaints);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const complaint = await Complaint.findById(id);
+    const complaint = await ComplaintTicket.findById(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
@@ -38,7 +38,7 @@ router.get('/:id', async (req, res) => {
 // Create new complaint
 router.post('/', async (req, res) => {
   try {
-    const complaint = new Complaint(req.body);
+    const complaint = new ComplaintTicket(req.body);
     const newComplaint = await complaint.save();
     res.status(201).json(newComplaint);
   } catch (error) {
@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const complaint = await Complaint.findByIdAndUpdate(id, req.body, { new: true });
+    const complaint = await ComplaintTicket.findByIdAndUpdate(id, req.body, { new: true });
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
@@ -64,7 +64,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const complaint = await Complaint.findByIdAndDelete(id);
+    const complaint = await ComplaintTicket.findByIdAndDelete(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
