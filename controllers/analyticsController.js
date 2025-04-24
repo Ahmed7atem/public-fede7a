@@ -487,7 +487,7 @@ router.get('/alerts', async (req, res) => {
 router.get('/all-data', async (req, res) => {
   try {
     // Get all employees with all needed fields
-    const employees = await Employee.find().select('_id id name email role department joinDate age ageGroup gender children smoker education recruitment_channel no_of_trainings previous_year_rating length_of_service kpis_met_80 avg_training_score');
+    const employees = await Employee.find().select('_id id name email role department joinDate age ageGroup gender children smoker education recruitmentChannel noOfTrainings previousYearRating lengthOfService kpisMet80 avgTrainingScore planName coverageDetails startDate endDate');
     
     // Get all related data
     const [healthData, wearableData, sleepData, claims, policies, predictions, complaints] = await Promise.all([
@@ -576,20 +576,17 @@ router.get('/all-data', async (req, res) => {
         totalSteps: (acc.totalSteps || 0) + (data.stepCount || 0),
         totalActiveEnergy: (acc.totalActiveEnergy || 0) + (data.activeEnergy || 0),
         totalExerciseTime: (acc.totalExerciseTime || 0) + (data.exerciseTime || 0),
-        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
+        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRateAvg || 0)) / (acc.count || 1),
         avgHRV: ((acc.avgHRV || 0) + (data.heartRateVariability || 0)) / (acc.count || 1),
-        totalWalkingDistance: (acc.totalWalkingDistance || 0) + (data.walkingDistance || 0),
+        totalWalkingDistance: (acc.totalWalkingDistance || 0) + (data.walkingRunningDistance || 0),
         count: (acc.count || 0) + 1
       }), {});
 
       // Calculate sleep stats
       const sleepStats = employeeSleep.reduce((acc, data) => ({
-        totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepDuration || 0),
-        avgSleepEfficiency: ((acc.avgSleepEfficiency || 0) + (data.sleepEfficiency || 0)) / (acc.count || 1),
-        avgDeepSleep: ((acc.avgDeepSleep || 0) + ((data.sleepStages?.deep) || 0)) / (acc.count || 1),
-        avgLightSleep: ((acc.avgLightSleep || 0) + ((data.sleepStages?.light) || 0)) / (acc.count || 1),
-        avgRemSleep: ((acc.avgRemSleep || 0) + ((data.sleepStages?.rem) || 0)) / (acc.count || 1),
-        avgAwakeSleep: ((acc.avgAwakeSleep || 0) + ((data.sleepStages?.awake) || 0)) / (acc.count || 1),
+        totalSleepHours: (acc.totalSleepHours || 0) + (data.timeInBed || 0),
+        avgSleepEfficiency: ((acc.avgSleepEfficiency || 0) + (data.sleepQuality || 0)) / (acc.count || 1),
+        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
         count: (acc.count || 0) + 1
       }), {});
 
@@ -608,65 +605,91 @@ router.get('/all-data', async (req, res) => {
           children: employee.children,
           smoker: employee.smoker,
           education: employee.education,
-          recruitment_channel: employee.recruitment_channel,
-          no_of_trainings: employee.no_of_trainings,
-          previous_year_rating: employee.previous_year_rating,
-          length_of_service: employee.length_of_service,
-          kpis_met_80: employee.kpis_met_80,
-          avg_training_score: employee.avg_training_score
+          recruitmentChannel: employee.recruitmentChannel,
+          noOfTrainings: employee.noOfTrainings,
+          previousYearRating: employee.previousYearRating,
+          lengthOfService: employee.lengthOfService,
+          kpisMet80: employee.kpisMet80,
+          avgTrainingScore: employee.avgTrainingScore,
+          planName: employee.planName,
+          coverageDetails: employee.coverageDetails,
+          startDate: employee.startDate,
+          endDate: employee.endDate
         },
         health: {
           latest: latestHealth ? {
             weight: latestHealth.weight,
             height: latestHealth.height,
             bmi: bmi,
-            bloodPressure: latestHealth.bloodPressure,
+            hemoglobin: latestHealth.hemoglobin,
             cholesterol: latestHealth.cholesterol,
             bloodSugar: latestHealth.bloodSugar,
-            hemoglobin: latestHealth.hemoglobin,
             creatinine: latestHealth.creatinine,
-            chronic_disease: latestHealth.chronic_disease,
-            chronic_diseases_count: latestHealth.chronic_diseases_count,
-            family_medical_history: latestHealth.family_medical_history,
-            recordDate: latestHealth.recordDate
+            chronicDisease: latestHealth.chronicDisease,
+            chronicDiseaseCount: latestHealth.chronicDiseaseCount,
+            familyMedicalHistory: latestHealth.familyMedicalHistory,
+            claimedAmount: latestHealth.claimedAmount,
+            recordDate: latestHealth.recordedAt
           } : {},
           history: employeeHealth.map(h => ({
             weight: h.weight,
             height: h.height,
             bmi: h.bmi,
-            bloodPressure: h.bloodPressure,
+            hemoglobin: h.hemoglobin,
             cholesterol: h.cholesterol,
             bloodSugar: h.bloodSugar,
-            hemoglobin: h.hemoglobin,
             creatinine: h.creatinine,
-            chronic_disease: h.chronic_disease,
-            chronic_diseases_count: h.chronic_diseases_count,
-            family_medical_history: h.family_medical_history,
-            recordDate: h.recordDate
+            chronicDisease: h.chronicDisease,
+            chronicDiseaseCount: h.chronicDiseaseCount,
+            familyMedicalHistory: h.familyMedicalHistory,
+            claimedAmount: h.claimedAmount,
+            recordDate: h.recordedAt
           }))
         },
         wearable: {
           latest: employeeWearable[0] ? {
-            stepCount: employeeWearable[0].stepCount,
-            heartRate: employeeWearable[0].heartRate,
-            sleepHours: employeeWearable[0].sleepHours,
             activeEnergy: employeeWearable[0].activeEnergy,
             exerciseTime: employeeWearable[0].exerciseTime,
+            standHours: employeeWearable[0].standHours,
+            standTime: employeeWearable[0].standTime,
+            environmentalAudioExposure: employeeWearable[0].environmentalAudioExposure,
+            flightsClimbed: employeeWearable[0].flightsClimbed,
+            headphoneAudioExposure: employeeWearable[0].headphoneAudioExposure,
+            heartRateMin: employeeWearable[0].heartRateMin,
+            heartRateMax: employeeWearable[0].heartRateMax,
+            heartRateAvg: employeeWearable[0].heartRateAvg,
             heartRateVariability: employeeWearable[0].heartRateVariability,
-            timeInBed: employeeWearable[0].timeInBed,
-            walkingDistance: employeeWearable[0].walkingDistance,
-            recordDate: employeeWearable[0].recordDate
+            physicalEffort: employeeWearable[0].physicalEffort,
+            restingEnergy: employeeWearable[0].restingEnergy,
+            restingHeartRate: employeeWearable[0].restingHeartRate,
+            stepCount: employeeWearable[0].stepCount,
+            walkingRunningDistance: employeeWearable[0].walkingRunningDistance,
+            walkingHeartRateAvg: employeeWearable[0].walkingHeartRateAvg,
+            walkingSpeed: employeeWearable[0].walkingSpeed,
+            walkingStepLength: employeeWearable[0].walkingStepLength,
+            recordDate: employeeWearable[0].date
           } : {},
           history: employeeWearable.map(w => ({
-            stepCount: w.stepCount,
-            heartRate: w.heartRate,
-            sleepHours: w.sleepHours,
             activeEnergy: w.activeEnergy,
             exerciseTime: w.exerciseTime,
+            standHours: w.standHours,
+            standTime: w.standTime,
+            environmentalAudioExposure: w.environmentalAudioExposure,
+            flightsClimbed: w.flightsClimbed,
+            headphoneAudioExposure: w.headphoneAudioExposure,
+            heartRateMin: w.heartRateMin,
+            heartRateMax: w.heartRateMax,
+            heartRateAvg: w.heartRateAvg,
             heartRateVariability: w.heartRateVariability,
-            timeInBed: w.timeInBed,
-            walkingDistance: w.walkingDistance,
-            recordDate: w.recordDate
+            physicalEffort: w.physicalEffort,
+            restingEnergy: w.restingEnergy,
+            restingHeartRate: w.restingHeartRate,
+            stepCount: w.stepCount,
+            walkingRunningDistance: w.walkingRunningDistance,
+            walkingHeartRateAvg: w.walkingHeartRateAvg,
+            walkingSpeed: w.walkingSpeed,
+            walkingStepLength: w.walkingStepLength,
+            recordDate: w.date
           })),
           stats: {
             totalSteps: wearableStats.totalSteps,
@@ -680,28 +703,27 @@ router.get('/all-data', async (req, res) => {
         },
         sleep: {
           latest: employeeSleep[0] ? {
-            sleepDuration: employeeSleep[0].sleepDuration,
-            sleepEfficiency: employeeSleep[0].sleepEfficiency,
-            sleepStages: employeeSleep[0].sleepStages,
+            startTime: employeeSleep[0].startTime,
+            endTime: employeeSleep[0].endTime,
+            sleepQuality: employeeSleep[0].sleepQuality,
+            timeInBed: employeeSleep[0].timeInBed,
+            sleepNotes: employeeSleep[0].sleepNotes,
             heartRate: employeeSleep[0].heartRate,
-            date: employeeSleep[0].date,
-            version: employeeSleep[0].version
+            date: employeeSleep[0].date
           } : {},
           history: employeeSleep.map(s => ({
-            sleepDuration: s.sleepDuration,
-            sleepEfficiency: s.sleepEfficiency,
-            sleepStages: s.sleepStages,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            sleepQuality: s.sleepQuality,
+            timeInBed: s.timeInBed,
+            sleepNotes: s.sleepNotes,
             heartRate: s.heartRate,
-            date: s.date,
-            version: s.version
+            date: s.date
           })),
           stats: {
             totalSleepHours: sleepStats.totalSleepHours,
             avgSleepEfficiency: sleepStats.avgSleepEfficiency ? sleepStats.avgSleepEfficiency.toFixed(2) : null,
-            avgDeepSleep: sleepStats.avgDeepSleep ? sleepStats.avgDeepSleep.toFixed(2) : null,
-            avgLightSleep: sleepStats.avgLightSleep ? sleepStats.avgLightSleep.toFixed(2) : null,
-            avgRemSleep: sleepStats.avgRemSleep ? sleepStats.avgRemSleep.toFixed(2) : null,
-            avgAwakeSleep: sleepStats.avgAwakeSleep ? sleepStats.avgAwakeSleep.toFixed(2) : null,
+            avgHeartRate: sleepStats.avgHeartRate ? sleepStats.avgHeartRate.toFixed(2) : null,
             totalDays: sleepStats.count
           }
         },
@@ -725,17 +747,17 @@ router.get('/all-data', async (req, res) => {
           }))
         },
         scores: {
-          insurance_score: latestHealth?.insurance_score,
-          smoker_score: latestHealth?.smoker_score,
-          family_score: latestHealth?.family_score,
-          lifestyle_score: latestHealth?.lifestyle_score,
-          bmi_score: latestHealth?.bmi_score,
-          hemoglobin_score: latestHealth?.hemoglobin_score,
-          sugar_score: latestHealth?.sugar_score,
-          cholesterol_score: latestHealth?.cholesterol_score,
-          creatinine_score: latestHealth?.creatinine_score,
-          physical_score: latestHealth?.physical_score,
-          wellness_score: latestHealth?.wellness_score
+          insuranceScore: latestHealth?.insuranceScore,
+          smokerScore: latestHealth?.smokerScore,
+          familyScore: latestHealth?.familyScore,
+          lifestyleScore: latestHealth?.lifestyleScore,
+          bmiScore: latestHealth?.bmiScore,
+          hemoglobinScore: latestHealth?.hemoglobinScore,
+          sugarScore: latestHealth?.sugarScore,
+          cholesterolScore: latestHealth?.cholesterolScore,
+          creatinineScore: latestHealth?.creatinineScore,
+          physicalScore: latestHealth?.physicalScore,
+          wellnessScore: latestHealth?.wellnessScore
         },
         predictions: employeePredictions.map(p => ({
           predictionType: p.predictionType,
