@@ -35,6 +35,60 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get wearable data by employee ID
+router.get('/employee/:employeeId', async (req, res) => {
+  try {
+    const employeeId = convertToObjectId(req.params.employeeId);
+    const wearableData = await WearableData.find({ employeeId });
+    if (!wearableData || wearableData.length === 0) {
+      return res.status(404).json({ message: 'No wearable data found for this employee' });
+    }
+    res.json(wearableData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get wearable logs by employee ID
+router.get('/employee/:employeeId/logs', async (req, res) => {
+  try {
+    const employeeId = convertToObjectId(req.params.employeeId);
+    const { startDate, endDate } = req.query;
+    
+    let query = { employeeId };
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const logs = await WearableData.find(query)
+      .sort({ date: -1 })
+      .select('date steps heartRate sleepHours caloriesBurned');
+
+    if (!logs || logs.length === 0) {
+      return res.status(404).json({ message: 'No logs found for this employee' });
+    }
+
+    // Calculate daily averages
+    const averages = {
+      steps: logs.reduce((acc, log) => acc + (log.steps || 0), 0) / logs.length,
+      heartRate: logs.reduce((acc, log) => acc + (log.heartRate || 0), 0) / logs.length,
+      sleepHours: logs.reduce((acc, log) => acc + (log.sleepHours || 0), 0) / logs.length,
+      caloriesBurned: logs.reduce((acc, log) => acc + (log.caloriesBurned || 0), 0) / logs.length
+    };
+
+    res.json({
+      logs,
+      averages,
+      totalDays: logs.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Create new wearable data
 router.post('/', async (req, res) => {
   try {
@@ -46,15 +100,71 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Create wearable log
+router.post('/log', async (req, res) => {
+  try {
+    const { employeeId, date, steps, heartRate, sleepHours, caloriesBurned } = req.body;
+    
+    if (!employeeId || !date) {
+      return res.status(400).json({ message: 'Employee ID and date are required' });
+    }
+
+    const log = new WearableData({
+      employeeId,
+      date: new Date(date),
+      steps: steps || 0,
+      heartRate: heartRate || 0,
+      sleepHours: sleepHours || 0,
+      caloriesBurned: caloriesBurned || 0
+    });
+
+    const savedLog = await log.save();
+    res.status(201).json(savedLog);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Update wearable data
 router.put('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const wearableData = await WearableData.findByIdAndUpdate(id, req.body, { new: true });
+    const wearableData = await WearableData.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true, runValidators: true }
+    );
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
     res.json(wearableData);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update wearable log
+router.put('/log/:id', async (req, res) => {
+  try {
+    const id = convertToObjectId(req.params.id);
+    const { steps, heartRate, sleepHours, caloriesBurned } = req.body;
+    
+    const log = await WearableData.findByIdAndUpdate(
+      id,
+      {
+        steps,
+        heartRate,
+        sleepHours,
+        caloriesBurned,
+        lastUpdated: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!log) {
+      return res.status(404).json({ message: 'Log not found' });
+    }
+    res.json(log);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -68,7 +178,7 @@ router.delete('/:id', async (req, res) => {
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
-    res.json({ message: 'Wearable data deleted' });
+    res.json({ message: 'Wearable data deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
