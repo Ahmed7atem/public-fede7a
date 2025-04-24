@@ -174,7 +174,7 @@ app.get('/api/health-data/:id', auth, (req, res, next) => {
 }, healthDataRoutes);
 
 // API to fetch all data (admin only)
-app.get('/api/all-data', adminAuth, async (req, res) => {
+app.get('/api/all-data', auth, adminAuth, async (req, res) => {
   try {
     const data = await getAllEmployeesData();
     res.json(data);

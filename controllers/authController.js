@@ -131,7 +131,8 @@ exports.register = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    console.log('getProfile called with req.employee:', req.employee);
+    console.log('getProfile called with req.employee:', JSON.stringify(req.employee, null, 2));
+    console.log('Auth header:', req.header('Authorization'));
     
     if (!req.employee || !req.employee._id) {
       console.log('No employee found in request object');
@@ -147,7 +148,7 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    console.log(`Profile retrieved for employee: ${employee._id}`);
+    console.log(`Profile retrieved for employee: ${employee._id}, email: ${employee.email}`);
     
     // Return employee without password
     const employeeObj = employee.toObject();
