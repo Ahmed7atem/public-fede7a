@@ -79,12 +79,11 @@ exports.register = async (req, res) => {
     
     // Create new employee
     const employee = new Employee({
-      _id: new mongoose.Types.ObjectId().toString(), // Generate string ID
       name,
       email,
       password: hashedPassword,
       role: role || 'employee',
-      age: req.body.age || 25, // Default values
+      age: req.body.age || 25,
       ageGroup: req.body.ageGroup || '25-34',
       gender: req.body.gender || 'other',
       children: req.body.children || 0,

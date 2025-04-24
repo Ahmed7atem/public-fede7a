@@ -1,39 +1,53 @@
 const fileUploadService = require('../services/fileUploadService');
 const Attachment = require('../models/Attachment');
+const mongoose = require('mongoose');
 
 class AttachmentController {
   // Upload multiple files
   async uploadFiles(req, res) {
     try {
+      console.log('Request files:', req.files);
+      console.log('Request body:', req.body);
+      console.log('Request user:', req.employee);
+
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
       const uploadedFiles = [];
       for (const file of req.files) {
-        const uploadResult = await fileUploadService.uploadFile(file, {
-          uploadedBy: req.user._id,
-          type: req.body.type,
-          referenceId: req.body.referenceId
-        });
+        console.log('Processing file:', file);
+        try {
+          const uploadResult = await fileUploadService.uploadFile(file, {
+            uploadedBy: req.employee._id,
+            type: req.body.type,
+            referenceId: new mongoose.Types.ObjectId(req.body.referenceId)
+          });
+          console.log('Upload result:', uploadResult);
 
-        const attachment = await Attachment.create({
-          fileId: uploadResult.fileId,
-          filename: uploadResult.filename,
-          contentType: uploadResult.contentType,
-          size: file.size,
-          uploadedBy: req.user._id,
-          type: req.body.type,
-          referenceId: req.body.referenceId,
-          description: req.body.description
-        });
+          const attachment = await Attachment.create({
+            fileId: uploadResult.fileId,
+            filename: uploadResult.filename,
+            contentType: uploadResult.contentType,
+            size: file.size,
+            uploadedBy: req.employee._id,
+            type: req.body.type,
+            referenceId: new mongoose.Types.ObjectId(req.body.referenceId),
+            description: req.body.description
+          });
+          console.log('Created attachment:', attachment);
 
-        uploadedFiles.push(attachment);
+          uploadedFiles.push(attachment);
+        } catch (fileError) {
+          console.error('Error processing file:', file.originalname, fileError);
+          throw fileError;
+        }
       }
 
       res.status(201).json(uploadedFiles);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error('Upload error:', error);
+      res.status(500).json({ error: error.message || 'Something broke!' });
     }
   }
 

@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const { getAllEmployeesData } = require('../services/dataService');
-const { predict } = require('../services/predictionService');
 const { getCurrentTimestamp } = require('../utils');
 const connectDB = require('../config/database');
 const { apiLimiter, authLimiter, dataSubmissionLimiter } = require('../middleware/rateLimiter');
 const { auth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose');
+const predictionRoutes = require('../routes/predictionRoutes');
 
 const app = express();
 
@@ -165,34 +165,13 @@ app.use('/api/tickets', auth, ticketRoutes);
 app.use('/api/files', auth, fileRoutes);
 app.use('/api/attachments', auth, attachmentRoutes);
 app.use('/api/admin', auth, adminRoutes);
+app.use('/api/predictions', auth, predictionRoutes);
 
 // Add a route for getting health data by employee ID
 app.get('/api/health-data/:id', auth, (req, res, next) => {
   req.params.id = req.params.id;
   next();
 }, healthDataRoutes);
-
-// Prediction API
-app.post('/api/predict/:employeeId', auth, async (req, res) => {
-  try {
-    // If admin, allow predicting for any employee
-    if (req.employee.role === 'admin') {
-      const result = await predict(req.params.employeeId);
-      return res.json(result);
-    }
-    
-    // Regular employees can only predict for themselves
-    if (req.params.employeeId !== req.employee._id.toString()) {
-      return res.status(403).json({ error: 'You can only predict for yourself' });
-    }
-    
-    const result = await predict(req.employee._id);
-    res.json(result);
-  } catch (error) {
-    console.error('Prediction error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // API to fetch all data (admin only)
 app.get('/api/all-data', adminAuth, async (req, res) => {

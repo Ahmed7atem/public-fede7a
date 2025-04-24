@@ -17,10 +17,9 @@ function convertToObjectId(id) {
 // Get health data
 exports.getHealthData = async (req, res) => {
   try {
-    const employeeId = req.params.id || req.user.id;
-    const objectId = convertToObjectId(employeeId);
+    const employeeId = req.params.id || req.employee._id;
     
-    const healthData = await HealthData.findOne({ employee: objectId }).sort({ date: -1 });
+    const healthData = await HealthData.findOne({ employee: employeeId }).sort({ date: -1 });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
@@ -34,12 +33,11 @@ exports.getHealthData = async (req, res) => {
 // Add health data
 exports.addHealthData = async (req, res) => {
   try {
-    const employeeId = req.user.id;
-    const objectId = convertToObjectId(employeeId);
+    const employeeId = req.employee._id;
     
     const healthData = new HealthData({
       ...req.body,
-      employee: objectId,
+      employee: employeeId,
       date: new Date()
     });
     
@@ -55,12 +53,10 @@ exports.addHealthData = async (req, res) => {
 exports.updateHealthData = async (req, res) => {
   try {
     const { id } = req.params;
-    const employeeId = req.user.id;
-    const objectId = convertToObjectId(id);
-    const employeeObjectId = convertToObjectId(employeeId);
+    const employeeId = req.employee._id;
     
     const healthData = await HealthData.findOneAndUpdate(
-      { _id: objectId, employee: employeeObjectId },
+      { _id: id, employee: employeeId },
       { $set: req.body },
       { new: true }
     );
@@ -79,13 +75,11 @@ exports.updateHealthData = async (req, res) => {
 exports.deleteHealthData = async (req, res) => {
   try {
     const { id } = req.params;
-    const employeeId = req.user.id;
-    const objectId = convertToObjectId(id);
-    const employeeObjectId = convertToObjectId(employeeId);
+    const employeeId = req.employee._id;
     
     const healthData = await HealthData.findOneAndDelete({
-      _id: objectId,
-      employee: employeeObjectId
+      _id: id,
+      employee: employeeId
     });
     
     if (!healthData) {

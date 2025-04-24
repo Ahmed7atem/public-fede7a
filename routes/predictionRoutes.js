@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
 const { isAdmin } = require('../middleware/roleCheck');
 const { validate, schemas } = require('../middleware/validate');
 const {
@@ -11,14 +10,17 @@ const {
   deletePrediction
 } = require('../controllers/predictionController');
 
-// Apply authentication to all routes
-router.use(authenticateToken);
-
 // Get all predictions (admin only)
 router.get('/', isAdmin, getAllPredictions);
 
 // Get prediction by ID (admin or self)
-router.get('/:id', isAdmin, getPredictionById);
+router.get('/:id', async (req, res, next) => {
+  // Allow access if admin or if the prediction belongs to the requesting employee
+  if (req.employee.role === 'admin' || req.params.id === req.employee.id) {
+    return next();
+  }
+  res.status(403).json({ error: 'Access denied' });
+}, getPredictionById);
 
 // Create new prediction
 router.post('/', validate(schemas.prediction), createPrediction);

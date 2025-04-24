@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
 const claimSchema = new mongoose.Schema({
+  _id: { type: String, default: () => uuidv4() },
+  id: { type: String, default: function() { return this._id; } },
   claimId: {
     type: String,
     required: true,
@@ -17,8 +20,7 @@ const claimSchema = new mongoose.Schema({
     required: true
   },
   patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
   claimAmount: {

@@ -18,12 +18,19 @@ const upload = multer({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'text/csv',
+      'text/html',
+      'text/xml',
+      'application/json',
+      'application/xml'
     ];
     
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only images, PDFs, and office documents are allowed.'));
+      console.log('Invalid file type:', file.mimetype);
+      cb(new Error('Invalid file type. Only images, PDFs, office documents, and text files are allowed.'));
     }
   }
 });

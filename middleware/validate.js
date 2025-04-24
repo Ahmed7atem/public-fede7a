@@ -58,7 +58,8 @@ const schemas = {
 
   // Prediction schema
   prediction: Joi.object({
-    employeeId: Joi.string().required(),
+    employee: Joi.string().required(),
+    predictionType: Joi.string().required().valid('health', 'wellness', 'risk'),
     healthData: Joi.object({
       weight: Joi.number().min(30).max(300),
       height: Joi.number().min(100).max(250),
@@ -66,8 +67,13 @@ const schemas = {
       diastolic: Joi.number().min(40).max(130),
       cholesterol: Joi.number().min(100).max(400),
       bloodSugar: Joi.number().min(50).max(400),
-      smoker: Joi.boolean()
-    }).required()
+      smoker: Joi.boolean(),
+      age: Joi.number().integer().min(18).max(100),
+      chronicDisease: Joi.string().allow('', null),
+      chronicDiseaseCount: Joi.number().integer().min(0),
+      familyMedicalHistory: Joi.string().allow('', null)
+    }).required(),
+    notes: Joi.string().allow('', null)
   })
 };
 

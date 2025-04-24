@@ -12,8 +12,8 @@ class ClaimController {
         status: 'Pending',
         provider: req.body.provider,
         patient: req.employee._id,
-        claimAmount: req.body.amount,
-        claimDate: req.body.date || new Date(),
+        claimAmount: req.body.claimAmount,
+        claimDate: req.body.claimDate || new Date(),
         patientAge: req.body.patientAge,
         providerSpecialty: req.body.providerSpecialty,
         patientIncome: req.body.patientIncome,
@@ -21,8 +21,8 @@ class ClaimController {
         patientEmploymentStatus: req.body.patientEmploymentStatus || 'Employed',
         claimType: req.body.claimType || 'Routine',
         claimSubmissionMethod: 'Online',
-        diagnosisDescription: req.body.diagnosis || 'Not provided',
-        procedureDescription: req.body.description || 'Not provided'
+        diagnosisDescription: req.body.diagnosisDescription || 'Not provided',
+        procedureDescription: req.body.procedureDescription || 'Not provided'
       });
 
       // Handle file attachments if any
