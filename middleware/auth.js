@@ -28,8 +28,13 @@ const auth = async (req, res, next) => {
         return res.status(401).json({ message: 'Invalid authentication token - Missing required token data' });
       }
       
-      // Find employee by _id
-      const employee = await Employee.findById(decoded.employee);
+      // Find employee by either _id or id field to handle both ObjectId and UUID
+      const employee = await Employee.findOne({ 
+        $or: [
+          { _id: decoded.employee },
+          { id: decoded.employee }
+        ]
+      });
 
       if (!employee) {
         console.error(`Employee not found for ID: ${decoded.employee}`);

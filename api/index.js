@@ -487,6 +487,20 @@ app.get('/api/all-data', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Simple admin test endpoint
+app.get('/api/admin-access-test', auth, adminAuth, async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Admin access confirmed',
+    admin: {
+      _id: req.employee._id,
+      id: req.employee.id, 
+      email: req.employee.email,
+      role: req.employee.role
+    }
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

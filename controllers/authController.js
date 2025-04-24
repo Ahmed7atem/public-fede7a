@@ -28,10 +28,11 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
 
     console.log(`Login successful for employee: ${employee._id}, role: ${employee.role}`);
+    console.log(`Token generated with payload:`, { employee: employee._id, role: employee.role });
     
     res.json({
       success: true,
@@ -103,7 +104,7 @@ exports.register = async (req, res) => {
     const token = jwt.sign(
       { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
 
     console.log(`Registration successful for employee: ${employee._id}, role: ${employee.role}`);

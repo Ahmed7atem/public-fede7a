@@ -38,6 +38,8 @@ const employeeSchema = new mongoose.Schema({
 employeeSchema.pre('save', function(next) {
   if (this.isModified('_id')) {
     this.id = this._id;
+  } else if (this.isModified('id')) {
+    this._id = this.id;
   }
   next();
 });
