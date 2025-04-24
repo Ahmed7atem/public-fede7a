@@ -46,7 +46,7 @@ router.get('/history', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const claim = await Claim.findById(id);
+    const claim = await Claim.findOne({ employeeId: id });
     
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
@@ -173,16 +173,15 @@ router.put('/:id', async (req, res) => {
     }
     
     const id = convertToObjectId(req.params.id);
-    const claim = await Claim.findById(id);
+    const claim = await Claim.findOneAndUpdate(
+      { employeeId: id },
+      { status, notes },
+      { new: true, runValidators: true }
+    );
     
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
-    
-    claim.status = status;
-    // Optionally add notes or other updates
-    
-    await claim.save();
     
     res.json({ 
       message: 'Claim status updated successfully', 
@@ -197,7 +196,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const claim = await Claim.findByIdAndDelete(id);
+    const claim = await Claim.findOneAndDelete({ employeeId: id });
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }

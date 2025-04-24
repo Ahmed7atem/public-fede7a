@@ -16,7 +16,7 @@ const convertToObjectId = (id) => {
 // Get all policies
 router.get('/', async (req, res) => {
   try {
-    const policies = await Policy.find();
+    const policies = await Policy.find().select('policyNumber planName coverageDetails startDate endDate');
     res.json(policies);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const policy = await Policy.findById(id);
+    const policy = await Policy.findOne({ employeeId: id });
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create policy
+// Create new policy
 router.post('/', async (req, res) => {
   try {
     const policy = new Policy(req.body);
@@ -52,7 +52,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const policy = await Policy.findByIdAndUpdate(id, req.body, { new: true });
+    const policy = await Policy.findOneAndUpdate(
+      { employeeId: id },
+      req.body,
+      { new: true, runValidators: true }
+    );
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
@@ -66,11 +70,11 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const policy = await Policy.findByIdAndDelete(id);
+    const policy = await Policy.findOneAndDelete({ employeeId: id });
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
-    res.json({ message: 'Policy deleted' });
+    res.json({ message: 'Policy deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

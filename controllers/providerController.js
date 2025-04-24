@@ -14,18 +14,17 @@ const convertToObjectId = (id) => {
 // Get all providers
 router.get('/', async (req, res) => {
   try {
-    const providers = await Provider.find();
+    const providers = await Provider.find().select('name type address contactInfo');
     res.json(providers);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Get provider by ID
-router.get('/:id', async (req, res) => {
+// Get provider by name
+router.get('/:name', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
-    const provider = await Provider.findById(id);
+    const provider = await Provider.findOne({ name: req.params.name });
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
@@ -47,10 +46,13 @@ router.post('/', async (req, res) => {
 });
 
 // Update provider
-router.put('/:id', async (req, res) => {
+router.put('/:name', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
-    const provider = await Provider.findByIdAndUpdate(id, req.body, { new: true });
+    const provider = await Provider.findOneAndUpdate(
+      { name: req.params.name },
+      req.body,
+      { new: true, runValidators: true }
+    );
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
@@ -61,14 +63,13 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete provider
-router.delete('/:id', async (req, res) => {
+router.delete('/:name', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
-    const provider = await Provider.findByIdAndDelete(id);
+    const provider = await Provider.findOneAndDelete({ name: req.params.name });
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-    res.json({ message: 'Provider deleted' });
+    res.json({ message: 'Provider deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

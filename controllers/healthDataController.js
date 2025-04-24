@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const healthData = await HealthData.findById(id);
+    const healthData = await HealthData.findOne({ employeeId: id });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
@@ -57,7 +57,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const healthData = await HealthData.findByIdAndUpdate(id, req.body, { new: true });
+    const healthData = await HealthData.findOneAndUpdate(
+      { employeeId: id },
+      req.body,
+      { new: true, runValidators: true }
+    );
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
@@ -71,11 +75,11 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const healthData = await HealthData.findByIdAndDelete(id);
+    const healthData = await HealthData.findOneAndDelete({ employeeId: id });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
-    res.json({ message: 'Health data deleted' });
+    res.json({ message: 'Health data deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
