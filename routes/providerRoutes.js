@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Provider = require('../models/Provider');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // GET /api/providers - List providers with filters
 router.get('/', auth, async (req, res) => {

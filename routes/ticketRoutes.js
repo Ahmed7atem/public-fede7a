@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Ticket = require('../models/Ticket');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const { upload, handleUploadError } = require('../middleware/uploadMiddleware');
 
 // POST /api/tickets - Create a support ticket with file uploads

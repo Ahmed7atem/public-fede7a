@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Grid = require('gridfs-stream');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Initialize GridFS
 let gfs;
