@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
-const { isAdmin } = require('../middleware/roleCheck');
+const { auth, adminAuth } = require('../middleware/auth');
 const {
   getDashboardStats,
   getEmployeeStats,
@@ -9,7 +8,7 @@ const {
 } = require('../controllers/adminController');
 
 // Apply authentication and admin role check to all routes
-router.use(authenticateToken, isAdmin);
+router.use(auth, adminAuth);
 
 // Dashboard statistics
 router.get('/dashboard', getDashboardStats);
