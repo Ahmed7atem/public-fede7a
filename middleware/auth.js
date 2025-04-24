@@ -10,9 +10,13 @@ const auth = async (req, res, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      const employee = await Employee.findById(decoded.id);
+      
+      // Convert ID to string if it's not already
+      const employeeId = decoded.id.toString();
+      const employee = await Employee.findById(employeeId);
 
       if (!employee) {
+        console.error('Employee not found for ID:', employeeId);
         return res.status(401).json({ 
           error: 'Invalid authentication token', 
           detail: 'Employee not found in database' 
@@ -23,7 +27,7 @@ const auth = async (req, res, next) => {
       req.token = token;
       req.employee = employee;
       req.tokenInfo = {
-        id: decoded.id,
+        id: employeeId,
         role: decoded.role,
         exp: new Date(decoded.exp * 1000).toISOString()
       };
