@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
 // Get employee by ID
 router.get('/:id', async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id, '-password');
+    const employee = await Employee.findOne({ id: req.params.id }, '-password');
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -63,18 +63,19 @@ router.get('/:id', async (req, res) => {
 // Create employee
 router.post('/', async (req, res) => {
   try {
-    const { name, email, password, role, age, gender, children, smoker } = req.body;
+    const { id, name, email, password, role, age, gender, children, smoker } = req.body;
     
-    if (!name || !email || !password) {
+    if (!id || !name || !email || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const existingEmployee = await Employee.findOne({ email });
+    const existingEmployee = await Employee.findOne({ $or: [{ email }, { id }] });
     if (existingEmployee) {
-      return res.status(400).json({ message: 'Email already registered' });
+      return res.status(400).json({ message: 'Email or ID already registered' });
     }
 
     const employee = new Employee({
+      id,
       name,
       email,
       age,
@@ -89,7 +90,7 @@ router.post('/', async (req, res) => {
     const newEmployee = await employee.save();
 
     res.status(201).json({
-      _id: newEmployee._id,
+      id: newEmployee.id,
       name: newEmployee.name,
       email: newEmployee.email,
       role: newEmployee.role
@@ -104,7 +105,7 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, email, age, gender, children, smoker, role } = req.body;
     
-    const employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findOne({ id: req.params.id });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -128,7 +129,7 @@ router.put('/:id', async (req, res) => {
     const updatedEmployee = await employee.save();
 
     res.json({
-      _id: updatedEmployee._id,
+      id: updatedEmployee.id,
       name: updatedEmployee.name,
       email: updatedEmployee.email,
       role: updatedEmployee.role
@@ -141,7 +142,7 @@ router.put('/:id', async (req, res) => {
 // Delete employee
 router.delete('/:id', async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findOne({ id: req.params.id });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -157,9 +158,9 @@ router.get('/all/data', async (req, res) => {
   try {
     const employees = await Employee.find();
     const employeeData = await Promise.all(employees.map(async (employee) => {
-      const healthData = await HealthData.find({ employeeId: employee._id });
-      const wearableData = await WearableData.find({ employeeId: employee._id });
-      const sleepData = await SleepData.find({ employeeId: employee._id });
+      const healthData = await HealthData.find({ employeeId: employee.id });
+      const wearableData = await WearableData.find({ employeeId: employee.id });
+      const sleepData = await SleepData.find({ employeeId: employee.id });
       
       return {
         ...employee.toObject(),

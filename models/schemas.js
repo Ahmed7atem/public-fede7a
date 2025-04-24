@@ -2,10 +2,17 @@ const mongoose = require('mongoose');
 
 // Employee Schema - Simplified for basic auth
 const employeeSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['employee', 'admin'], default: 'employee' }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+// Set id as the primary key
+employeeSchema.set('id', false);
 
 // Health Data Schema - Basic health metrics
 const healthDataSchema = new mongoose.Schema({
