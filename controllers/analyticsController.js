@@ -350,15 +350,15 @@ router.get('/alerts', async (req, res) => {
 router.get('/all-data', async (req, res) => {
   try {
     // Get all employees with more fields
-    const employees = await Employee.find().select('_id name email role department joinDate age gender');
+    const employees = await Employee.find().select('_id name email role department joinDate age gender children smoker');
     
     // Get all related data with proper indexing
     const [healthData, wearableData, sleepData, claims, policies] = await Promise.all([
-      HealthData.find().select('employeeId weight height bloodPressure cholesterol bloodSugar date').lean(),
-      WearableData.find().select('employeeId steps heartRate sleepHours caloriesBurned date').lean(),
-      SleepData.find().select('employeeId sleepHours sleepQuality date').lean(),
-      Claim.find().select('employeeId claimAmount status date type').lean(),
-      Policy.find().select('employeeId policyNumber coverageType startDate endDate').lean()
+      HealthData.find().select('employee weight height bloodPressure cholesterol bloodSugar date').lean(),
+      WearableData.find().select('employee stepCount heartRate sleepHours recordDate').lean(),
+      SleepData.find().select('employee sleepDuration sleepEfficiency sleepStages heartRate date').lean(),
+      Claim.find().select('employeeId provider claimAmount status').lean(),
+      Policy.find().select('employeeId policyNumber type status').lean()
     ]);
 
     // Create lookup maps for faster access
@@ -370,19 +370,19 @@ router.get('/all-data', async (req, res) => {
 
     // Populate maps
     healthData.forEach(h => {
-      const key = h.employeeId?.toString();
+      const key = h.employee?.toString();
       if (!healthMap.has(key)) healthMap.set(key, []);
       healthMap.get(key).push(h);
     });
 
     wearableData.forEach(w => {
-      const key = w.employeeId?.toString();
+      const key = w.employee?.toString();
       if (!wearableMap.has(key)) wearableMap.set(key, []);
       wearableMap.get(key).push(w);
     });
 
     sleepData.forEach(s => {
-      const key = s.employeeId?.toString();
+      const key = s.employee?.toString();
       if (!sleepMap.has(key)) sleepMap.set(key, []);
       sleepMap.get(key).push(s);
     });
@@ -414,16 +414,15 @@ router.get('/all-data', async (req, res) => {
 
       // Calculate wearable stats
       const wearableStats = employeeWearable.reduce((acc, data) => ({
-        totalSteps: (acc.totalSteps || 0) + (data.steps || 0),
-        totalCalories: (acc.totalCalories || 0) + (data.caloriesBurned || 0),
+        totalSteps: (acc.totalSteps || 0) + (data.stepCount || 0),
         avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
         count: (acc.count || 0) + 1
       }), {});
 
       // Calculate sleep stats
       const sleepStats = employeeSleep.reduce((acc, data) => ({
-        totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepHours || 0),
-        avgSleepQuality: ((acc.avgSleepQuality || 0) + (data.sleepQuality || 0)) / (acc.count || 1),
+        totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepDuration || 0),
+        avgSleepEfficiency: ((acc.avgSleepEfficiency || 0) + (data.sleepEfficiency || 0)) / (acc.count || 1),
         count: (acc.count || 0) + 1
       }), {});
 
@@ -436,7 +435,9 @@ router.get('/all-data', async (req, res) => {
           department: employee.department,
           joinDate: employee.joinDate,
           age: employee.age,
-          gender: employee.gender
+          gender: employee.gender,
+          children: employee.children,
+          smoker: employee.smoker
         },
         health: {
           latest: {
@@ -459,55 +460,54 @@ router.get('/all-data', async (req, res) => {
         },
         wearable: {
           latest: employeeWearable[0] ? {
-            steps: employeeWearable[0].steps,
+            stepCount: employeeWearable[0].stepCount,
             heartRate: employeeWearable[0].heartRate,
             sleepHours: employeeWearable[0].sleepHours,
-            caloriesBurned: employeeWearable[0].caloriesBurned,
-            date: employeeWearable[0].date
+            date: employeeWearable[0].recordDate
           } : {},
           history: employeeWearable.map(w => ({
-            steps: w.steps,
+            stepCount: w.stepCount,
             heartRate: w.heartRate,
             sleepHours: w.sleepHours,
-            caloriesBurned: w.caloriesBurned,
-            date: w.date
+            date: w.recordDate
           })),
           stats: {
             totalSteps: wearableStats.totalSteps,
-            totalCalories: wearableStats.totalCalories,
             avgHeartRate: wearableStats.avgHeartRate ? wearableStats.avgHeartRate.toFixed(2) : null,
             totalDays: wearableStats.count
           }
         },
         sleep: {
           latest: employeeSleep[0] ? {
-            sleepHours: employeeSleep[0].sleepHours,
-            sleepQuality: employeeSleep[0].sleepQuality,
+            sleepDuration: employeeSleep[0].sleepDuration,
+            sleepEfficiency: employeeSleep[0].sleepEfficiency,
+            sleepStages: employeeSleep[0].sleepStages,
+            heartRate: employeeSleep[0].heartRate,
             date: employeeSleep[0].date
           } : {},
           history: employeeSleep.map(s => ({
-            sleepHours: s.sleepHours,
-            sleepQuality: s.sleepQuality,
+            sleepDuration: s.sleepDuration,
+            sleepEfficiency: s.sleepEfficiency,
+            sleepStages: s.sleepStages,
+            heartRate: s.heartRate,
             date: s.date
           })),
           stats: {
             totalSleepHours: sleepStats.totalSleepHours,
-            avgSleepQuality: sleepStats.avgSleepQuality ? sleepStats.avgSleepQuality.toFixed(2) : null,
+            avgSleepEfficiency: sleepStats.avgSleepEfficiency ? sleepStats.avgSleepEfficiency.toFixed(2) : null,
             totalDays: sleepStats.count
           }
         },
         insurance: {
           policy: employeePolicy ? {
             policyNumber: employeePolicy.policyNumber,
-            coverageType: employeePolicy.coverageType,
-            startDate: employeePolicy.startDate,
-            endDate: employeePolicy.endDate
+            type: employeePolicy.type,
+            status: employeePolicy.status
           } : null,
           claims: employeeClaims.map(c => ({
+            provider: c.provider,
             claimAmount: c.claimAmount,
-            status: c.status,
-            type: c.type,
-            date: c.date
+            status: c.status
           }))
         }
       };
