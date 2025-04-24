@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { Provider } = require('../models/schemas');
+const mongoose = require('mongoose');
+const Provider = require('../models/Provider');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Get all providers
 router.get('/', async (req, res) => {
@@ -15,7 +24,8 @@ router.get('/', async (req, res) => {
 // Get provider by ID
 router.get('/:id', async (req, res) => {
   try {
-    const provider = await Provider.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const provider = await Provider.findById(id);
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
@@ -25,7 +35,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create provider
+// Create new provider
 router.post('/', async (req, res) => {
   try {
     const provider = new Provider(req.body);
@@ -39,13 +49,12 @@ router.post('/', async (req, res) => {
 // Update provider
 router.put('/:id', async (req, res) => {
   try {
-    const provider = await Provider.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const provider = await Provider.findByIdAndUpdate(id, req.body, { new: true });
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-    Object.assign(provider, req.body);
-    const updatedProvider = await provider.save();
-    res.json(updatedProvider);
+    res.json(provider);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -54,12 +63,12 @@ router.put('/:id', async (req, res) => {
 // Delete provider
 router.delete('/:id', async (req, res) => {
   try {
-    const provider = await Provider.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const provider = await Provider.findByIdAndDelete(id);
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-    await provider.deleteOne();
-    res.json({ message: 'Provider deleted successfully' });
+    res.json({ message: 'Provider deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { Employee, HealthData, WearableData, SleepData, Claim } = require('../models/schemas');
+const mongoose = require('mongoose');
+const { Employee, HealthData, WearableData, SleepData, Claim, Policy, Provider, Complaint } = require('../models/schemas');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Helper function to calculate BMI category
 const getBMICategory = (bmi) => {
@@ -15,13 +24,13 @@ const calculateHealthRisk = (healthData, wearableData) => {
   let riskScore = 0;
   
   // BMI risk
-  if (healthData.bmi) {
+  if (healthData?.bmi) {
     if (healthData.bmi < 18.5 || healthData.bmi >= 30) riskScore += 2;
     else if (healthData.bmi >= 25) riskScore += 1;
   }
   
   // Blood pressure risk
-  if (healthData.bloodPressure) {
+  if (healthData?.bloodPressure) {
     const [systolic, diastolic] = healthData.bloodPressure.split('/').map(Number);
     if (systolic >= 140 || diastolic >= 90) riskScore += 2;
     else if (systolic >= 130 || diastolic >= 85) riskScore += 1;
@@ -40,15 +49,17 @@ const calculateHealthRisk = (healthData, wearableData) => {
 // Get comprehensive employee analytics
 router.get('/employee/:id', async (req, res) => {
   try {
-    const employee = await Employee.findOne({ id: req.params.id });
+    const id = convertToObjectId(req.params.id);
+    const employee = await Employee.findById(id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    const healthData = await HealthData.find({ employee: employee.id }).sort({ recordDate: -1 });
-    const wearableData = await WearableData.find({ employee: employee.id }).sort({ recordDate: -1 });
-    const sleepData = await SleepData.find({ employee: employee.id }).sort({ date: -1 });
-    const claims = await Claim.find({ employeeId: employee.id });
+    const healthData = await HealthData.find({ employee: id }).sort({ recordDate: -1 });
+    const wearableData = await WearableData.find({ employee: id }).sort({ recordDate: -1 });
+    const sleepData = await SleepData.find({ employee: id }).sort({ date: -1 });
+    const claims = await Claim.find({ employeeId: id });
+    const policy = await Policy.findOne({ employee: id });
 
     // Calculate trends
     const bmiTrend = healthData.map(h => ({ date: h.recordDate, value: h.bmi }));
@@ -69,20 +80,38 @@ router.get('/employee/:id', async (req, res) => {
     const riskScore = calculateHealthRisk(latestHealth, latestWearable);
 
     res.json({
-      employee: {
-        id: employee.id,
+      personalInfo: {
+        id: employee._id,
         name: employee.name,
+        email: employee.email,
+        phone: employee.phone,
+        address: employee.address,
+        dateOfBirth: employee.dateOfBirth,
+        gender: employee.gender,
         age: employee.age,
-        gender: employee.gender
+        ageGroup: getAgeGroup(employee.age),
+        maritalStatus: employee.maritalStatus,
+        emergencyContact: employee.emergencyContact
+      },
+      employmentInfo: {
+        employeeId: employee.employeeId,
+        department: employee.department,
+        role: employee.role,
+        joiningDate: employee.joiningDate,
+        employmentType: employee.employmentType,
+        status: employee.status
       },
       healthMetrics: {
-        currentBMI: latestHealth?.bmi,
+        height: latestHealth?.height,
+        weight: latestHealth?.weight,
+        bmi: latestHealth?.bmi,
         bmiCategory: latestHealth?.bmi ? getBMICategory(latestHealth.bmi) : null,
         bloodPressure: latestHealth?.bloodPressure,
-        hemoglobin: latestHealth?.hemoglobin,
-        cholesterol: latestHealth?.cholesterol,
         bloodSugar: latestHealth?.bloodSugar,
-        creatinine: latestHealth?.creatinine
+        cholesterol: latestHealth?.cholesterol,
+        hemoglobin: latestHealth?.hemoglobin,
+        creatinine: latestHealth?.creatinine,
+        lastCheckup: latestHealth?.recordDate
       },
       activityMetrics: {
         averageSteps: avgSteps,
@@ -108,11 +137,26 @@ router.get('/employee/:id', async (req, res) => {
           ...(latestSleep?.sleepDuration < 6 ? ['Insufficient Sleep'] : [])
         ]
       },
-      claims: {
+      insuranceInfo: {
+        policyNumber: policy?.policyNumber,
+        coverageType: policy?.coverageType,
+        startDate: policy?.startDate,
+        endDate: policy?.endDate,
+        status: policy?.status
+      },
+      claimsHistory: {
         total: claims.length,
         approved: claims.filter(c => c.status === 'Approved').length,
         pending: claims.filter(c => c.status === 'Submitted').length,
-        totalAmount: claims.reduce((sum, c) => sum + c.claimAmount, 0)
+        totalAmount: claims.reduce((sum, c) => sum + c.claimAmount, 0),
+        recentClaims: claims.slice(0, 5).map(claim => ({
+          id: claim._id,
+          claimId: claim.claimId,
+          status: claim.status,
+          amount: claim.claimAmount,
+          submissionDate: claim.submissionDate,
+          provider: claim.provider
+        }))
       }
     });
   } catch (error) {
@@ -120,7 +164,7 @@ router.get('/employee/:id', async (req, res) => {
   }
 });
 
-// Get organization-wide health analytics
+// Get organization-wide analytics
 router.get('/organization', async (req, res) => {
   try {
     const employees = await Employee.find();
@@ -128,6 +172,9 @@ router.get('/organization', async (req, res) => {
     const wearableData = await WearableData.find();
     const sleepData = await SleepData.find();
     const claims = await Claim.find();
+    const policies = await Policy.find();
+    const providers = await Provider.find();
+    const complaints = await Complaint.find();
 
     // Calculate organization averages
     const avgBMI = healthData.reduce((sum, h) => sum + (h.bmi || 0), 0) / healthData.length;
@@ -167,6 +214,28 @@ router.get('/organization', async (req, res) => {
       averageAmount: claims.reduce((sum, c) => sum + c.claimAmount, 0) / claims.length
     };
 
+    // Calculate provider statistics
+    const providerStats = {
+      total: providers.length,
+      bySpecialty: providers.reduce((acc, p) => {
+        acc[p.specialty] = (acc[p.specialty] || 0) + 1;
+        return acc;
+      }, {})
+    };
+
+    // Calculate complaint statistics
+    const complaintStats = {
+      total: complaints.length,
+      byStatus: complaints.reduce((acc, c) => {
+        acc[c.status] = (acc[c.status] || 0) + 1;
+        return acc;
+      }, {}),
+      byCategory: complaints.reduce((acc, c) => {
+        acc[c.category] = (acc[c.category] || 0) + 1;
+        return acc;
+      }, {})
+    };
+
     res.json({
       overview: {
         totalEmployees: employees.length,
@@ -197,6 +266,14 @@ router.get('/organization', async (req, res) => {
         ...claimStats,
         approvalRate: (claimStats.approved / claimStats.total) * 100,
         averageClaimPerEmployee: claimStats.total / employees.length
+      },
+      providerAnalysis: {
+        ...providerStats,
+        averageClaimsPerProvider: claimStats.total / providers.length
+      },
+      complaintAnalysis: {
+        ...complaintStats,
+        resolutionRate: (complaintStats.byStatus['Resolved'] / complaintStats.total) * 100
       },
       riskFactors: {
         highBMI: bmiDistribution.overweight + bmiDistribution.obese,

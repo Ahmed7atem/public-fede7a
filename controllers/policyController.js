@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Policy, PolicyDocument } = require('../models/schemas');
 const path = require('path');
 const fs = require('fs');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Get all policies
 router.get('/', async (req, res) => {
@@ -17,7 +26,8 @@ router.get('/', async (req, res) => {
 // Get policy by ID
 router.get('/:id', async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const policy = await Policy.findById(id);
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
@@ -41,13 +51,12 @@ router.post('/', async (req, res) => {
 // Update policy
 router.put('/:id', async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const policy = await Policy.findByIdAndUpdate(id, req.body, { new: true });
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
-    Object.assign(policy, req.body);
-    const updatedPolicy = await policy.save();
-    res.json(updatedPolicy);
+    res.json(policy);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -56,12 +65,12 @@ router.put('/:id', async (req, res) => {
 // Delete policy
 router.delete('/:id', async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const policy = await Policy.findByIdAndDelete(id);
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
-    await policy.deleteOne();
-    res.json({ message: 'Policy deleted successfully' });
+    res.json({ message: 'Policy deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,11 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { ComplaintTicket } = require('../models/schemas');
+const mongoose = require('mongoose');
+const Complaint = require('../models/Complaint');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Get all complaints
 router.get('/', async (req, res) => {
   try {
-    const complaints = await ComplaintTicket.find();
+    const complaints = await Complaint.find();
     res.json(complaints);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -15,7 +24,8 @@ router.get('/', async (req, res) => {
 // Get complaint by ID
 router.get('/:id', async (req, res) => {
   try {
-    const complaint = await ComplaintTicket.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const complaint = await Complaint.findById(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
@@ -25,10 +35,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create complaint
+// Create new complaint
 router.post('/', async (req, res) => {
   try {
-    const complaint = new ComplaintTicket(req.body);
+    const complaint = new Complaint(req.body);
     const newComplaint = await complaint.save();
     res.status(201).json(newComplaint);
   } catch (error) {
@@ -39,13 +49,12 @@ router.post('/', async (req, res) => {
 // Update complaint
 router.put('/:id', async (req, res) => {
   try {
-    const complaint = await ComplaintTicket.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const complaint = await Complaint.findByIdAndUpdate(id, req.body, { new: true });
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
-    Object.assign(complaint, req.body);
-    const updatedComplaint = await complaint.save();
-    res.json(updatedComplaint);
+    res.json(complaint);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -54,12 +63,12 @@ router.put('/:id', async (req, res) => {
 // Delete complaint
 router.delete('/:id', async (req, res) => {
   try {
-    const complaint = await ComplaintTicket.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const complaint = await Complaint.findByIdAndDelete(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
-    await complaint.deleteOne();
-    res.json({ message: 'Complaint deleted successfully' });
+    res.json({ message: 'Complaint deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

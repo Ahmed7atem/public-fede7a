@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { WearableData } = require('../models/schemas');
+const mongoose = require('mongoose');
+const WearableData = require('../models/WearableData');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Get all wearable data
 router.get('/', async (req, res) => {
@@ -15,7 +24,8 @@ router.get('/', async (req, res) => {
 // Get wearable data by ID
 router.get('/:id', async (req, res) => {
   try {
-    const wearableData = await WearableData.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const wearableData = await WearableData.findById(id);
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
@@ -25,7 +35,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create wearable data
+// Create new wearable data
 router.post('/', async (req, res) => {
   try {
     const wearableData = new WearableData(req.body);
@@ -39,13 +49,12 @@ router.post('/', async (req, res) => {
 // Update wearable data
 router.put('/:id', async (req, res) => {
   try {
-    const wearableData = await WearableData.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const wearableData = await WearableData.findByIdAndUpdate(id, req.body, { new: true });
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
-    Object.assign(wearableData, req.body);
-    const updatedWearableData = await wearableData.save();
-    res.json(updatedWearableData);
+    res.json(wearableData);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -54,12 +63,12 @@ router.put('/:id', async (req, res) => {
 // Delete wearable data
 router.delete('/:id', async (req, res) => {
   try {
-    const wearableData = await WearableData.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const wearableData = await WearableData.findByIdAndDelete(id);
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
-    await wearableData.deleteOne();
-    res.json({ message: 'Wearable data deleted successfully' });
+    res.json({ message: 'Wearable data deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

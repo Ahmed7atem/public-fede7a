@@ -1,9 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Claim } = require('../models/schemas');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
+// Helper function to convert string ID to ObjectId if needed
+const convertToObjectId = (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return id;
+};
 
 // Get all claims (admin sees all, employees see only their own)
 router.get('/', async (req, res) => {
@@ -36,7 +45,8 @@ router.get('/history', async (req, res) => {
 // Get a specific claim by ID
 router.get('/:id', async (req, res) => {
   try {
-    const claim = await Claim.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const claim = await Claim.findById(id);
     
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
@@ -162,7 +172,8 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid status value' });
     }
     
-    const claim = await Claim.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const claim = await Claim.findById(id);
     
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
@@ -185,11 +196,11 @@ router.put('/:id', async (req, res) => {
 // Delete claim
 router.delete('/:id', async (req, res) => {
   try {
-    const claim = await Claim.findById(req.params.id);
+    const id = convertToObjectId(req.params.id);
+    const claim = await Claim.findByIdAndDelete(id);
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
-    await claim.deleteOne();
     res.json({ message: 'Claim deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
