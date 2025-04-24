@@ -6,6 +6,7 @@ const { getCurrentTimestamp } = require('../utils');
 const connectDB = require('../config/database');
 const { apiLimiter, authLimiter, dataSubmissionLimiter } = require('../middleware/rateLimiter');
 const { auth, adminAuth } = require('../middleware/auth');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -18,12 +19,15 @@ app.set('trust proxy', 1);
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL_PROD] 
+    ? [process.env.FRONTEND_URL_PROD, 'https://*.vercel.app'] 
     : [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 // Apply CORS middleware
@@ -42,7 +46,6 @@ const initializeDB = async () => {
   if (!dbConnectionAttempted) {
     try {
       console.log('Initializing database connection...');
-      // Check for both environment variable names
       const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI;
       if (!mongoUri) {
         console.error('MongoDB connection URI is missing');
@@ -52,6 +55,17 @@ const initializeDB = async () => {
       dbConnection = await connectDB();
       dbConnectionAttempted = true;
       console.log('Database connection initialized:', !!dbConnection);
+      
+      // Ensure connection is ready before proceeding
+      if (dbConnection) {
+        await new Promise((resolve) => {
+          if (mongoose.connection.readyState === 1) {
+            resolve();
+          } else {
+            mongoose.connection.once('connected', resolve);
+          }
+        });
+      }
     } catch (error) {
       console.error('Failed to initialize database connection:', error);
       dbConnectionAttempted = true;
@@ -60,8 +74,27 @@ const initializeDB = async () => {
   return dbConnection;
 };
 
-// Initialize database connection
-initializeDB().catch(console.error);
+// Initialize database connection before starting the server
+const startServer = async () => {
+  try {
+    const dbStatus = await initializeDB();
+    if (!dbStatus) {
+      console.error('Failed to establish database connection');
+    }
+
+    // Only start the server if we're not in a serverless environment
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to start server:', error);
+  }
+};
+
+startServer().catch(console.error);
 
 // Apply general rate limiting to all routes
 app.use(apiLimiter);
@@ -161,13 +194,5 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something broke!' });
 });
-
-// Only start the server if we're not in a serverless environment
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
 
 module.exports = app;

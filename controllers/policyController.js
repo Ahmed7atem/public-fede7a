@@ -1,17 +1,4 @@
-const mongoose = require('mongoose');
-
-// Define a schema for PolicyDocument if it doesn't exist elsewhere
-const PolicyDocumentSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-  fileUrl: String,
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Create the model if it doesn't exist
-const PolicyDocument = mongoose.models.PolicyDocument || 
-  mongoose.model('PolicyDocument', PolicyDocumentSchema);
+const { PolicyDocument } = require('../models/schemas');
 
 // Get all policy documents
 const getDocuments = async (req, res) => {

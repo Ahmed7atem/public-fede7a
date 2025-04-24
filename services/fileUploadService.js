@@ -5,9 +5,19 @@ const path = require('path');
 
 class FileUploadService {
   constructor() {
-    this.bucket = new GridFSBucket(mongoose.connection.db, {
-      bucketName: 'uploads'
-    });
+    this._bucket = null;
+  }
+
+  get bucket() {
+    if (!this._bucket) {
+      if (!mongoose.connection.db) {
+        throw new Error('Database connection not established');
+      }
+      this._bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
+      });
+    }
+    return this._bucket;
   }
 
   // Initialize multer storage for handling file uploads
@@ -60,4 +70,6 @@ class FileUploadService {
   }
 }
 
-module.exports = new FileUploadService(); 
+// Export a singleton instance
+const fileUploadService = new FileUploadService();
+module.exports = fileUploadService; 
