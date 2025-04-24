@@ -1,86 +1,91 @@
 const { Prediction } = require('../models/schemas');
-const { predictHealthRisk } = require('../services/predictionService');
 
-const getAllPredictions = async (req, res) => {
+exports.getAllPredictions = async (req, res) => {
   try {
-    const predictions = await Prediction.find().populate('employee', 'name email');
+    const predictions = await Prediction.find();
     res.json(predictions);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-const getPredictionById = async (req, res) => {
+exports.getPredictionById = async (req, res) => {
   try {
-    const prediction = await Prediction.findById(req.params.id).populate('employee', 'name email');
-    if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
+    const prediction = await Prediction.findById(req.params.id);
+    if (!prediction) {
+      return res.status(404).json({ message: 'Prediction not found' });
+    }
     res.json(prediction);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-const createPrediction = async (req, res) => {
+exports.createPrediction = async (req, res) => {
   try {
-    const { employee, predictionType, healthData } = req.body;
+    const {
+      employee,
+      predictionType,
+      healthData,
+      predictionValue
+    } = req.body;
+
     if (!employee || !predictionType || !healthData) {
-      return res.status(400).json({ error: 'Employee, prediction type, and health data are required' });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const predictionResult = await predictHealthRisk(healthData);
     const prediction = new Prediction({
       employee,
-      predictedAt: new Date(),
       predictionType,
-      predictionValue: predictionResult.predictionValue,
-      confidence: predictionResult.confidence,
-      factors: predictionResult.factors
+      healthData,
+      predictionValue,
+      predictedAt: new Date()
     });
 
     await prediction.save();
+
     res.status(201).json(prediction);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-const updatePrediction = async (req, res) => {
+exports.updatePrediction = async (req, res) => {
   try {
-    const { predictionType, healthData } = req.body;
-    if (!predictionType || !healthData) {
-      return res.status(400).json({ error: 'Prediction type and health data are required' });
+    const prediction = await Prediction.findById(req.params.id);
+    if (!prediction) {
+      return res.status(404).json({ message: 'Prediction not found' });
     }
 
-    const prediction = await Prediction.findById(req.params.id);
-    if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
+    const {
+      predictionType,
+      healthData,
+      predictionValue
+    } = req.body;
 
-    const predictionResult = await predictHealthRisk(healthData);
-    prediction.predictionType = predictionType;
-    prediction.predictionValue = predictionResult.predictionValue;
-    prediction.confidence = predictionResult.confidence;
-    prediction.factors = predictionResult.factors;
+    if (predictionType) prediction.predictionType = predictionType;
+    if (healthData) prediction.healthData = healthData;
+    if (predictionValue !== undefined) prediction.predictionValue = predictionValue;
 
     await prediction.save();
+
     res.json(prediction);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-const deletePrediction = async (req, res) => {
+exports.deletePrediction = async (req, res) => {
   try {
-    const prediction = await Prediction.findByIdAndDelete(req.params.id);
-    if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+    const prediction = await Prediction.findById(req.params.id);
+    if (!prediction) {
+      return res.status(404).json({ message: 'Prediction not found' });
+    }
 
-module.exports = {
-  getAllPredictions,
-  getPredictionById,
-  createPrediction,
-  updatePrediction,
-  deletePrediction
+    await prediction.deleteOne();
+
+    res.json({ message: 'Prediction deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
 };

@@ -121,10 +121,113 @@ const getPolicyDocumentByType = async (req, res) => {
   }
 };
 
+exports.getAllPolicies = async (req, res) => {
+  try {
+    const policies = await Policy.find();
+    res.json(policies);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+exports.createPolicy = async (req, res) => {
+  try {
+    const {
+      policyNumber,
+      companyName,
+      policyType,
+      status,
+      startDate,
+      renewalDate,
+      areaOfCover,
+      healthcarePlans,
+      employeeId
+    } = req.body;
+
+    if (!policyNumber || !companyName || !policyType || !startDate || !renewalDate || !areaOfCover || !employeeId) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const policy = new Policy({
+      policyNumber,
+      companyName,
+      policyType,
+      status: status || 'Active',
+      startDate,
+      renewalDate,
+      areaOfCover,
+      healthcarePlans: healthcarePlans || [],
+      employeeId
+    });
+
+    await policy.save();
+
+    res.status(201).json(policy);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+exports.updatePolicy = async (req, res) => {
+  try {
+    const policy = await Policy.findById(req.params.id);
+    if (!policy) {
+      return res.status(404).json({ message: 'Policy not found' });
+    }
+
+    const {
+      policyNumber,
+      companyName,
+      policyType,
+      status,
+      startDate,
+      renewalDate,
+      areaOfCover,
+      healthcarePlans,
+      employeeId
+    } = req.body;
+
+    if (policyNumber) policy.policyNumber = policyNumber;
+    if (companyName) policy.companyName = companyName;
+    if (policyType) policy.policyType = policyType;
+    if (status) policy.status = status;
+    if (startDate) policy.startDate = startDate;
+    if (renewalDate) policy.renewalDate = renewalDate;
+    if (areaOfCover) policy.areaOfCover = areaOfCover;
+    if (healthcarePlans) policy.healthcarePlans = healthcarePlans;
+    if (employeeId) policy.employeeId = employeeId;
+
+    await policy.save();
+
+    res.json(policy);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+exports.deletePolicy = async (req, res) => {
+  try {
+    const policy = await Policy.findById(req.params.id);
+    if (!policy) {
+      return res.status(404).json({ message: 'Policy not found' });
+    }
+
+    await policy.deleteOne();
+
+    res.json({ message: 'Policy deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
 module.exports = {
   getDocuments,
   getPolicyDetails,
   getPolicyById,
   getPolicyDocuments,
-  getPolicyDocumentByType
+  getPolicyDocumentByType,
+  getAllPolicies,
+  createPolicy,
+  updatePolicy,
+  deletePolicy
 }; 

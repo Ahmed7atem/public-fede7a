@@ -1,178 +1,114 @@
 const { WearableData } = require('../models/schemas');
-const { getEmployeeWearableData, saveWearableData, getAggregatedWearableData } = require('../services/dataService');
-const mongoose = require('mongoose');
 
-// Helper function to normalize IDs for comparison
-function normalizeId(id) {
-  if (!id) return null;
-  
-  // If it's an ObjectId, convert to string
-  if (typeof id === 'object' && id._id) {
-    id = id._id.toString();
-  } else if (typeof id === 'object') {
-    id = id.toString();
-  }
-
-  // Return the ID as is, preserving hyphens for UUIDs
-  return id;
-}
-
-exports.getWearableData = async (req, res) => {
+exports.getAllWearableData = async (req, res) => {
   try {
-    // Check if employee exists
-    if (!req.employee) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    
-    const { days = 30 } = req.query;
-    
-    // If admin, allow viewing any employee's data
-    if (req.employee.role === 'admin') {
-      const { employeeId } = req.query;
-      if (!employeeId) {
-        return res.status(400).json({ error: 'Employee ID is required for admin users' });
-      }
-      try {
-        const normalizedId = normalizeId(employeeId);
-        const wearableData = await getEmployeeWearableData(normalizedId, parseInt(days));
-        return res.json(wearableData);
-      } catch (error) {
-        return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-      }
-    }
-    
-    // Regular employees can only view their own data
-    try {
-      const normalizedId = normalizeId(req.employee._id);
-      const wearableData = await getEmployeeWearableData(normalizedId, parseInt(days));
-      res.json(wearableData);
-    } catch (error) {
-      return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-    }
+    const wearableData = await WearableData.find();
+    res.json(wearableData);
   } catch (error) {
-    console.error('Error in getWearableData:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+exports.getWearableDataById = async (req, res) => {
+  try {
+    const wearableData = await WearableData.findById(req.params.id);
+    if (!wearableData) {
+      return res.status(404).json({ message: 'Wearable data not found' });
+    }
+    res.json(wearableData);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.createWearableData = async (req, res) => {
   try {
-    // Check if employee exists
-    if (!req.employee) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    
-    // Admin cannot create wearable data
-    if (req.employee.role === 'admin') {
-      return res.status(403).json({ error: 'Admin users cannot create wearable data' });
-    }
-    
-    try {
-      const normalizedId = normalizeId(req.employee._id);
-      const wearableData = await saveWearableData(normalizedId, req.body);
-      res.status(201).json(wearableData);
-    } catch (error) {
-      return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-    }
-  } catch (error) {
-    console.error('Error in createWearableData:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
+    const {
+      employee,
+      logDate,
+      stepCount,
+      activeEnergy,
+      exerciseTime,
+      heartRate,
+      heartRateVariability,
+      sleepQuality,
+      timeInBed,
+      walkingDistance
+    } = req.body;
 
-exports.getAggregatedData = async (req, res) => {
-  try {
-    // Check if employee exists
-    if (!req.employee) {
-      return res.status(401).json({ error: 'Authentication required' });
+    if (!employee || !logDate) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-    
-    const { days = 30 } = req.query;
-    
-    // If admin, allow viewing any employee's data
-    if (req.employee.role === 'admin') {
-      const { employeeId } = req.query;
-      if (!employeeId) {
-        return res.status(400).json({ error: 'Employee ID is required for admin users' });
-      }
-      try {
-        const normalizedId = normalizeId(employeeId);
-        const aggregatedData = await getAggregatedWearableData(normalizedId, parseInt(days));
-        return res.json(aggregatedData);
-      } catch (error) {
-        return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-      }
-    }
-    
-    // Regular employees can only view their own data
-    try {
-      const normalizedId = normalizeId(req.employee._id);
-      const aggregatedData = await getAggregatedWearableData(normalizedId, parseInt(days));
-      res.json(aggregatedData);
-    } catch (error) {
-      return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-    }
+
+    const wearableData = new WearableData({
+      employee,
+      logDate,
+      stepCount: stepCount || 0,
+      activeEnergy: activeEnergy || 0,
+      exerciseTime: exerciseTime || 0,
+      heartRate: heartRate || 0,
+      heartRateVariability: heartRateVariability || 0,
+      sleepQuality: sleepQuality || 0,
+      timeInBed: timeInBed || 0,
+      walkingDistance: walkingDistance || 0
+    });
+
+    await wearableData.save();
+
+    res.status(201).json(wearableData);
   } catch (error) {
-    console.error('Error in getAggregatedData:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.updateWearableData = async (req, res) => {
   try {
-    // Check if employee exists
-    if (!req.employee) {
-      return res.status(401).json({ error: 'Authentication required' });
+    const wearableData = await WearableData.findById(req.params.id);
+    if (!wearableData) {
+      return res.status(404).json({ message: 'Wearable data not found' });
     }
-    
-    // Admin cannot update wearable data
-    if (req.employee.role === 'admin') {
-      return res.status(403).json({ error: 'Admin users cannot update wearable data' });
-    }
-    
-    try {
-      const objectId = convertToObjectId(req.employee._id);
-      const wearableData = await WearableData.findOneAndUpdate(
-        { employee: objectId, _id: req.params.id },
-        { $set: req.body },
-        { new: true }
-      );
-      if (!wearableData) return res.status(404).json({ error: 'Wearable data not found' });
-      res.json(wearableData);
-    } catch (error) {
-      return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-    }
+
+    const {
+      logDate,
+      stepCount,
+      activeEnergy,
+      exerciseTime,
+      heartRate,
+      heartRateVariability,
+      sleepQuality,
+      timeInBed,
+      walkingDistance
+    } = req.body;
+
+    if (logDate) wearableData.logDate = logDate;
+    if (stepCount !== undefined) wearableData.stepCount = stepCount;
+    if (activeEnergy !== undefined) wearableData.activeEnergy = activeEnergy;
+    if (exerciseTime !== undefined) wearableData.exerciseTime = exerciseTime;
+    if (heartRate !== undefined) wearableData.heartRate = heartRate;
+    if (heartRateVariability !== undefined) wearableData.heartRateVariability = heartRateVariability;
+    if (sleepQuality !== undefined) wearableData.sleepQuality = sleepQuality;
+    if (timeInBed !== undefined) wearableData.timeInBed = timeInBed;
+    if (walkingDistance !== undefined) wearableData.walkingDistance = walkingDistance;
+
+    await wearableData.save();
+
+    res.json(wearableData);
   } catch (error) {
-    console.error('Error in updateWearableData:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.deleteWearableData = async (req, res) => {
   try {
-    // Check if employee exists
-    if (!req.employee) {
-      return res.status(401).json({ error: 'Authentication required' });
+    const wearableData = await WearableData.findById(req.params.id);
+    if (!wearableData) {
+      return res.status(404).json({ message: 'Wearable data not found' });
     }
-    
-    // Admin cannot delete wearable data
-    if (req.employee.role === 'admin') {
-      return res.status(403).json({ error: 'Admin users cannot delete wearable data' });
-    }
-    
-    try {
-      const objectId = convertToObjectId(req.employee._id);
-      const wearableData = await WearableData.findOneAndDelete({
-        employee: objectId,
-        _id: req.params.id
-      });
-      if (!wearableData) return res.status(404).json({ error: 'Wearable data not found' });
-      res.status(204).send();
-    } catch (error) {
-      return res.status(400).json({ error: `Invalid employee ID: ${error.message}` });
-    }
+
+    await wearableData.deleteOne();
+
+    res.json({ message: 'Wearable data deleted successfully' });
   } catch (error) {
-    console.error('Error in deleteWearableData:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 }; 

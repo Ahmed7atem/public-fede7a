@@ -1,74 +1,12 @@
 {
   "info": {
-    "name": "MedBond Health Predictions API - Complete Collection",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Comprehensive API collection for the MedBond Health Predictions platform"
+    "name": "MedBond API - Simplified",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Environment Setup",
-      "item": [
-        {
-          "name": "Set Base URL",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('base_url', 'http://localhost:3000');"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
       "name": "Authentication",
       "item": [
-        {
-          "name": "Register Admin",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"password\": \"adminPass2025\",\n    \"role\": \"admin\",\n    \"age\": 35,\n    \"gender\": \"Male\",\n    \"children\": 0,\n    \"smoker\": false\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
-            }
-          }
-        },
-        {
-          "name": "Register Employee",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Employee User\",\n    \"email\": \"employee@medbond.com\",\n    \"password\": \"employee123\",\n    \"role\": \"employee\",\n    \"age\": 27,\n    \"gender\": \"Male\",\n    \"children\": 2,\n    \"smoker\": true\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
-            }
-          }
-        },
         {
           "name": "Login Admin",
           "request": {
@@ -88,20 +26,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "login"]
             }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set('admin_token', jsonData.token);",
-                  "pm.environment.set('admin_id', jsonData.user._id);"
-                ]
-              }
-            }
-          ]
+          }
         },
         {
           "name": "Login Employee",
@@ -115,140 +40,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"employee@medbond.com\",\n    \"password\": \"employee123\"\n}"
+              "raw": "{\n    \"email\": \"employee8f7b7927@example.com\",\n    \"password\": \"password123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/auth/login",
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "login"]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set('employee_token', jsonData.token);",
-                  "pm.environment.set('employee_id', jsonData.user._id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Profile (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/profile",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "profile"]
-            }
-          }
-        },
-        {
-          "name": "Get Profile (Employee)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/profile",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "profile"]
-            }
-          }
-        },
-        {
-          "name": "Update Profile",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@medbond.com\",\n  \"currentPassword\": \"employee123\",\n  \"newPassword\": \"newpassword123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/profile",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "profile"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin Endpoints",
-      "item": [
-        {
-          "name": "Get All Data",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/all-data",
-              "host": ["{{base_url}}"],
-              "path": ["api", "all-data"]
-            }
-          }
-        },
-        {
-          "name": "Get Dashboard Stats",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/admin/dashboard",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "dashboard"]
-            }
-          }
-        },
-        {
-          "name": "Get System Health",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/admin/system-health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "admin", "system-health"]
             }
           }
         }
@@ -264,47 +61,13 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
+                "value": "ADMIN_TOKEN"
               }
             ],
             "url": {
               "raw": "{{base_url}}/api/employees",
               "host": ["{{base_url}}"],
               "path": ["api", "employees"]
-            }
-          }
-        },
-        {
-          "name": "Get Employee By ID (MongoDB)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/employees/{{employee_mongodb_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "employees", "{{employee_mongodb_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Get Employee By ID (UUID)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/employees/{{employee_uuid}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "employees", "{{employee_uuid}}"]
             }
           }
         },
@@ -315,7 +78,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
+                "value": "ADMIN_TOKEN"
               },
               {
                 "key": "Content-Type",
@@ -324,54 +87,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"New Employee\",\n  \"email\": \"new@example.com\",\n  \"password\": \"password123\",\n  \"age\": 35,\n  \"gender\": \"Female\",\n  \"role\": \"employee\",\n  \"children\": 2,\n  \"smoker\": false\n}"
+              "raw": "{\n    \"name\": \"New Employee\",\n    \"email\": \"new@example.com\",\n    \"password\": \"password123\",\n    \"age\": 30,\n    \"gender\": \"Male\",\n    \"children\": 0,\n    \"smoker\": false\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/employees",
               "host": ["{{base_url}}"],
               "path": ["api", "employees"]
-            }
-          }
-        },
-        {
-          "name": "Update Employee",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\",\n  \"age\": 40,\n  \"gender\": \"Male\",\n  \"role\": \"employee\",\n  \"children\": 1,\n  \"smoker\": true\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/employees/{{employee_mongodb_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "employees", "{{employee_mongodb_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Delete Employee",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/employees/{{employee_mongodb_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "employees", "{{employee_mongodb_id}}"]
             }
           }
         }
@@ -386,17 +107,17 @@
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "EMPLOYEE_TOKEN"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employee\": \"{{employee_mongodb_id}}\",\n  \"weight\": 70,\n  \"height\": 175,\n  \"bmi\": 22.9,\n  \"hemoglobin\": 14.5,\n  \"cholesterol\": 180,\n  \"bloodSugar\": 95,\n  \"creatinine\": 0.9,\n  \"chronicDisease\": \"None\",\n  \"chronicDiseaseCount\": 0,\n  \"familyMedicalHistory\": \"None\"\n}"
+              "raw": "{\n    \"weight\": 70,\n    \"height\": 175,\n    \"bmi\": 22.9,\n    \"hemoglobin\": 14.5,\n    \"cholesterol\": 180,\n    \"bloodSugar\": 95,\n    \"creatinine\": 0.9\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/health",
@@ -412,110 +133,13 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
+                "value": "EMPLOYEE_TOKEN"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/health/{{employee_mongodb_id}}",
+              "raw": "{{base_url}}/api/health",
               "host": ["{{base_url}}"],
-              "path": ["api", "health", "{{employee_mongodb_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Update Health Data",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"weight\": 72,\n  \"height\": 175,\n  \"bmi\": 23.5,\n  \"hemoglobin\": 14.2,\n  \"cholesterol\": 175,\n  \"bloodSugar\": 90,\n  \"creatinine\": 0.85\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/health/{{employee_mongodb_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health", "{{employee_mongodb_id}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Sleep Data",
-      "item": [
-        {
-          "name": "Create Sleep Data",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"date\": \"2024-04-25\",\n  \"duration\": 7.5,\n  \"quality\": 8,\n  \"deepSleepPercentage\": 30,\n  \"remSleepPercentage\": 25,\n  \"lightSleepPercentage\": 45,\n  \"sleepEfficiency\": 90,\n  \"restlessness\": 5,\n  \"notes\": \"Slept well after exercising\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/sleep",
-              "host": ["{{base_url}}"],
-              "path": ["api", "sleep"]
-            }
-          }
-        },
-        {
-          "name": "Get Sleep Data",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/sleep",
-              "host": ["{{base_url}}"],
-              "path": ["api", "sleep"]
-            }
-          }
-        },
-        {
-          "name": "Update Sleep Data",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"duration\": 8.0,\n  \"quality\": 9,\n  \"deepSleepPercentage\": 32,\n  \"notes\": \"Updated notes - slept better than initially reported\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/sleep/{{sleep_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "sleep", "{{sleep_id}}"]
+              "path": ["api", "health"]
             }
           }
         }
@@ -531,7 +155,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
+                "value": "EMPLOYEE_TOKEN"
               },
               {
                 "key": "Content-Type",
@@ -540,29 +164,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"provider\": \"507f1f77bcf86cd799439011\",\n    \"claimAmount\": 500,\n    \"patientAge\": 35,\n    \"providerSpecialty\": \"Cardiology\",\n    \"patientIncome\": 75000,\n    \"claimDate\": \"2024-04-24\",\n    \"patientMaritalStatus\": \"Single\",\n    \"patientEmploymentStatus\": \"Employed\",\n    \"claimType\": \"Routine\",\n    \"diagnosisDescription\": \"Annual checkup\",\n    \"procedureDescription\": \"Physical examination\"\n}"
+              "raw": "{\n    \"provider\": \"Hospital A\",\n    \"claimAmount\": 500,\n    \"claimType\": \"General\",\n    \"diagnosisDescription\": \"Annual checkup\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/claims",
               "host": ["{{base_url}}"],
               "path": ["api", "claims"]
-            }
-          }
-        },
-        {
-          "name": "Get Claim by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/claims/{{claim_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "claims", "{{claim_id}}"]
             }
           }
         },
@@ -573,314 +180,13 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
+                "value": "ADMIN_TOKEN"
               }
             ],
             "url": {
               "raw": "{{base_url}}/api/claims",
               "host": ["{{base_url}}"],
               "path": ["api", "claims"]
-            }
-          }
-        },
-        {
-          "name": "Update Claim Status",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"approved\",\n  \"notes\": \"Claim approved after review\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/claims/{{claim_id}}/status",
-              "host": ["{{base_url}}"],
-              "path": ["api", "claims", "{{claim_id}}", "status"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "File Attachments",
-      "item": [
-        {
-          "name": "Upload Files",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "files",
-                  "type": "file",
-                  "src": []
-                },
-                {
-                  "key": "type",
-                  "value": "claim",
-                  "type": "text"
-                },
-                {
-                  "key": "referenceId",
-                  "value": "{{claim_id}}",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "Medical bills and receipts",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/attachments/upload",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "upload"]
-            }
-          }
-        },
-        {
-          "name": "Download File",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/attachments/download/{{file_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "download", "{{file_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Get File Metadata",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/attachments/metadata/{{file_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "metadata", "{{file_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Delete File",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/attachments/{{file_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "{{file_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Get All Attachments",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/attachments/{{type}}/{{referenceId}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "{{type}}", "{{referenceId}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Machine Learning",
-      "item": [
-        {
-          "name": "Predict Insurance Costs",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"age\": 35,\n  \"gender\": \"Male\",\n  \"bmi\": 26.5,\n  \"children\": 2,\n  \"smoker\": false,\n  \"region\": \"southwest\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/ml/predict-insurance",
-              "host": ["{{base_url}}"],
-              "path": ["api", "ml", "predict-insurance"]
-            }
-          }
-        },
-        {
-          "name": "Predict Health Risk",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{employee_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"age\": 45,\n  \"bmi\": 29.8,\n  \"bloodPressure\": 135,\n  \"cholesterol\": 240,\n  \"glucose\": 100,\n  \"smoker\": true,\n  \"alcoholConsumption\": \"moderate\",\n  \"exerciseHoursPerWeek\": 2\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/ml/predict-health-risk",
-              "host": ["{{base_url}}"],
-              "path": ["api", "ml", "predict-health-risk"]
-            }
-          }
-        },
-        {
-          "name": "Get Model Performance Metrics",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/ml/model-metrics",
-              "host": ["{{base_url}}"],
-              "path": ["api", "ml", "model-metrics"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Analytics",
-      "item": [
-        {
-          "name": "Get Health Trends",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/analytics/health-trends?timeframe=monthly",
-              "host": ["{{base_url}}"],
-              "path": ["api", "analytics", "health-trends"],
-              "query": [
-                {
-                  "key": "timeframe",
-                  "value": "monthly"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Claim Statistics",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/analytics/claim-statistics",
-              "host": ["{{base_url}}"],
-              "path": ["api", "analytics", "claim-statistics"]
-            }
-          }
-        },
-        {
-          "name": "Get Employee Health Overview",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/analytics/employee-health-overview",
-              "host": ["{{base_url}}"],
-              "path": ["api", "analytics", "employee-health-overview"]
-            }
-          }
-        },
-        {
-          "name": "Export Analytics Report",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/analytics/export?format=csv&report=health-trends",
-              "host": ["{{base_url}}"],
-              "path": ["api", "analytics", "export"],
-              "query": [
-                {
-                  "key": "format",
-                  "value": "csv"
-                },
-                {
-                  "key": "report",
-                  "value": "health-trends"
-                }
-              ]
             }
           }
         }

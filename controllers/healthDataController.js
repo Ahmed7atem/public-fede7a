@@ -1,93 +1,124 @@
 const { HealthData } = require('../models/schemas');
-const mongoose = require('mongoose');
 
-// Helper function to convert UUID to ObjectId
-function convertToObjectId(id) {
-  if (mongoose.Types.ObjectId.isValid(id)) {
-    return new mongoose.Types.ObjectId(id);
-  }
-  // Convert UUID to ObjectId by taking first 24 chars after removing hyphens
-  const hexId = id.replace(/-/g, '').substring(0, 24);
-  if (!/^[0-9a-fA-F]{24}$/.test(hexId)) {
-    throw new Error('Invalid ID format');
-  }
-  return new mongoose.Types.ObjectId(hexId);
-}
-
-// Get health data
-exports.getHealthData = async (req, res) => {
+exports.getAllHealthData = async (req, res) => {
   try {
-    const employeeId = req.params.id || req.employee._id;
-    
-    const healthData = await HealthData.findOne({ employee: employeeId }).sort({ recordedAt: -1 });
+    const healthData = await HealthData.find();
+    res.json(healthData);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+exports.getHealthDataById = async (req, res) => {
+  try {
+    const healthData = await HealthData.findById(req.params.id);
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
     res.json(healthData);
   } catch (error) {
-    console.error('Error in getHealthData:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-// Add health data
-exports.addHealthData = async (req, res) => {
+exports.createHealthData = async (req, res) => {
   try {
-    const employeeId = req.employee._id;
-    
+    const {
+      employee,
+      weight,
+      height,
+      bmi,
+      hemoglobin,
+      cholesterol,
+      bloodSugar,
+      creatinine,
+      chronicDisease,
+      chronicDiseaseCount,
+      familyMedicalHistory
+    } = req.body;
+
+    if (!employee || !weight || !height) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
     const healthData = new HealthData({
-      ...req.body,
-      employee: employeeId,
+      employee,
+      weight,
+      height,
+      bmi: bmi || calculateBMI(weight, height),
+      hemoglobin,
+      cholesterol,
+      bloodSugar,
+      creatinine,
+      chronicDisease,
+      chronicDiseaseCount,
+      familyMedicalHistory,
       recordedAt: new Date()
     });
-    
+
     await healthData.save();
+
     res.status(201).json(healthData);
   } catch (error) {
-    console.error('Error in addHealthData:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-// Update health data
 exports.updateHealthData = async (req, res) => {
   try {
-    const { id } = req.params;
-    const employeeId = req.employee._id;
-    
-    const healthData = await HealthData.findOneAndUpdate(
-      { _id: id, employee: employeeId },
-      { $set: req.body },
-      { new: true }
-    );
-    
+    const healthData = await HealthData.findById(req.params.id);
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
+
+    const {
+      weight,
+      height,
+      hemoglobin,
+      cholesterol,
+      bloodSugar,
+      creatinine,
+      chronicDisease,
+      chronicDiseaseCount,
+      familyMedicalHistory
+    } = req.body;
+
+    if (weight) healthData.weight = weight;
+    if (height) healthData.height = height;
+    if (weight && height) healthData.bmi = calculateBMI(weight, height);
+    if (hemoglobin) healthData.hemoglobin = hemoglobin;
+    if (cholesterol) healthData.cholesterol = cholesterol;
+    if (bloodSugar) healthData.bloodSugar = bloodSugar;
+    if (creatinine) healthData.creatinine = creatinine;
+    if (chronicDisease) healthData.chronicDisease = chronicDisease;
+    if (chronicDiseaseCount) healthData.chronicDiseaseCount = chronicDiseaseCount;
+    if (familyMedicalHistory) healthData.familyMedicalHistory = familyMedicalHistory;
+
+    await healthData.save();
+
     res.json(healthData);
   } catch (error) {
-    console.error('Error in updateHealthData:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-// Delete health data
 exports.deleteHealthData = async (req, res) => {
   try {
-    const { id } = req.params;
-    const employeeId = req.employee._id;
-    
-    const healthData = await HealthData.findOneAndDelete({
-      _id: id,
-      employee: employeeId
-    });
-    
+    const healthData = await HealthData.findById(req.params.id);
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
+
+    await healthData.deleteOne();
+
     res.json({ message: 'Health data deleted successfully' });
   } catch (error) {
-    console.error('Error in deleteHealthData:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
+};
+
+// Helper function to calculate BMI
+const calculateBMI = (weight, height) => {
+  const heightInMeters = height / 100;
+  return (weight / (heightInMeters * heightInMeters)).toFixed(2);
 };

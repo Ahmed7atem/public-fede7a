@@ -1,31 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
-const { validate, schemas } = require('../middleware/validate');
+const { auth } = require('../middleware/auth');
 const {
   getWearableData,
   createWearableData,
-  getAggregatedData,
-  updateWearableData,
-  deleteWearableData
+  updateWearableData
 } = require('../controllers/wearableController');
 
-// Apply authentication to all routes
-router.use(authenticateToken);
+router.use(auth);
 
-// Get wearable data
-router.get('/', getWearableData);
-
-// Create wearable data
-router.post('/', validate(schemas.wearableData), createWearableData);
-
-// Get aggregated wearable data
-router.get('/aggregated', getAggregatedData);
-
-// Update wearable data
-router.put('/', validate(schemas.wearableData), updateWearableData);
-
-// Delete wearable data
-router.delete('/', deleteWearableData);
+router.get('/:employeeId', getWearableData);
+router.post('/', createWearableData);
+router.put('/:id', updateWearableData);
 
 module.exports = router; 

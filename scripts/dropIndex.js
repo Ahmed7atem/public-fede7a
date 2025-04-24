@@ -1,27 +1,23 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-async function dropIndex() {
+const dropIndexes = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_CONNECT_URI;
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Drop the problematic index
-    await mongoose.connection.db.collection('employees').dropIndex('id_1');
-    console.log('Successfully dropped index');
+    // Drop indexes for all collections
+    await mongoose.model('Employee').collection.dropIndexes();
+    await mongoose.model('HealthData').collection.dropIndexes();
+    await mongoose.model('WearableData').collection.dropIndexes();
+    await mongoose.model('Prediction').collection.dropIndexes();
 
-    // List remaining indexes
-    const indexes = await mongoose.connection.db.collection('employees').listIndexes().toArray();
-    console.log('Remaining indexes:', indexes);
-
+    console.log('All indexes dropped successfully');
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error dropping indexes:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
   }
-}
+};
 
-dropIndex(); 
+dropIndexes(); 

@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middleware/auth');
-const providerController = require('../controllers/providerController');
+const { auth, adminAuth } = require('../middleware/auth');
+const {
+  getAllProviders,
+  getProviderById,
+  createProvider,
+  updateProvider,
+  deleteProvider
+} = require('../controllers/providerController');
 
-// GET /api/providers - Get all healthcare providers
-router.get('/', auth, providerController.getAllProviders);
+router.use(auth);
 
-// GET /api/providers/search - Search healthcare providers with filters
-router.get('/search', auth, providerController.searchProviders);
+// Admin routes
+router.post('/', adminAuth, createProvider);
+router.put('/:id', adminAuth, updateProvider);
+router.delete('/:id', adminAuth, deleteProvider);
 
-// GET /api/providers/:id - Get provider by ID
-router.get('/:id', auth, providerController.getProviderById);
-
-// Admin-only routes
-// POST /api/providers - Add a new provider
-router.post('/', auth, providerController.addProvider);
-
-// PUT /api/providers/:id - Update a provider
-router.put('/:id', auth, providerController.updateProvider);
+// Employee routes
+router.get('/', getAllProviders);
+router.get('/:id', getProviderById);
 
 module.exports = router; 

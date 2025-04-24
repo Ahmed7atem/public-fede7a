@@ -1,23 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { validate, schemas } = require('../middleware/validate');
+const { auth } = require('../middleware/auth');
 const {
   getHealthData,
-  addHealthData,
-  updateHealthData,
-  deleteHealthData
+  createHealthData,
+  updateHealthData
 } = require('../controllers/healthDataController');
 
-// Get health data
-router.get('/', getHealthData);
+router.use(auth);
 
-// Add health data
-router.post('/', validate(schemas.healthData), addHealthData);
-
-// Update health data
-router.put('/:id', validate(schemas.healthData), updateHealthData);
-
-// Delete health data
-router.delete('/:id', deleteHealthData);
+router.get('/:employeeId', getHealthData);
+router.post('/', createHealthData);
+router.put('/:id', updateHealthData);
 
 module.exports = router;

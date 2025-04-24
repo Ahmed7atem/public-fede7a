@@ -3,36 +3,10 @@ const { Provider } = require('../models/schemas');
 // Get all healthcare providers
 const getAllProviders = async (req, res) => {
   try {
-    const providers = await Provider.find({ isActive: true });
+    const providers = await Provider.find();
     res.json(providers);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching providers', error: error.message });
-  }
-};
-
-// Search providers with filters (location, category, type)
-const searchProviders = async (req, res) => {
-  try {
-    const { location, category, type } = req.query;
-    
-    let query = { isActive: true };
-    
-    if (location) {
-      query['location.city'] = { $regex: location, $options: 'i' };
-    }
-    
-    if (category) {
-      query.category = { $regex: category, $options: 'i' };
-    }
-    
-    if (type) {
-      query.type = type;
-    }
-    
-    const providers = await Provider.find(query);
-    res.json(providers);
-  } catch (error) {
-    res.status(500).json({ message: 'Error searching providers', error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
@@ -40,106 +14,119 @@ const searchProviders = async (req, res) => {
 const getProviderById = async (req, res) => {
   try {
     const provider = await Provider.findById(req.params.id);
-    
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-    
-    if (!provider.isActive) {
-      return res.status(404).json({ message: 'Provider is not active' });
-    }
-    
     res.json(provider);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching provider details', error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-// Admin only: Add a new provider
-const addProvider = async (req, res) => {
+// Create a new provider
+const createProvider = async (req, res) => {
   try {
-    // Only admins can add providers
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
     const {
       name,
       type,
       category,
       location,
       availability,
+      ratings,
       experienceYears,
-      contactInformation
+      contactInformation,
+      isActive
     } = req.body;
-    
+
     if (!name || !type || !category || !location) {
-      return res.status(400).json({ message: 'Missing required provider information' });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-    
-    const newProvider = new Provider({
+
+    const provider = new Provider({
+      name,
+      type,
+      category,
+      location,
+      availability: availability || {
+        days: [],
+        hours: ''
+      },
+      ratings: ratings || 0,
+      experienceYears,
+      contactInformation: contactInformation || {
+        phone: '',
+        email: '',
+        website: ''
+      },
+      isActive: isActive !== undefined ? isActive : true
+    });
+
+    await provider.save();
+
+    res.status(201).json(provider);
+  } catch (error) {
+    res.status(500).json({ message: `Server error - ${error.message}` });
+  }
+};
+
+// Update a provider
+const updateProvider = async (req, res) => {
+  try {
+    const provider = await Provider.findById(req.params.id);
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+
+    const {
       name,
       type,
       category,
       location,
       availability,
+      ratings,
       experienceYears,
-      contactInformation
-    });
-    
-    await newProvider.save();
-    
-    res.status(201).json({
-      message: 'Provider added successfully',
-      provider: newProvider
-    });
+      contactInformation,
+      isActive
+    } = req.body;
+
+    if (name) provider.name = name;
+    if (type) provider.type = type;
+    if (category) provider.category = category;
+    if (location) provider.location = location;
+    if (availability) provider.availability = availability;
+    if (ratings !== undefined) provider.ratings = ratings;
+    if (experienceYears) provider.experienceYears = experienceYears;
+    if (contactInformation) provider.contactInformation = contactInformation;
+    if (isActive !== undefined) provider.isActive = isActive;
+
+    await provider.save();
+
+    res.json(provider);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding provider', error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-// Admin only: Update provider
-const updateProvider = async (req, res) => {
+// Delete a provider
+const deleteProvider = async (req, res) => {
   try {
-    // Only admins can update providers
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
     const provider = await Provider.findById(req.params.id);
-    
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-    
-    // Fields that can be updated
-    const updatableFields = [
-      'name', 'type', 'category', 'location', 'availability', 
-      'ratings', 'experienceYears', 'contactInformation', 'isActive'
-    ];
-    
-    // Update only allowed fields
-    updatableFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        provider[field] = req.body[field];
-      }
-    });
-    
-    await provider.save();
-    
-    res.json({
-      message: 'Provider updated successfully',
-      provider: provider
-    });
+
+    await provider.deleteOne();
+
+    res.json({ message: 'Provider deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating provider', error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 module.exports = {
   getAllProviders,
-  searchProviders,
   getProviderById,
-  addProvider,
-  updateProvider
+  createProvider,
+  updateProvider,
+  deleteProvider
 }; 

@@ -1,6 +1,9 @@
 const { Employee } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const HealthData = require('../models/schemas').HealthData;
+const WearableData = require('../models/schemas').WearableData;
+const SleepData = require('../models/schemas').SleepData;
 
 // Helper function to convert UUID to ObjectId
 const convertToObjectId = (id) => {
@@ -37,145 +40,143 @@ const getAgeGroup = (age) => {
 
 exports.getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().select('-password');
+    const employees = await Employee.find({}, '-password');
     res.json(employees);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.getEmployeeById = async (req, res) => {
   try {
-    // Try to find by MongoDB _id first
-    let employee = null;
-    
-    // Check if it's a valid MongoDB ObjectId
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      employee = await Employee.findById(req.params.id).select('-password');
-    }
-    
-    // If not found, try to find by UUID id field
+    const employee = await Employee.findById(req.params.id, '-password');
     if (!employee) {
-      employee = await Employee.findOne({ id: req.params.id }).select('-password');
+      return res.status(404).json({ message: 'Employee not found' });
     }
-    
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-    
     res.json(employee);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, age, gender, role, _id } = req.body;
+    const { name, email, password, role, age, gender, children, smoker } = req.body;
+    
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email and password are required' });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Check if email already exists
     const existingEmployee = await Employee.findOne({ email });
     if (existingEmployee) {
-      return res.status(400).json({ error: 'Email already registered' });
+      return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const employee = new Employee({
-      _id: _id || new mongoose.Types.ObjectId().toString(), // Use provided ID or generate a new one
       name,
       email,
-      password: hashedPassword,
-      age: age || 0,
-      ageGroup: getAgeGroup(age || 0),
-      gender: gender || 'Unknown',
+      age,
+      ageGroup: getAgeGroup(age),
+      gender,
+      password,
+      children: children || 0,
+      smoker: smoker || false,
       role: role || 'employee'
     });
 
     await employee.save();
 
-    const response = employee.toObject();
-    delete response.password;
-    res.status(201).json(response);
+    res.status(201).json({
+      _id: employee._id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.updateEmployee = async (req, res) => {
   try {
-    const { name, email, age, gender, role } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required' });
+    const { name, email, age, gender, children, smoker, role } = req.body;
+    
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
     }
 
-    // Try to find by MongoDB _id first
-    let employee = null;
-    
-    // Check if it's a valid MongoDB ObjectId
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      employee = await Employee.findById(req.params.id);
-    }
-    
-    // If not found, try to find by UUID id field
-    if (!employee) {
-      employee = await Employee.findOne({ id: req.params.id });
-    }
-    
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-
-    // Check if email is being changed and if it already exists
-    if (email !== employee.email) {
+    if (email && email !== employee.email) {
       const existingEmployee = await Employee.findOne({ email });
-      if (existingEmployee && existingEmployee._id.toString() !== employee._id.toString()) {
-        return res.status(400).json({ error: 'Email already registered' });
+      if (existingEmployee) {
+        return res.status(400).json({ message: 'Email already registered' });
       }
     }
 
-    employee.name = name;
-    employee.email = email;
-    employee.age = age || 0;
-    employee.gender = gender || 'Unknown';
-    employee.role = role || 'employee';
+    employee.name = name || employee.name;
+    employee.email = email || employee.email;
+    employee.age = age || employee.age;
+    employee.ageGroup = age ? getAgeGroup(age) : employee.ageGroup;
+    employee.gender = gender || employee.gender;
+    employee.children = children !== undefined ? children : employee.children;
+    employee.smoker = smoker !== undefined ? smoker : employee.smoker;
+    employee.role = role || employee.role;
 
     await employee.save();
 
-    const response = employee.toObject();
-    delete response.password;
-    res.json(response);
+    res.json({
+      _id: employee._id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    // Try to find and delete by MongoDB _id first
-    let employee = null;
-    
-    // Check if it's a valid MongoDB ObjectId
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      employee = await Employee.findByIdAndDelete(req.params.id);
-    }
-    
-    // If not found, try to find and delete by UUID id field
+    const employee = await Employee.findById(req.params.id);
     if (!employee) {
-      employee = await Employee.findOneAndDelete({ id: req.params.id });
+      return res.status(404).json({ message: 'Employee not found' });
     }
-    
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-    
-    res.status(204).send();
+
+    await employee.deleteOne();
+
+    res.json({ message: 'Employee deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
-module.exports = exports;
+const getAllEmployeeData = async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    const employeeData = await Promise.all(employees.map(async (employee) => {
+      const healthData = await HealthData.find({ employeeId: employee._id });
+      const wearableData = await WearableData.find({ employeeId: employee._id });
+      const sleepData = await SleepData.find({ employeeId: employee._id });
+      
+      return {
+        ...employee.toObject(),
+        healthData,
+        wearableData,
+        sleepData
+      };
+    }));
+
+    res.json(employeeData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  getAllEmployees,
+  getEmployeeById,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee,
+  getAllEmployeeData
+};

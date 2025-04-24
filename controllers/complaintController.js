@@ -123,16 +123,10 @@ const updateComplaintStatus = async (req, res) => {
 // Admin only: Get all complaints
 const getAllComplaints = async (req, res) => {
   try {
-    // Only admins can view all complaints
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    const complaints = await ComplaintTicket.find().sort({ createdAt: -1 });
-    
+    const complaints = await ComplaintTicket.find();
     res.json(complaints);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching complaints', error: error.message });
+    res.status(500).json({ message: `Server error - ${error.message}` });
   }
 };
 
