@@ -111,7 +111,7 @@ app.use('/api/wearable-logs', auth, dataSubmissionLimiter, wearableLogRoutes);
 app.use('/api/employees', auth, employeeRoutes);
 app.use('/api/reports', auth, reportRoutes);
 app.use('/api/feedback', auth, feedbackRoutes);
-app.use('/api/policy', auth, policyRoutes);
+app.use('/api/policy', policyRoutes);
 app.use('/api/claims', auth, claimRoutes);
 app.use('/api/providers', auth, providerRoutes);
 app.use('/api/tickets', auth, ticketRoutes);
