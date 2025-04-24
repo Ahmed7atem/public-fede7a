@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { HealthData } = require('../models/schemas');
 
+// Helper function to calculate BMI
+const calculateBMI = (weight, height) => {
+  const heightInMeters = height / 100;
+  return (weight / (heightInMeters * heightInMeters)).toFixed(2);
+};
+
 // Get all health data
 router.get('/', async (req, res) => {
   try {
@@ -66,9 +72,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
-// Helper function to calculate BMI
-const calculateBMI = (weight, height) => {
-  const heightInMeters = height / 100;
-  return (weight / (heightInMeters * heightInMeters)).toFixed(2);
-};
