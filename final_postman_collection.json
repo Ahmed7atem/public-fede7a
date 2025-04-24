@@ -1,1 +1,409 @@
- 
+{
+  "info": {
+    "name": "Health Predictions API (Final)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"password\": \"adminPass2025\",\n    \"role\": \"admin\",\n    \"age\": 35,\n    \"gender\": \"Male\",\n    \"children\": 0,\n    \"smoker\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Employee User\",\n    \"email\": \"employee8f7b7927@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"employee\",\n    \"age\": 27,\n    \"gender\": \"Male\",\n    \"children\": 2,\n    \"smoker\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@medbond.com\",\n    \"password\": \"adminPass2025\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"employee8f7b7927@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile (Employee)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Endpoints",
+      "item": [
+        {
+          "name": "Get All Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/all-data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "all-data"]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/system-health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "system-health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/employees",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees"]
+            }
+          }
+        },
+        {
+          "name": "Get Employee By ID (MongoDB)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/employees/{{employee_mongodb_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees", "{{employee_mongodb_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Employee By ID (UUID)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/employees/{{employee_uuid}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees", "{{employee_uuid}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New Employee\",\n    \"email\": \"new.employee@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"employee\",\n    \"age\": 30,\n    \"gender\": \"Female\",\n    \"children\": 1,\n    \"smoker\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/employees",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees"]
+            }
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Employee\",\n    \"email\": \"employee8f7b7927@example.com\",\n    \"age\": 28,\n    \"gender\": \"Male\",\n    \"role\": \"employee\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/employees/{{employee_uuid}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees", "{{employee_uuid}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Data",
+      "item": [
+        {
+          "name": "Get Health Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/health-data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health-data"]
+            }
+          }
+        },
+        {
+          "name": "Submit Health Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employee_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"weight\": 75,\n    \"height\": 180,\n    \"bmi\": 23.1,\n    \"hemoglobin\": 14.5,\n    \"cholesterol\": 190,\n    \"bloodSugar\": 90,\n    \"creatinine\": 0.8,\n    \"chronicDisease\": \"None\",\n    \"chronicDiseaseCount\": 0,\n    \"familyMedicalHistory\": \"None\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/health-data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health-data"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wearable Data",
+      "item": [
+        {
+          "name": "Get Wearable Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/wearable-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "wearable-logs"]
+            }
+          }
+        },
+        {
+          "name": "Submit Wearable Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{employee_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"steps\": 10000,\n    \"heartRate\": 72,\n    \"sleepHours\": 7.5,\n    \"activeMinutes\": 45,\n    \"caloriesBurnt\": 2200,\n    \"deviceType\": \"FitBit\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/wearable-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "wearable-logs"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://public-fede7a.vercel.app"
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "employee_token",
+      "value": ""
+    },
+    {
+      "key": "employee_mongodb_id",
+      "value": "68095d6f7394607b19e574fd"
+    },
+    {
+      "key": "employee_uuid",
+      "value": "8f7b7927-6c04-401a-ab0b-61000132f970"
+    }
+  ]
+} 
