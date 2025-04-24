@@ -3,18 +3,41 @@ const { Employee } = require('../models/schemas');
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    // Get token from header
+    const authHeader = req.header('Authorization');
+    if (!authHeader) {
+      return res.status(401).json({ 
+        error: 'Authentication required', 
+        detail: 'No Authorization header provided' 
+      });
+    }
+
+    // Extract token from Bearer scheme
+    const token = authHeader.replace('Bearer ', '');
     if (!token) {
-      return res.status(401).json({ error: 'Authentication required', detail: 'No token provided' });
+      return res.status(401).json({ 
+        error: 'Authentication required', 
+        detail: 'No token provided in Authorization header' 
+      });
     }
 
     try {
+      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       
-      // Convert ID to string if it's not already
-      const employeeId = decoded.id.toString();
-      const employee = await Employee.findById(employeeId);
+      // Ensure decoded object has required properties
+      if (!decoded || !decoded.id) {
+        return res.status(401).json({ 
+          error: 'Invalid token', 
+          detail: 'Token payload is invalid' 
+        });
+      }
 
+      // Convert ID to string
+      const employeeId = decoded.id.toString();
+      
+      // Find employee
+      const employee = await Employee.findById(employeeId);
       if (!employee) {
         console.error('Employee not found for ID:', employeeId);
         return res.status(401).json({ 
@@ -23,17 +46,20 @@ const auth = async (req, res, next) => {
         });
       }
 
-      // Add token info to response for debugging (remove in production)
-      req.token = token;
+      // Attach employee to request
       req.employee = employee;
+      req.token = token;
+      
+      // Add debug info (remove in production)
       req.tokenInfo = {
         id: employeeId,
         role: decoded.role,
         exp: new Date(decoded.exp * 1000).toISOString()
       };
+
       next();
     } catch (jwtError) {
-      // Handle specific JWT errors more gracefully
+      // Handle specific JWT errors
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({ 
           error: 'Authentication expired', 
@@ -45,11 +71,18 @@ const auth = async (req, res, next) => {
           detail: 'Token signature verification failed' 
         });
       }
-      throw jwtError;
+      console.error('JWT verification error:', jwtError);
+      return res.status(401).json({ 
+        error: 'Authentication failed', 
+        detail: jwtError.message 
+      });
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    res.status(401).json({ error: 'Please authenticate', detail: error.message });
+    res.status(500).json({ 
+      error: 'Authentication error', 
+      detail: error.message 
+    });
   }
 };
 

@@ -1,6 +1,7 @@
 const { Employee } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 exports.login = async (req, res) => {
   try {
@@ -29,33 +30,91 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
+    // Validate request body
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({ 
+        error: 'Invalid request body',
+        detail: 'Request body must be a valid JSON object'
+      });
+    }
+
     const { name, email, password, role } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: 'Name, email and password are required' });
+    
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        detail: 'Name, email and password are required'
+      });
+    }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        error: 'Invalid email format',
+        detail: 'Please provide a valid email address'
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        error: 'Password too short',
+        detail: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Check for existing employee
     const existingEmployee = await Employee.findOne({ email });
-    if (existingEmployee) return res.status(400).json({ error: 'Email already registered' });
+    if (existingEmployee) {
+      return res.status(400).json({ 
+        error: 'Email already registered',
+        detail: 'This email address is already in use'
+      });
+    }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create new employee
     const employee = new Employee({
+      _id: new mongoose.Types.ObjectId().toString(), // Generate string ID
       name,
       email,
       password: hashedPassword,
-      role: role || 'employee'
+      role: role || 'employee',
+      age: req.body.age || 25, // Default values
+      ageGroup: req.body.ageGroup || '25-34',
+      gender: req.body.gender || 'other',
+      children: req.body.children || 0,
+      smoker: req.body.smoker || false
     });
 
     await employee.save();
 
+    // Generate token
     const token = jwt.sign(
       { id: employee._id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
 
+    // Prepare response
     const response = employee.toObject();
     delete response.password;
-    res.status(201).json({ employee: response, token });
+    
+    res.status(201).json({ 
+      employee: response, 
+      token,
+      message: 'Registration successful'
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      error: 'Registration failed',
+      detail: error.message
+    });
   }
 };
 
