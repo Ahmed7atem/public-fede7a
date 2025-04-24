@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const Provider = require('../models/Provider');
+const { Provider } = require('../models/schemas');
 
 // Helper function to convert string ID to ObjectId if needed
 const convertToObjectId = (id) => {

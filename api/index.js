@@ -20,6 +20,7 @@ app.use('/api/claims', require('../controllers/claimController'));
 app.use('/api/providers', require('../controllers/providerController'));
 app.use('/api/complaints', require('../controllers/complaintController'));
 app.use('/api/analytics', require('../controllers/analyticsController'));
+app.use('/api/sleep', require('../controllers/sleepDataController'));
 
 // Health check endpoint
 app.get('/', (req, res) => {
