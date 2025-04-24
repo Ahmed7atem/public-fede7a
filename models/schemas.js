@@ -241,18 +241,62 @@ const complaintTicketSchema = new mongoose.Schema({
   version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
-// Create models
-const Employee = mongoose.model('Employee', employeeSchema);
-const HealthData = mongoose.model('HealthData', healthDataSchema);
-const SleepData = mongoose.model('SleepData', sleepDataSchema);
-const WearableData = mongoose.model('WearableData', wearableDataSchema);
-const Prediction = mongoose.model('Prediction', predictionSchema);
-const Policy = mongoose.model('Policy', policySchema);
-const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
-const Claim = mongoose.model('Claim', claimSchema);
-const Provider = mongoose.model('Provider', providerSchema);
-const ComplaintTicket = mongoose.model('ComplaintTicket', complaintTicketSchema);
-const Feedback = mongoose.model('Feedback', feedbackSchema);
+// Feedback Schema
+const feedbackSchema = new mongoose.Schema({
+  employee: { type: String, required: true },
+  message: { type: String, required: true },
+  rating: { type: Number, min: 1, max: 5 },
+  status: { type: String, enum: ['pending', 'resolved', 'closed'], default: 'pending' },
+  response: String,
+  submittedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Create models with safe checks to prevent OverwriteModelError
+const modelNames = mongoose.modelNames();
+
+const Employee = modelNames.includes('Employee') 
+  ? mongoose.model('Employee')
+  : mongoose.model('Employee', employeeSchema);
+
+const HealthData = modelNames.includes('HealthData')
+  ? mongoose.model('HealthData')
+  : mongoose.model('HealthData', healthDataSchema);
+
+const SleepData = modelNames.includes('SleepData')
+  ? mongoose.model('SleepData')
+  : mongoose.model('SleepData', sleepDataSchema);
+
+const WearableData = modelNames.includes('WearableData')
+  ? mongoose.model('WearableData')
+  : mongoose.model('WearableData', wearableDataSchema);
+
+const Prediction = modelNames.includes('Prediction')
+  ? mongoose.model('Prediction')
+  : mongoose.model('Prediction', predictionSchema);
+
+const Policy = modelNames.includes('Policy')
+  ? mongoose.model('Policy')
+  : mongoose.model('Policy', policySchema);
+
+const PolicyDocument = modelNames.includes('PolicyDocument')
+  ? mongoose.model('PolicyDocument')
+  : mongoose.model('PolicyDocument', policyDocumentSchema);
+
+const Claim = modelNames.includes('Claim')
+  ? mongoose.model('Claim')
+  : mongoose.model('Claim', claimSchema);
+
+const Provider = modelNames.includes('Provider')
+  ? mongoose.model('Provider')
+  : mongoose.model('Provider', providerSchema);
+
+const ComplaintTicket = modelNames.includes('ComplaintTicket')
+  ? mongoose.model('ComplaintTicket')
+  : mongoose.model('ComplaintTicket', complaintTicketSchema);
+
+const Feedback = modelNames.includes('Feedback')
+  ? mongoose.model('Feedback')
+  : mongoose.model('Feedback', feedbackSchema);
 
 module.exports = {
   Employee,
