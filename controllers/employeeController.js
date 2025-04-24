@@ -26,6 +26,15 @@ const convertToObjectId = (id) => {
   }
 };
 
+// Helper function to calculate age group
+const getAgeGroup = (age) => {
+  if (age < 25) return '18-24';
+  if (age < 35) return '25-34';
+  if (age < 45) return '35-44';
+  if (age < 55) return '45-54';
+  return '55+';
+};
+
 exports.getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find().select('-password');
@@ -66,6 +75,7 @@ exports.createEmployee = async (req, res) => {
       email,
       password: hashedPassword,
       age: age || 0,
+      ageGroup: getAgeGroup(age || 0),
       gender: gender || 'Unknown',
       role: role || 'employee'
     });

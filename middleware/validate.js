@@ -59,21 +59,25 @@ const schemas = {
   // Prediction schema
   prediction: Joi.object({
     employee: Joi.string().required(),
-    predictionType: Joi.string().required().valid('health', 'wellness', 'risk'),
+    predictionType: Joi.string().valid('health', 'wellness', 'risk').required(),
     healthData: Joi.object({
-      weight: Joi.number().min(30).max(300),
-      height: Joi.number().min(100).max(250),
-      systolic: Joi.number().min(70).max(200),
-      diastolic: Joi.number().min(40).max(130),
-      cholesterol: Joi.number().min(100).max(400),
-      bloodSugar: Joi.number().min(50).max(400),
-      smoker: Joi.boolean(),
-      age: Joi.number().integer().min(18).max(100),
-      chronicDisease: Joi.string().allow('', null),
-      chronicDiseaseCount: Joi.number().integer().min(0),
-      familyMedicalHistory: Joi.string().allow('', null)
-    }).required(),
-    notes: Joi.string().allow('', null)
+      weight: Joi.number().min(30).max(300).required(),
+      height: Joi.number().min(100).max(250).required(),
+      systolic: Joi.number().min(70).max(200).required(),
+      diastolic: Joi.number().min(40).max(130).required(),
+      cholesterol: Joi.number().min(100).max(400).required(),
+      bloodSugar: Joi.number().min(50).max(400).required(),
+      smoker: Joi.boolean().required(),
+      age: Joi.number().integer().min(18).max(100).required(),
+      chronicDisease: Joi.string().allow('', null).required(),
+      chronicDiseaseCount: Joi.number().integer().min(0).required(),
+      familyMedicalHistory: Joi.string().allow('', null).required(),
+      sleepHours: Joi.number().min(0).max(24).required(),
+      exerciseHours: Joi.number().min(0).max(24).required(),
+      stressLevel: Joi.number().min(0).max(10).required(),
+      smokingStatus: Joi.boolean().required(),
+      alcoholConsumption: Joi.number().min(0).required()
+    }).required()
   })
 };
 

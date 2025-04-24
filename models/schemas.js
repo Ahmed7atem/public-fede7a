@@ -30,105 +30,108 @@ const employeeSchema = new mongoose.Schema({
 
 // Health Data Schema
 const healthDataSchema = new mongoose.Schema({
-  employee: { type: String, ref: 'Employee', required: true },
-  recordedAt: { type: Date, required: true },
-  weight: { type: Number },
-  height: { type: Number },
-  bmi: { type: Number },
-  hemoglobin: { type: Number },
-  cholesterol: { type: Number },
-  bloodSugar: { type: Number },
-  creatinine: { type: Number },
+  employee: { type: String, required: true },
+  recordedAt: Date,
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
   chronicDisease: String,
-  chronicDiseaseCount: { type: Number },
+  chronicDiseaseCount: Number,
   familyMedicalHistory: String,
-  claimedAmount: { type: Number },
-  insuranceScore: { type: Number },
-  smokerScore: { type: Number },
-  familyScore: { type: Number },
-  lifestyleScore: { type: Number },
-  bmiScore: { type: Number },
-  hemoglobinScore: { type: Number },
-  sugarScore: { type: Number },
-  cholesterolScore: { type: Number },
-  creatinineScore: { type: Number },
-  physicalScore: { type: Number },
-  wellnessScore: { type: Number }
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: { type: String, default: '1.0' }
+}, { timestamps: true });
+
+// Sleep Data Schema
+const sleepDataSchema = new mongoose.Schema({
+  employee: { type: String, required: true },
+  startTime: Date,
+  endTime: Date,
+  sleepQuality: Number,
+  timeInBed: Number,
+  sleepNotes: [String],
+  heartRate: Number,
+  version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
 // Wearable Data Schema
 const wearableDataSchema = new mongoose.Schema({
-  employee: { type: String, ref: 'Employee', required: true },
-  logDate: { type: Date, required: true },
-  stepCount: { type: Number },
-  activeEnergyKj: { type: Number },
-  exerciseTimeMin: { type: Number },
-  standHours: { type: Number },
-  standTimeMin: { type: Number },
-  envAudioExposure: { type: Number },
-  flightsClimbed: { type: Number },
-  headphoneAudioExposure: { type: Number },
-  heartRateMin: { type: Number },
-  heartRateMax: { type: Number },
-  heartRateAvg: { type: Number },
-  heartRateVariability: { type: Number },
-  physicalEffortMet: { type: Number },
-  restingEnergyKj: { type: Number },
-  restingHeartRate: { type: Number },
-  walkingRunningDistanceKm: { type: Number },
-  walkingHeartRateAvg: { type: Number },
-  walkingSpeedKmh: { type: Number },
-  walkingStepLengthCm: { type: Number },
-  sleepStart: { type: String },
-  sleepEnd: { type: String },
-  sleepQuality: { type: Number },
-  timeInBed: { type: Number },
-  heartRateSleep: { type: Number },
-  notes: String
+  employee: { type: String, required: true },
+  logDate: Date,
+  stepCount: Number,
+  activeEnergy: Number,
+  exerciseTime: Number,
+  heartRate: Number,
+  heartRateVariability: Number,
+  sleepQuality: Number,
+  timeInBed: Number,
+  walkingDistance: Number,
+  version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
 // Prediction Schema
 const predictionSchema = new mongoose.Schema({
-  employee: { type: String, ref: 'Employee', required: true },
-  predictedAt: { type: Date, required: true },
-  predictionType: { type: String, required: true },
-  predictionValue: { type: mongoose.Schema.Types.Mixed, required: true },
-  confidence: { type: Number },
-  factors: [String],
-  notes: String
-}, { timestamps: true });
-
-// Feedback Schema
-const feedbackSchema = new mongoose.Schema({
-  employee: { type: String, ref: 'Employee', required: true },
-  message: { type: String, required: true },
-  rating: { type: Number },
-  submittedAt: { type: Date, required: true },
-  status: { type: String, enum: ['pending', 'reviewed', 'resolved'], default: 'pending' }
+  employee: { type: String, required: true },
+  predictionType: { type: String, enum: ['health', 'wellness', 'risk'], required: true },
+  healthData: {
+    weight: { type: Number, required: true },
+    height: { type: Number, required: true },
+    systolic: { type: Number, required: true },
+    diastolic: { type: Number, required: true },
+    cholesterol: { type: Number, required: true },
+    bloodSugar: { type: Number, required: true },
+    smoker: { type: Boolean, required: true },
+    age: { type: Number, required: true },
+    chronicDisease: { type: String, required: true },
+    chronicDiseaseCount: { type: Number, required: true },
+    familyMedicalHistory: { type: String, required: true },
+    sleepHours: { type: Number, required: true },
+    exerciseHours: { type: Number, required: true },
+    stressLevel: { type: Number, required: true },
+    smokingStatus: { type: Boolean, required: true },
+    alcoholConsumption: { type: Number, required: true }
+  },
+  predictionValue: Number,
+  predictedAt: { type: Date, default: Date.now },
+  version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
 // Policy Document Schema
 const policyDocumentSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  description: { type: String, required: true },
-  fileUrl: { type: String, required: true },
+  content: { type: String, required: true },
   isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
+  version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
 // Create models
 const Employee = mongoose.model('Employee', employeeSchema);
 const HealthData = mongoose.model('HealthData', healthDataSchema);
+const SleepData = mongoose.model('SleepData', sleepDataSchema);
 const WearableData = mongoose.model('WearableData', wearableDataSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
-const Feedback = mongoose.model('Feedback', feedbackSchema);
 const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
 
 module.exports = {
   Employee,
   HealthData,
+  SleepData,
   WearableData,
   Prediction,
-  Feedback,
   PolicyDocument
 }; 

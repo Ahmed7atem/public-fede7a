@@ -26,20 +26,23 @@ const auth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       
       // Ensure decoded object has required properties
-      if (!decoded || !decoded.id) {
+      if (!decoded || !decoded.employee) {
         return res.status(401).json({ 
           error: 'Invalid token', 
           detail: 'Token payload is invalid' 
         });
       }
-
-      // Convert ID to string
-      const employeeId = decoded.id.toString();
       
-      // Find employee
-      const employee = await Employee.findById(employeeId);
+      // Find employee using either _id or id
+      const employee = await Employee.findOne({ 
+        $or: [
+          { _id: decoded.employee },
+          { id: decoded.employee }
+        ]
+      });
+
       if (!employee) {
-        console.error('Employee not found for ID:', employeeId);
+        console.error('Employee not found for ID:', decoded.employee);
         return res.status(401).json({ 
           error: 'Invalid authentication token', 
           detail: 'Employee not found in database' 
@@ -52,7 +55,7 @@ const auth = async (req, res, next) => {
       
       // Add debug info (remove in production)
       req.tokenInfo = {
-        id: employeeId,
+        id: decoded.employee,
         role: decoded.role,
         exp: new Date(decoded.exp * 1000).toISOString()
       };
@@ -88,16 +91,23 @@ const auth = async (req, res, next) => {
 
 const adminAuth = async (req, res, next) => {
   try {
-    await auth(req, res, () => {
-      if (req.employee.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      next();
-    });
+    if (!req.employee || req.employee.role !== 'admin') {
+      return res.status(403).json({ 
+        error: 'Access denied', 
+        detail: 'Admin privileges required' 
+      });
+    }
+    next();
   } catch (error) {
-    console.error('Admin auth error:', error);
-    res.status(403).json({ error: 'Admin access required', detail: error.message });
+    console.error('Admin auth middleware error:', error);
+    res.status(500).json({ 
+      error: 'Authentication failed', 
+      detail: error.message 
+    });
   }
 };
 
-module.exports = { auth, adminAuth }; 
+module.exports = {
+  auth,
+  adminAuth
+}; 

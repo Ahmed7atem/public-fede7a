@@ -12,4 +12,9 @@ const checkRole = (roles) => {
   };
 };
 
-module.exports = checkRole; 
+const isAdmin = checkRole(['admin']);
+
+module.exports = {
+  checkRole,
+  isAdmin
+}; 

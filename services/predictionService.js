@@ -54,29 +54,83 @@ const calculateRiskScore = (healthData) => {
 };
 
 const predictHealthRisk = async (healthData) => {
-  const riskScore = calculateRiskScore(healthData);
-  const riskFactors = assessRiskFactors(healthData);
-  
-  let predictionValue;
-  let confidence;
-  
-  if (riskScore >= 80) {
-    predictionValue = 'High Risk';
-    confidence = 0.9;
-  } else if (riskScore >= 50) {
-    predictionValue = 'Medium Risk';
-    confidence = 0.75;
-  } else {
-    predictionValue = 'Low Risk';
-    confidence = 0.85;
+  try {
+    // Calculate BMI if not provided
+    if (!healthData.bmi && healthData.weight && healthData.height) {
+      healthData.bmi = calculateBMI(healthData.weight, healthData.height);
+    }
+
+    // Validate required fields
+    const requiredFields = [
+      'age', 'chronicDisease', 'chronicDiseaseCount', 'familyMedicalHistory',
+      'cholesterol', 'bloodSugar', 'bmi', 'sleepHours',
+      'exerciseHours', 'stressLevel', 'smokingStatus', 'alcoholConsumption'
+    ];
+
+    for (const field of requiredFields) {
+      if (healthData[field] === undefined) {
+        throw new Error(`Missing required field: ${field}`);
+      }
+    }
+
+    // Calculate blood pressure risk
+    let bloodPressureRisk = 0;
+    if (healthData.bloodPressure) {
+      bloodPressureRisk = healthData.bloodPressure > 140 ? 1 : 0;
+    } else if (healthData.systolic && healthData.diastolic) {
+      bloodPressureRisk = healthData.systolic > 140 || healthData.diastolic > 90 ? 1 : 0;
+    } else {
+      throw new Error('Missing blood pressure data');
+    }
+
+    // Calculate risk factors
+    const riskFactors = {
+      age: healthData.age > 50 ? 1 : 0,
+      chronicDisease: healthData.chronicDisease ? 1 : 0,
+      chronicDiseaseCount: Math.min(healthData.chronicDiseaseCount / 2, 1),
+      familyMedicalHistory: healthData.familyMedicalHistory ? 0.5 : 0,
+      bloodPressure: bloodPressureRisk,
+      cholesterol: healthData.cholesterol > 200 ? 1 : 0,
+      bloodSugar: healthData.bloodSugar > 100 ? 1 : 0,
+      bmi: healthData.bmi > 30 ? 1 : 0,
+      sleepHours: healthData.sleepHours < 6 ? 0.5 : 0,
+      exerciseHours: healthData.exerciseHours < 2 ? 0.5 : 0,
+      stressLevel: healthData.stressLevel > 7 ? 0.5 : 0,
+      smokingStatus: healthData.smokingStatus ? 1 : 0,
+      alcoholConsumption: healthData.alcoholConsumption > 14 ? 0.5 : 0
+    };
+
+    // Calculate total risk score (0-1)
+    const totalRisk = Object.values(riskFactors).reduce((sum, value) => sum + value, 0) / Object.keys(riskFactors).length;
+
+    // Determine risk level
+    let predictionValue;
+    if (totalRisk < 0.3) {
+      predictionValue = 'low';
+    } else if (totalRisk < 0.6) {
+      predictionValue = 'medium';
+    } else {
+      predictionValue = 'high';
+    }
+
+    // Calculate confidence based on data completeness
+    const confidence = 1 - (Object.values(healthData).filter(v => v === undefined).length / Object.keys(healthData).length);
+
+    // Identify key factors and format as strings
+    const factors = Object.entries(riskFactors)
+      .filter(([_, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([factor, impact]) => `${factor} (impact: ${Math.round(impact * 100)}%)`);
+
+    return {
+      predictionValue,
+      confidence,
+      factors
+    };
+  } catch (error) {
+    throw new Error(`Prediction failed: ${error.message}`);
   }
-  
-  return {
-    predictionValue,
-    confidence,
-    factors: riskFactors,
-    score: riskScore
-  };
 };
 
 exports.predict = async (employeeId) => {

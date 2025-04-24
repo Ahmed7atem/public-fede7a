@@ -14,7 +14,7 @@ const {
 router.get('/', isAdmin, getAllPredictions);
 
 // Get prediction by ID (admin or self)
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   // Allow access if admin or if the prediction belongs to the requesting employee
   if (req.employee.role === 'admin' || req.params.id === req.employee.id) {
     return next();

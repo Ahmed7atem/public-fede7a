@@ -15,7 +15,7 @@ exports.login = async (req, res) => {
     if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { id: employee._id, role: employee.role },
+      { employee: employee.id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, age, gender, children, smoker } = req.body;
     
     // Validate required fields
     if (!name || !email || !password) {
@@ -75,7 +75,8 @@ exports.register = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     
     // Create new employee
     const employee = new Employee({
@@ -83,18 +84,18 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role: role || 'employee',
-      age: req.body.age || 25,
-      ageGroup: req.body.ageGroup || '25-34',
-      gender: req.body.gender || 'other',
-      children: req.body.children || 0,
-      smoker: req.body.smoker || false
+      age,
+      ageGroup: getAgeGroup(age),
+      gender,
+      children: children || 0,
+      smoker: smoker || false
     });
 
     await employee.save();
 
     // Generate token
     const token = jwt.sign(
-      { id: employee._id, role: employee.role },
+      { employee: employee.id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -104,7 +105,18 @@ exports.register = async (req, res) => {
     delete response.password;
     
     res.status(201).json({ 
-      employee: response, 
+      employee: {
+        _id: employee._id,
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        age: employee.age,
+        ageGroup: employee.ageGroup,
+        gender: employee.gender,
+        children: employee.children,
+        smoker: employee.smoker,
+        role: employee.role
+      },
       token,
       message: 'Registration successful'
     });
@@ -151,4 +163,13 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+// Helper function to determine age group
+const getAgeGroup = (age) => {
+  if (age < 25) return '18-24';
+  if (age < 35) return '25-34';
+  if (age < 45) return '35-44';
+  if (age < 55) return '45-54';
+  return '55+';
 };

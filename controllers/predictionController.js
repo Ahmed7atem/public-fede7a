@@ -1,18 +1,18 @@
 const { Prediction } = require('../models/schemas');
 const { predictHealthRisk } = require('../services/predictionService');
 
-exports.getAllPredictions = async (req, res) => {
+const getAllPredictions = async (req, res) => {
   try {
-    const predictions = await Prediction.find().populate('employeeId', 'name email');
+    const predictions = await Prediction.find().populate('employee', 'name email');
     res.json(predictions);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.getPredictionById = async (req, res) => {
+const getPredictionById = async (req, res) => {
   try {
-    const prediction = await Prediction.findById(req.params.id).populate('employeeId', 'name email');
+    const prediction = await Prediction.findById(req.params.id).populate('employee', 'name email');
     if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
     res.json(prediction);
   } catch (error) {
@@ -20,16 +20,19 @@ exports.getPredictionById = async (req, res) => {
   }
 };
 
-exports.createPrediction = async (req, res) => {
+const createPrediction = async (req, res) => {
   try {
-    const { employeeId, healthData } = req.body;
-    if (!employeeId || !healthData) return res.status(400).json({ error: 'Employee ID and health data are required' });
+    const { employee, predictionType, healthData } = req.body;
+    if (!employee || !predictionType || !healthData) {
+      return res.status(400).json({ error: 'Employee, prediction type, and health data are required' });
+    }
 
     const predictionResult = await predictHealthRisk(healthData);
     const prediction = new Prediction({
-      employeeId,
-      healthData,
-      prediction: predictionResult.prediction,
+      employee,
+      predictedAt: new Date(),
+      predictionType,
+      predictionValue: predictionResult.predictionValue,
       confidence: predictionResult.confidence,
       factors: predictionResult.factors
     });
@@ -41,17 +44,19 @@ exports.createPrediction = async (req, res) => {
   }
 };
 
-exports.updatePrediction = async (req, res) => {
+const updatePrediction = async (req, res) => {
   try {
-    const { healthData } = req.body;
-    if (!healthData) return res.status(400).json({ error: 'Health data is required' });
+    const { predictionType, healthData } = req.body;
+    if (!predictionType || !healthData) {
+      return res.status(400).json({ error: 'Prediction type and health data are required' });
+    }
 
     const prediction = await Prediction.findById(req.params.id);
     if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
 
     const predictionResult = await predictHealthRisk(healthData);
-    prediction.healthData = healthData;
-    prediction.prediction = predictionResult.prediction;
+    prediction.predictionType = predictionType;
+    prediction.predictionValue = predictionResult.predictionValue;
     prediction.confidence = predictionResult.confidence;
     prediction.factors = predictionResult.factors;
 
@@ -62,7 +67,7 @@ exports.updatePrediction = async (req, res) => {
   }
 };
 
-exports.deletePrediction = async (req, res) => {
+const deletePrediction = async (req, res) => {
   try {
     const prediction = await Prediction.findByIdAndDelete(req.params.id);
     if (!prediction) return res.status(404).json({ error: 'Prediction not found' });
@@ -70,4 +75,12 @@ exports.deletePrediction = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+module.exports = {
+  getAllPredictions,
+  getPredictionById,
+  createPrediction,
+  updatePrediction,
+  deletePrediction
 };

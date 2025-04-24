@@ -19,7 +19,7 @@ exports.getHealthData = async (req, res) => {
   try {
     const employeeId = req.params.id || req.employee._id;
     
-    const healthData = await HealthData.findOne({ employee: employeeId }).sort({ date: -1 });
+    const healthData = await HealthData.findOne({ employee: employeeId }).sort({ recordedAt: -1 });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
@@ -38,7 +38,7 @@ exports.addHealthData = async (req, res) => {
     const healthData = new HealthData({
       ...req.body,
       employee: employeeId,
-      date: new Date()
+      recordedAt: new Date()
     });
     
     await healthData.save();
