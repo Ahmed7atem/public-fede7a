@@ -1,4 +1,4 @@
-const { HealthData, WearableData, Employee } = require('../models/schemas');
+const { HealthData, WearableData, Employee, SleepData } = require('../models/schemas');
 const mongoose = require('mongoose');
 
 // Helper function to normalize IDs for comparison
@@ -132,19 +132,18 @@ exports.getAllEmployeesData = async () => {
         // Get the employee ID as a string
         const employeeId = employee._id.toString();
         
-        // Find the most recent health and wearable data
-        const healthData = await HealthData.findOne({ 
-          employee: employeeId 
-        }).sort({ recordedAt: -1 });
-        
-        const wearableData = await WearableData.findOne({ 
-          employee: employeeId 
-        }).sort({ logDate: -1 });
+        // Find the most recent health, wearable, and sleep data
+        const [healthData, wearableData, sleepData] = await Promise.all([
+          HealthData.findOne({ employee: employeeId }).sort({ recordedAt: -1 }),
+          WearableData.findOne({ employee: employeeId }).sort({ logDate: -1 }),
+          SleepData.findOne({ employee: employeeId }).sort({ startTime: -1 })
+        ]);
         
         return {
           employee,
           healthData,
-          wearableData
+          wearableData,
+          sleepData
         };
       })
     );

@@ -119,6 +119,16 @@ const policyDocumentSchema = new mongoose.Schema({
   version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
+// Feedback Schema
+const feedbackSchema = new mongoose.Schema({
+  employee: { type: String, required: true },
+  message: { type: String, required: true },
+  rating: { type: Number, min: 1, max: 5 },
+  status: { type: String, enum: ['pending', 'resolved', 'closed'], default: 'pending' },
+  response: String,
+  submittedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
 // Create models
 const Employee = mongoose.model('Employee', employeeSchema);
 const HealthData = mongoose.model('HealthData', healthDataSchema);
@@ -126,6 +136,7 @@ const SleepData = mongoose.model('SleepData', sleepDataSchema);
 const WearableData = mongoose.model('WearableData', wearableDataSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
 const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
+const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 module.exports = {
   Employee,
@@ -133,5 +144,6 @@ module.exports = {
   SleepData,
   WearableData,
   Prediction,
-  PolicyDocument
+  PolicyDocument,
+  Feedback
 }; 
