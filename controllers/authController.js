@@ -14,8 +14,15 @@ exports.login = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, employee.password);
     if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
+    // Log employee details to debug
+    console.log('Login successful for:', {
+      email: employee.email,
+      role: employee.role,
+      _id: employee._id
+    });
+
     const token = jwt.sign(
-      { employee: employee.id, role: employee.role },
+      { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -95,7 +102,7 @@ exports.register = async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { employee: employee.id, role: employee.role },
+      { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -131,10 +138,28 @@ exports.register = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.employee._id).select('-password');
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
-    res.json(employee);
+    console.log('Request object in getProfile:', {
+      employee: req.employee,
+      token: req.token
+    });
+    
+    if (!req.employee || !req.employee._id) {
+      console.error('No employee or employee._id in request');
+      return res.status(401).json({ error: 'No employee information in request' });
+    }
+
+    // User is already attached to req.employee from the auth middleware
+    // No need to query the database again
+    const employee = req.employee;
+    
+    // Convert to object and remove password field
+    const employeeData = employee.toObject ? employee.toObject() : { ...employee };
+    delete employeeData.password;
+    
+    console.log('Returning employee profile:', employeeData);
+    res.json(employeeData);
   } catch (error) {
+    console.error('Error in getProfile:', error);
     res.status(500).json({ error: error.message });
   }
 };

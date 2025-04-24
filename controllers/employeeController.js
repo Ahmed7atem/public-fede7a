@@ -46,8 +46,23 @@ exports.getAllEmployees = async (req, res) => {
 
 exports.getEmployeeById = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).select('-password');
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    // Try to find by MongoDB _id first
+    let employee = null;
+    
+    // Check if it's a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      employee = await Employee.findById(req.params.id).select('-password');
+    }
+    
+    // If not found, try to find by UUID id field
+    if (!employee) {
+      employee = await Employee.findOne({ id: req.params.id }).select('-password');
+    }
+    
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    
     res.json(employee);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -97,7 +112,19 @@ exports.updateEmployee = async (req, res) => {
       return res.status(400).json({ error: 'Name and email are required' });
     }
 
-    const employee = await Employee.findById(req.params.id);
+    // Try to find by MongoDB _id first
+    let employee = null;
+    
+    // Check if it's a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      employee = await Employee.findById(req.params.id);
+    }
+    
+    // If not found, try to find by UUID id field
+    if (!employee) {
+      employee = await Employee.findOne({ id: req.params.id });
+    }
+    
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
@@ -105,7 +132,7 @@ exports.updateEmployee = async (req, res) => {
     // Check if email is being changed and if it already exists
     if (email !== employee.email) {
       const existingEmployee = await Employee.findOne({ email });
-      if (existingEmployee) {
+      if (existingEmployee && existingEmployee._id.toString() !== employee._id.toString()) {
         return res.status(400).json({ error: 'Email already registered' });
       }
     }
@@ -128,10 +155,23 @@ exports.updateEmployee = async (req, res) => {
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    // Try to find and delete by MongoDB _id first
+    let employee = null;
+    
+    // Check if it's a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      employee = await Employee.findByIdAndDelete(req.params.id);
+    }
+    
+    // If not found, try to find and delete by UUID id field
+    if (!employee) {
+      employee = await Employee.findOneAndDelete({ id: req.params.id });
+    }
+    
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
+    
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
