@@ -15,7 +15,7 @@ exports.login = async (req, res) => {
     if (!isValidPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { employee: employee.id, role: employee.role },
+      { employee: employee._id, role: employee.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -105,18 +105,7 @@ exports.register = async (req, res) => {
     delete response.password;
     
     res.status(201).json({ 
-      employee: {
-        _id: employee._id,
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        age: employee.age,
-        ageGroup: employee.ageGroup,
-        gender: employee.gender,
-        children: employee.children,
-        smoker: employee.smoker,
-        role: employee.role
-      },
+      employee: response,
       token,
       message: 'Registration successful'
     });
@@ -131,10 +120,29 @@ exports.register = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.employee._id).select('-password');
-    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    console.log('Request object in getProfile:', {
+      employee: req.employee,
+      token: req.token,
+      tokenInfo: req.tokenInfo
+    });
+    
+    if (!req.employee || !req.employee.id) {
+      console.error('No employee or employee.id in request');
+      return res.status(401).json({ error: 'No employee information in request' });
+    }
+
+    console.log('Looking for employee with ID:', req.employee.id);
+    const employee = await Employee.findOne({ id: req.employee.id }).select('-password');
+    
+    if (!employee) {
+      console.error('Employee not found for ID:', req.employee.id);
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    console.log('Found employee:', employee);
     res.json(employee);
   } catch (error) {
+    console.error('Error in getProfile:', error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -8,7 +8,7 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Register",
+          "name": "Register Admin",
           "request": {
             "method": "POST",
             "header": [
@@ -22,14 +22,14 @@
               "raw": "{\n    \"name\": \"Admin User\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\",\n    \"role\": \"admin\",\n    \"age\": 35,\n    \"gender\": \"male\",\n    \"children\": 0,\n    \"smoker\": false\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/auth/register",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "auth", "register"]
             }
           }
         },
         {
-          "name": "Login",
+          "name": "Register Employee",
           "request": {
             "method": "POST",
             "header": [
@@ -40,11 +40,53 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+              "raw": "{\n    \"name\": \"Employee User\",\n    \"email\": \"employee@example.com\",\n    \"password\": \"employee123\",\n    \"role\": \"employee\",\n    \"age\": 30,\n    \"gender\": \"female\",\n    \"children\": 1,\n    \"smoker\": false\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/auth/login",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/auth/register",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@medbond.com\",\n    \"password\": \"adminPass2025\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/auth/login",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"employee@example.com\",\n    \"password\": \"employee123\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/auth/login",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "auth", "login"]
             }
           }
@@ -56,12 +98,12 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/auth/profile",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/auth/profile",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "auth", "profile"]
             }
           }
@@ -78,12 +120,12 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/all-data",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/all-data",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "all-data"]
             }
           }
@@ -95,12 +137,12 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/admin/dashboard",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/admin/dashboard",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "admin", "dashboard"]
             }
           }
@@ -112,124 +154,13 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/admin/system-health",
-              "host": ["{{base_url}}"],
+              "raw": "{{BaseURL}}/api/admin/system-health",
+              "host": ["{{BaseURL}}"],
               "path": ["api", "admin", "system-health"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Claims",
-      "item": [
-        {
-          "name": "Submit Claim",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"provider\": \"507f1f77bcf86cd799439011\",\n    \"claimAmount\": 500,\n    \"patientAge\": 35,\n    \"providerSpecialty\": \"Cardiology\",\n    \"patientIncome\": 75000,\n    \"claimDate\": \"2024-04-24\",\n    \"patientMaritalStatus\": \"Single\",\n    \"patientEmploymentStatus\": \"Employed\",\n    \"claimType\": \"Routine\",\n    \"diagnosisDescription\": \"Annual checkup\",\n    \"procedureDescription\": \"Physical examination\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/claims",
-              "host": ["{{base_url}}"],
-              "path": ["api", "claims"]
-            }
-          }
-        },
-        {
-          "name": "Get Claim by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/claims/{{claim_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "claims", "{{claim_id}}"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Attachments",
-      "item": [
-        {
-          "name": "Upload Files",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "files",
-                  "type": "file",
-                  "src": []
-                },
-                {
-                  "key": "type",
-                  "value": "claim",
-                  "type": "text"
-                },
-                {
-                  "key": "referenceId",
-                  "value": "507f1f77bcf86cd799439011",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "Medical bills and receipts",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/attachments/upload",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "upload"]
-            }
-          }
-        },
-        {
-          "name": "Get Attachments",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/attachments/{{type}}/{{referenceId}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "attachments", "{{type}}", "{{referenceId}}"]
             }
           }
         }
@@ -245,24 +176,24 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health"]
+              "raw": "{{BaseURL}}/api/health-data",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "health-data"]
             }
           }
         },
         {
-          "name": "Submit Health Data",
+          "name": "Add Health Data",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               },
               {
                 "key": "Content-Type",
@@ -274,56 +205,119 @@
               "raw": "{\n    \"weight\": 70,\n    \"height\": 175,\n    \"bmi\": 22.9,\n    \"hemoglobin\": 14,\n    \"cholesterol\": 180,\n    \"bloodSugar\": 95,\n    \"creatinine\": 0.9,\n    \"chronicDisease\": \"None\",\n    \"chronicDiseaseCount\": 0,\n    \"familyMedicalHistory\": \"None\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/health",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health"]
+              "raw": "{{BaseURL}}/api/health-data",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "health-data"]
             }
           }
         }
       ]
     },
     {
-      "name": "Feedback",
+      "name": "Wearable Data",
       "item": [
         {
-          "name": "Get Feedback",
+          "name": "Get Wearable Data",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/feedback",
-              "host": ["{{base_url}}"],
-              "path": ["api", "feedback"]
+              "raw": "{{BaseURL}}/api/wearable-logs",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "wearable-logs"]
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "Predictions",
+      "item": [
         {
-          "name": "Submit Feedback",
+          "name": "Get All Predictions",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+                "value": "Bearer {{Token-admin}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"message\": \"Great service!\",\n    \"rating\": 5\n}"
-            },
             "url": {
-              "raw": "{{base_url}}/api/feedback",
-              "host": ["{{base_url}}"],
-              "path": ["api", "feedback"]
+              "raw": "{{BaseURL}}/api/predictions",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "predictions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Providers",
+      "item": [
+        {
+          "name": "Get Providers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{Token-admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/providers",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "providers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Get Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{Token-admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/tickets",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "tickets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Get Claims",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{Token-admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/claims",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "claims"]
             }
           }
         }
@@ -332,16 +326,28 @@
   ],
   "variable": [
     {
-      "key": "base_url",
-      "value": "http://localhost:3000"
+      "key": "BaseURL",
+      "value": "https://public-fede7a.vercel.app"
     },
     {
-      "key": "token",
-      "value": "your_token_here"
+      "key": "Token-admin",
+      "value": "your_admin_token_here"
     },
     {
-      "key": "claim_id",
-      "value": "your_claim_id_here"
+      "key": "Token-employee",
+      "value": "your_employee_token_here"
+    },
+    {
+      "key": "EmployeeId",
+      "value": "your_employee_id_here"
+    },
+    {
+      "key": "Token-employee-generated",
+      "value": "your_generated_employee_token_here"
+    },
+    {
+      "key": "EmployeeId-generated",
+      "value": "your_generated_employee_id_here"
     }
   ]
 } 

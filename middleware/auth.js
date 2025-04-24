@@ -26,39 +26,48 @@ const auth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
       
       // Ensure decoded object has required properties
-      if (!decoded || !decoded.employee) {
-        return res.status(401).json({ 
-          error: 'Invalid token', 
-          detail: 'Token payload is invalid' 
-        });
+      if (!decoded || !decoded.employee || !decoded.role) {
+        return res.status(401).json({ message: 'Invalid authentication token' });
       }
       
-      // Find employee using either _id or id
-      const employee = await Employee.findOne({ 
-        $or: [
-          { _id: decoded.employee },
-          { id: decoded.employee }
-        ]
-      });
-
+      // Find employee using UUID
+      console.log('Looking for employee with decoded.employee:', decoded.employee);
+      const employee = await Employee.findOne({ id: decoded.employee });
+      
       if (!employee) {
         console.error('Employee not found for ID:', decoded.employee);
+        console.error('Available employees:', await Employee.find({}, '_id id name email'));
         return res.status(401).json({ 
           error: 'Invalid authentication token', 
           detail: 'Employee not found in database' 
         });
       }
+      console.log('Found employee:', { _id: employee._id, id: employee.id });
+
+      // Verify that the role in the token matches the employee's role
+      if (decoded.role !== employee.role) {
+        console.error('Role mismatch:', decoded.role, 'vs', employee.role);
+        return res.status(401).json({ 
+          error: 'Invalid authentication token', 
+          detail: 'Token role does not match employee role' 
+        });
+      }
 
       // Attach employee to request
-      req.employee = employee;
+      const employeeObj = employee.toObject();
+      console.log('Employee after toObject:', employeeObj);
+      req.employee = employeeObj;
       req.token = token;
       
       // Add debug info (remove in production)
       req.tokenInfo = {
-        id: decoded.employee,
-        role: decoded.role,
+        id: employeeObj.id,
+        _id: employeeObj._id,
+        role: employeeObj.role,
         exp: new Date(decoded.exp * 1000).toISOString()
       };
+
+      console.log('Request employee after attach:', req.employee);
 
       next();
     } catch (jwtError) {
@@ -82,7 +91,7 @@ const auth = async (req, res, next) => {
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({
       error: 'Authentication error', 
       detail: error.message 
     });

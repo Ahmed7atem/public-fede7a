@@ -1,6 +1,7 @@
 const { Employee } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
 // Helper function to convert UUID to ObjectId
 const convertToObjectId = (id) => {
@@ -46,7 +47,7 @@ exports.getAllEmployees = async (req, res) => {
 
 exports.getEmployeeById = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).select('-password');
+    const employee = await Employee.findOne({ id: req.params.id }).select('-password');
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     res.json(employee);
   } catch (error) {
@@ -56,7 +57,7 @@ exports.getEmployeeById = async (req, res) => {
 
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, age, gender, role, _id } = req.body;
+    const { name, email, password, age, gender, role, id } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
@@ -70,7 +71,7 @@ exports.createEmployee = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const employee = new Employee({
-      _id: _id || new mongoose.Types.ObjectId().toString(), // Use provided ID or generate a new one
+      id: id || uuidv4(), // Use provided ID or generate a new one
       name,
       email,
       password: hashedPassword,
@@ -97,7 +98,7 @@ exports.updateEmployee = async (req, res) => {
       return res.status(400).json({ error: 'Name and email are required' });
     }
 
-    const employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findOne({ id: req.params.id });
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
@@ -128,7 +129,7 @@ exports.updateEmployee = async (req, res) => {
 
 exports.deleteEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employee = await Employee.findOneAndDelete({ id: req.params.id });
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
