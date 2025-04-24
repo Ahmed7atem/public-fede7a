@@ -1,10 +1,22 @@
+const express = require('express');
+const router = express.Router();
 const { Employee } = require('../models/schemas');
 // Remove encryption libraries
 // const bcrypt = require('bcryptjs');
 // const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-exports.login = async (req, res) => {
+// Helper function to determine age group
+const getAgeGroup = (age) => {
+  if (age < 25) return '18-24';
+  if (age < 35) return '25-34';
+  if (age < 45) return '35-44';
+  if (age < 55) return '45-54';
+  return '55+';
+};
+
+// Login route
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -37,7 +49,7 @@ exports.login = async (req, res) => {
     return res.json({
       success: true,
       token,
-      employee // Return entire employee model
+      employee
     });
   } catch (error) {
     return res.status(500).json({
@@ -46,9 +58,10 @@ exports.login = async (req, res) => {
       error: error.message
     });
   }
-};
+});
 
-exports.register = async (req, res) => {
+// Register route
+router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, age, gender, children, smoker } = req.body;
     
@@ -92,11 +105,12 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.getProfile = async (req, res) => {
+// Get profile route
+router.get('/profile', async (req, res) => {
   try {
     const authHeader = req.header('Authorization');
     const isAdmin = authHeader === 'ADMIN_TOKEN';
@@ -117,11 +131,12 @@ exports.getProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.updateProfile = async (req, res) => {
+// Update profile route
+router.put('/profile', async (req, res) => {
   try {
     const { name, email } = req.body;
     if (!name || !email) {
@@ -147,15 +162,8 @@ exports.updateProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-// Helper function to determine age group
-const getAgeGroup = (age) => {
-  if (age < 25) return '18-24';
-  if (age < 35) return '25-34';
-  if (age < 45) return '35-44';
-  if (age < 55) return '45-54';
-  return '55+';
-};
+module.exports = router;
