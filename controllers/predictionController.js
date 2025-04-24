@@ -1,15 +1,19 @@
+const express = require('express');
+const router = express.Router();
 const { Prediction } = require('../models/schemas');
 
-exports.getAllPredictions = async (req, res) => {
+// Get all predictions
+router.get('/', async (req, res) => {
   try {
     const predictions = await Prediction.find();
     res.json(predictions);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.getPredictionById = async (req, res) => {
+// Get prediction by ID
+router.get('/:id', async (req, res) => {
   try {
     const prediction = await Prediction.findById(req.params.id);
     if (!prediction) {
@@ -17,75 +21,48 @@ exports.getPredictionById = async (req, res) => {
     }
     res.json(prediction);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.createPrediction = async (req, res) => {
+// Create prediction
+router.post('/', async (req, res) => {
   try {
-    const {
-      employee,
-      predictionType,
-      healthData,
-      predictionValue
-    } = req.body;
-
-    if (!employee || !predictionType || !healthData) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const prediction = new Prediction({
-      employee,
-      predictionType,
-      healthData,
-      predictionValue,
-      predictedAt: new Date()
-    });
-
-    await prediction.save();
-
-    res.status(201).json(prediction);
+    const prediction = new Prediction(req.body);
+    const newPrediction = await prediction.save();
+    res.status(201).json(newPrediction);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-exports.updatePrediction = async (req, res) => {
+// Update prediction
+router.put('/:id', async (req, res) => {
   try {
     const prediction = await Prediction.findById(req.params.id);
     if (!prediction) {
       return res.status(404).json({ message: 'Prediction not found' });
     }
-
-    const {
-      predictionType,
-      healthData,
-      predictionValue
-    } = req.body;
-
-    if (predictionType) prediction.predictionType = predictionType;
-    if (healthData) prediction.healthData = healthData;
-    if (predictionValue !== undefined) prediction.predictionValue = predictionValue;
-
-    await prediction.save();
-
-    res.json(prediction);
+    Object.assign(prediction, req.body);
+    const updatedPrediction = await prediction.save();
+    res.json(updatedPrediction);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-exports.deletePrediction = async (req, res) => {
+// Delete prediction
+router.delete('/:id', async (req, res) => {
   try {
     const prediction = await Prediction.findById(req.params.id);
     if (!prediction) {
       return res.status(404).json({ message: 'Prediction not found' });
     }
-
     await prediction.deleteOne();
-
     res.json({ message: 'Prediction deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
+
+module.exports = router;

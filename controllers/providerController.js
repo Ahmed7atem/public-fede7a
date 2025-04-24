@@ -1,17 +1,19 @@
+const express = require('express');
+const router = express.Router();
 const { Provider } = require('../models/schemas');
 
-// Get all healthcare providers
-const getAllProviders = async (req, res) => {
+// Get all providers
+router.get('/', async (req, res) => {
   try {
     const providers = await Provider.find();
     res.json(providers);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
 // Get provider by ID
-const getProviderById = async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const provider = await Provider.findById(req.params.id);
     if (!provider) {
@@ -19,114 +21,48 @@ const getProviderById = async (req, res) => {
     }
     res.json(provider);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-// Create a new provider
-const createProvider = async (req, res) => {
+// Create provider
+router.post('/', async (req, res) => {
   try {
-    const {
-      name,
-      type,
-      category,
-      location,
-      availability,
-      ratings,
-      experienceYears,
-      contactInformation,
-      isActive
-    } = req.body;
-
-    if (!name || !type || !category || !location) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const provider = new Provider({
-      name,
-      type,
-      category,
-      location,
-      availability: availability || {
-        days: [],
-        hours: ''
-      },
-      ratings: ratings || 0,
-      experienceYears,
-      contactInformation: contactInformation || {
-        phone: '',
-        email: '',
-        website: ''
-      },
-      isActive: isActive !== undefined ? isActive : true
-    });
-
-    await provider.save();
-
-    res.status(201).json(provider);
+    const provider = new Provider(req.body);
+    const newProvider = await provider.save();
+    res.status(201).json(newProvider);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-// Update a provider
-const updateProvider = async (req, res) => {
+// Update provider
+router.put('/:id', async (req, res) => {
   try {
     const provider = await Provider.findById(req.params.id);
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-
-    const {
-      name,
-      type,
-      category,
-      location,
-      availability,
-      ratings,
-      experienceYears,
-      contactInformation,
-      isActive
-    } = req.body;
-
-    if (name) provider.name = name;
-    if (type) provider.type = type;
-    if (category) provider.category = category;
-    if (location) provider.location = location;
-    if (availability) provider.availability = availability;
-    if (ratings !== undefined) provider.ratings = ratings;
-    if (experienceYears) provider.experienceYears = experienceYears;
-    if (contactInformation) provider.contactInformation = contactInformation;
-    if (isActive !== undefined) provider.isActive = isActive;
-
-    await provider.save();
-
-    res.json(provider);
+    Object.assign(provider, req.body);
+    const updatedProvider = await provider.save();
+    res.json(updatedProvider);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-// Delete a provider
-const deleteProvider = async (req, res) => {
+// Delete provider
+router.delete('/:id', async (req, res) => {
   try {
     const provider = await Provider.findById(req.params.id);
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
-
     await provider.deleteOne();
-
     res.json({ message: 'Provider deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-module.exports = {
-  getAllProviders,
-  getProviderById,
-  createProvider,
-  updateProvider,
-  deleteProvider
-}; 
+module.exports = router; 

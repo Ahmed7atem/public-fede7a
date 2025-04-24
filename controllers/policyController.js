@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 const { Policy, PolicyDocument } = require('../models/schemas');
 const path = require('path');
 const fs = require('fs');
@@ -121,113 +123,54 @@ const getPolicyDocumentByType = async (req, res) => {
   }
 };
 
-exports.getAllPolicies = async (req, res) => {
+// Get all policies
+router.get('/', async (req, res) => {
   try {
     const policies = await Policy.find();
     res.json(policies);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.createPolicy = async (req, res) => {
+// Create policy
+router.post('/', async (req, res) => {
   try {
-    const {
-      policyNumber,
-      companyName,
-      policyType,
-      status,
-      startDate,
-      renewalDate,
-      areaOfCover,
-      healthcarePlans,
-      employeeId
-    } = req.body;
-
-    if (!policyNumber || !companyName || !policyType || !startDate || !renewalDate || !areaOfCover || !employeeId) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const policy = new Policy({
-      policyNumber,
-      companyName,
-      policyType,
-      status: status || 'Active',
-      startDate,
-      renewalDate,
-      areaOfCover,
-      healthcarePlans: healthcarePlans || [],
-      employeeId
-    });
-
-    await policy.save();
-
-    res.status(201).json(policy);
+    const policy = new Policy(req.body);
+    const newPolicy = await policy.save();
+    res.status(201).json(newPolicy);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-exports.updatePolicy = async (req, res) => {
+// Update policy
+router.put('/:id', async (req, res) => {
   try {
     const policy = await Policy.findById(req.params.id);
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
-
-    const {
-      policyNumber,
-      companyName,
-      policyType,
-      status,
-      startDate,
-      renewalDate,
-      areaOfCover,
-      healthcarePlans,
-      employeeId
-    } = req.body;
-
-    if (policyNumber) policy.policyNumber = policyNumber;
-    if (companyName) policy.companyName = companyName;
-    if (policyType) policy.policyType = policyType;
-    if (status) policy.status = status;
-    if (startDate) policy.startDate = startDate;
-    if (renewalDate) policy.renewalDate = renewalDate;
-    if (areaOfCover) policy.areaOfCover = areaOfCover;
-    if (healthcarePlans) policy.healthcarePlans = healthcarePlans;
-    if (employeeId) policy.employeeId = employeeId;
-
-    await policy.save();
-
-    res.json(policy);
+    Object.assign(policy, req.body);
+    const updatedPolicy = await policy.save();
+    res.json(updatedPolicy);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(400).json({ message: error.message });
   }
-};
+});
 
-exports.deletePolicy = async (req, res) => {
+// Delete policy
+router.delete('/:id', async (req, res) => {
   try {
     const policy = await Policy.findById(req.params.id);
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
     }
-
     await policy.deleteOne();
-
     res.json({ message: 'Policy deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-module.exports = {
-  getDocuments,
-  getPolicyDetails,
-  getPolicyById,
-  getPolicyDocuments,
-  getPolicyDocumentByType,
-  getAllPolicies,
-  createPolicy,
-  updatePolicy,
-  deletePolicy
-}; 
+module.exports = router; 

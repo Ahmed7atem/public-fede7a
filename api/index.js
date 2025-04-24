@@ -20,8 +20,10 @@ app.use('/api/claims', require('../controllers/claimController'));
 app.use('/api/providers', require('../controllers/providerController'));
 app.use('/api/complaints', require('../controllers/complaintController'));
 
-// New route for getting all employee data
-app.get('/api/all-data', require('../controllers/employeeController').getAllEmployeeData);
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API is running' });
+});
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -30,3 +32,5 @@ mongoose.connect(process.env.MONGODB_URI)
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

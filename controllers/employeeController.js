@@ -1,9 +1,8 @@
-const { Employee } = require('../models/schemas');
+const express = require('express');
+const router = express.Router();
+const { Employee, HealthData, WearableData, SleepData } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
-const HealthData = require('../models/schemas').HealthData;
-const WearableData = require('../models/schemas').WearableData;
-const SleepData = require('../models/schemas').SleepData;
 
 // Helper function to convert UUID to ObjectId
 const convertToObjectId = (id) => {
@@ -38,16 +37,18 @@ const getAgeGroup = (age) => {
   return '55+';
 };
 
-exports.getAllEmployees = async (req, res) => {
+// Get all employees
+router.get('/', async (req, res) => {
   try {
     const employees = await Employee.find({}, '-password');
     res.json(employees);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.getEmployeeById = async (req, res) => {
+// Get employee by ID
+router.get('/:id', async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id, '-password');
     if (!employee) {
@@ -55,11 +56,12 @@ exports.getEmployeeById = async (req, res) => {
     }
     res.json(employee);
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.createEmployee = async (req, res) => {
+// Create employee
+router.post('/', async (req, res) => {
   try {
     const { name, email, password, role, age, gender, children, smoker } = req.body;
     
@@ -84,20 +86,21 @@ exports.createEmployee = async (req, res) => {
       role: role || 'employee'
     });
 
-    await employee.save();
+    const newEmployee = await employee.save();
 
     res.status(201).json({
-      _id: employee._id,
-      name: employee.name,
-      email: employee.email,
-      role: employee.role
+      _id: newEmployee._id,
+      name: newEmployee.name,
+      email: newEmployee.email,
+      role: newEmployee.role
     });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.updateEmployee = async (req, res) => {
+// Update employee
+router.put('/:id', async (req, res) => {
   try {
     const { name, email, age, gender, children, smoker, role } = req.body;
     
@@ -122,35 +125,35 @@ exports.updateEmployee = async (req, res) => {
     employee.smoker = smoker !== undefined ? smoker : employee.smoker;
     employee.role = role || employee.role;
 
-    await employee.save();
+    const updatedEmployee = await employee.save();
 
     res.json({
-      _id: employee._id,
-      name: employee.name,
-      email: employee.email,
-      role: employee.role
+      _id: updatedEmployee._id,
+      name: updatedEmployee.name,
+      email: updatedEmployee.email,
+      role: updatedEmployee.role
     });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-exports.deleteEmployee = async (req, res) => {
+// Delete employee
+router.delete('/:id', async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-
     await employee.deleteOne();
-
     res.json({ message: 'Employee deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: `Server error - ${error.message}` });
+    res.status(500).json({ message: error.message });
   }
-};
+});
 
-const getAllEmployeeData = async (req, res) => {
+// Get all employee data with related information
+router.get('/all/data', async (req, res) => {
   try {
     const employees = await Employee.find();
     const employeeData = await Promise.all(employees.map(async (employee) => {
@@ -170,13 +173,6 @@ const getAllEmployeeData = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+});
 
-module.exports = {
-  getAllEmployees,
-  getEmployeeById,
-  createEmployee,
-  updateEmployee,
-  deleteEmployee,
-  getAllEmployeeData
-};
+module.exports = router;

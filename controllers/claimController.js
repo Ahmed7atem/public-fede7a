@@ -1,10 +1,12 @@
+const express = require('express');
+const router = express.Router();
 const { Claim } = require('../models/schemas');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 // Get all claims (admin sees all, employees see only their own)
-const getClaims = async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     let query = {};
     
@@ -18,10 +20,10 @@ const getClaims = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error fetching claims', error: error.message });
   }
-};
+});
 
 // Get claim history (all claims for the current user)
-const getClaimHistory = async (req, res) => {
+router.get('/history', async (req, res) => {
   try {
     const claims = await Claim.find({ employeeId: req.user.id }).sort({ createdAt: -1 });
     
@@ -29,10 +31,10 @@ const getClaimHistory = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error fetching claim history', error: error.message });
   }
-};
+});
 
 // Get a specific claim by ID
-const getClaimById = async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const claim = await Claim.findById(req.params.id);
     
@@ -49,10 +51,10 @@ const getClaimById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error fetching claim details', error: error.message });
   }
-};
+});
 
 // Submit a new claim
-const submitClaim = async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { providerType, claimDescription } = req.body;
     
@@ -93,10 +95,10 @@ const submitClaim = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error submitting claim', error: error.message });
   }
-};
+});
 
 // Submit a claim pre-approval
-const submitPreApproval = async (req, res) => {
+router.post('/pre-approval', async (req, res) => {
   try {
     const { providerType, category, dateTime, additionalDetails } = req.body;
     
@@ -138,10 +140,10 @@ const submitPreApproval = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error submitting pre-approval', error: error.message });
   }
-};
+});
 
 // Update claim status (admin only)
-const updateClaimStatus = async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     // Only admins can update claim status
     if (req.user.role !== 'admin') {
@@ -178,13 +180,20 @@ const updateClaimStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error updating claim status', error: error.message });
   }
-};
+});
 
-module.exports = {
-  getClaims,
-  getClaimHistory,
-  getClaimById,
-  submitClaim,
-  submitPreApproval,
-  updateClaimStatus
-}; 
+// Delete claim
+router.delete('/:id', async (req, res) => {
+  try {
+    const claim = await Claim.findById(req.params.id);
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    await claim.deleteOne();
+    res.json({ message: 'Claim deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = router; 
