@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin } = require('../middleware/roleCheck');
+const { auth, adminAuth } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validate');
 const {
   getAllPredictions,
@@ -10,8 +10,11 @@ const {
   deletePrediction
 } = require('../controllers/predictionController');
 
+// Apply authentication to all routes
+router.use(auth);
+
 // Get all predictions (admin only)
-router.get('/', isAdmin, getAllPredictions);
+router.get('/', adminAuth, getAllPredictions);
 
 // Get prediction by ID (admin or self)
 router.get('/:id', (req, res, next) => {
@@ -26,9 +29,9 @@ router.get('/:id', (req, res, next) => {
 router.post('/', validate(schemas.prediction), createPrediction);
 
 // Update prediction (admin only)
-router.put('/:id', isAdmin, validate(schemas.prediction), updatePrediction);
+router.put('/:id', adminAuth, validate(schemas.prediction), updatePrediction);
 
 // Delete prediction (admin only)
-router.delete('/:id', isAdmin, deletePrediction);
+router.delete('/:id', adminAuth, deletePrediction);
 
 module.exports = router; 
