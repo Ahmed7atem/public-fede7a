@@ -5,10 +5,29 @@
     },
     "item": [
       {
+        "name": "Environment Setup",
+        "item": [
+          {
+            "name": "Set Base URL",
+            "event": [
+              {
+                "listen": "prerequest",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.environment.set('base_url', 'http://localhost:3000');"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "name": "Authentication",
         "item": [
           {
-            "name": "Login",
+            "name": "Login - Admin",
             "request": {
               "method": "POST",
               "header": [
@@ -20,6 +39,40 @@
               "body": {
                 "mode": "raw",
                 "raw": "{\n    \"email\": \"admin@medbond.com\",\n    \"password\": \"admin123\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/auth/login",
+                "host": ["{{base_url}}"],
+                "path": ["api", "auth", "login"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "pm.environment.set('token', jsonData.token);",
+                    "pm.environment.set('user_id', jsonData.user._id);"
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Login - Employee",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"employee@medbond.com\",\n    \"password\": \"employee123\"\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/auth/login",
@@ -94,6 +147,121 @@
         ]
       },
       {
+        "name": "File Attachments",
+        "item": [
+          {
+            "name": "Upload Files",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "files",
+                    "type": "file",
+                    "src": []
+                  },
+                  {
+                    "key": "type",
+                    "value": "claim",
+                    "type": "text"
+                  },
+                  {
+                    "key": "referenceId",
+                    "value": "{{claim_id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Medical bills and receipts",
+                    "type": "text"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/api/attachments/upload",
+                "host": ["{{base_url}}"],
+                "path": ["api", "attachments", "upload"]
+              }
+            }
+          },
+          {
+            "name": "Download File",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/attachments/download/:id",
+                "host": ["{{base_url}}"],
+                "path": ["api", "attachments", "download", ":id"]
+              }
+            }
+          },
+          {
+            "name": "Get File Metadata",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/attachments/metadata/:id",
+                "host": ["{{base_url}}"],
+                "path": ["api", "attachments", "metadata", ":id"]
+              }
+            }
+          },
+          {
+            "name": "Delete File",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/attachments/:id",
+                "host": ["{{base_url}}"],
+                "path": ["api", "attachments", ":id"]
+              }
+            }
+          },
+          {
+            "name": "Get All Attachments",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/attachments/:type/:referenceId",
+                "host": ["{{base_url}}"],
+                "path": ["api", "attachments", ":type", ":referenceId"]
+              }
+            }
+          }
+        ]
+      },
+      {
         "name": "Employees",
         "item": [
           {
@@ -146,7 +314,7 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n    \"age\": 30,\n    \"gender\": \"Male\",\n    \"department\": \"Technology\",\n    \"email\": \"new.employee@medbond.com\"\n}"
+                "raw": "{\n    \"name\": \"New Employee\",\n    \"email\": \"new.employee@medbond.com\",\n    \"password\": \"employee123\",\n    \"role\": \"employee\",\n    \"department\": \"Technology\",\n    \"position\": \"Developer\"\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/employees",
@@ -171,7 +339,7 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n    \"age\": 31,\n    \"department\": \"HR\"\n}"
+                "raw": "{\n    \"name\": \"Updated Employee\",\n    \"department\": \"HR\",\n    \"position\": \"Manager\"\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/employees/:id",
@@ -235,7 +403,7 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n    \"weight\": 70,\n    \"height\": 175,\n    \"bmi\": 22.9,\n    \"bloodPressure\": \"120/80\"\n}"
+                "raw": "{\n    \"weight\": 70,\n    \"height\": 175,\n    \"bmi\": 22.9,\n    \"bloodPressure\": \"120/80\",\n    \"cholesterol\": 180,\n    \"glucose\": 90\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/health",
@@ -260,39 +428,91 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n    \"weight\": 71,\n    \"bloodPressure\": \"125/82\"\n}"
+                "raw": "{\n    \"weight\": 72,\n    \"bmi\": 23.5,\n    \"bloodPressure\": \"125/82\"\n}"
               },
               "url": {
-                "raw": "{{base_url}}/api/health",
+                "raw": "{{base_url}}/api/health/:id",
                 "host": ["{{base_url}}"],
-                "path": ["api", "health"]
-              }
-            }
-          },
-          {
-            "name": "Delete Health Data",
-            "request": {
-              "method": "DELETE",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "url": {
-                "raw": "{{base_url}}/api/health",
-                "host": ["{{base_url}}"],
-                "path": ["api", "health"]
+                "path": ["api", "health", ":id"]
               }
             }
           }
         ]
       },
       {
-        "name": "Wearable Data",
+        "name": "Claims",
         "item": [
           {
-            "name": "Get Wearable Data",
+            "name": "Submit Claim with Attachments",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "type",
+                    "value": "medical",
+                    "type": "text"
+                  },
+                  {
+                    "key": "amount",
+                    "value": "500",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Doctor visit",
+                    "type": "text"
+                  },
+                  {
+                    "key": "date",
+                    "value": "2024-04-24",
+                    "type": "text"
+                  },
+                  {
+                    "key": "provider",
+                    "value": "City Hospital",
+                    "type": "text"
+                  },
+                  {
+                    "key": "files",
+                    "type": "file",
+                    "src": []
+                  },
+                  {
+                    "key": "attachmentDescription",
+                    "value": "Medical bills and receipts",
+                    "type": "text"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/api/claims",
+                "host": ["{{base_url}}"],
+                "path": ["api", "claims"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "pm.environment.set('claim_id', jsonData._id);"
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Get All Claims",
             "request": {
               "method": "GET",
               "header": [
@@ -302,39 +522,31 @@
                 }
               ],
               "url": {
-                "raw": "{{base_url}}/api/wearable",
+                "raw": "{{base_url}}/api/claims",
                 "host": ["{{base_url}}"],
-                "path": ["api", "wearable"]
+                "path": ["api", "claims"]
               }
             }
           },
           {
-            "name": "Create Wearable Data",
+            "name": "Get Claim by ID",
             "request": {
-              "method": "POST",
+              "method": "GET",
               "header": [
                 {
                   "key": "Authorization",
                   "value": "Bearer {{token}}"
-                },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
                 }
               ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n    \"heartRate\": 75,\n    \"steps\": 5000,\n    \"sleepHours\": 7.5,\n    \"timestamp\": \"2024-02-20T08:00:00Z\"\n}"
-              },
               "url": {
-                "raw": "{{base_url}}/api/wearable",
+                "raw": "{{base_url}}/api/claims/{{claim_id}}",
                 "host": ["{{base_url}}"],
-                "path": ["api", "wearable"]
+                "path": ["api", "claims", "{{claim_id}}"]
               }
             }
           },
           {
-            "name": "Update Wearable Data",
+            "name": "Update Claim Status",
             "request": {
               "method": "PUT",
               "header": [
@@ -349,135 +561,12 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n    \"heartRate\": 80,\n    \"steps\": 6000\n}"
+                "raw": "{\n    \"status\": \"approved\",\n    \"notes\": \"Claim approved after review\"\n}"
               },
               "url": {
-                "raw": "{{base_url}}/api/wearable",
+                "raw": "{{base_url}}/api/claims/{{claim_id}}/status",
                 "host": ["{{base_url}}"],
-                "path": ["api", "wearable"]
-              }
-            }
-          },
-          {
-            "name": "Delete Wearable Data",
-            "request": {
-              "method": "DELETE",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "url": {
-                "raw": "{{base_url}}/api/wearable",
-                "host": ["{{base_url}}"],
-                "path": ["api", "wearable"]
-              }
-            }
-          }
-        ]
-      },
-      {
-        "name": "Predictions",
-        "item": [
-          {
-            "name": "Get All Predictions",
-            "request": {
-              "method": "GET",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "url": {
-                "raw": "{{base_url}}/api/predictions",
-                "host": ["{{base_url}}"],
-                "path": ["api", "predictions"]
-              }
-            }
-          },
-          {
-            "name": "Get Prediction by ID",
-            "request": {
-              "method": "GET",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "url": {
-                "raw": "{{base_url}}/api/predictions/:id",
-                "host": ["{{base_url}}"],
-                "path": ["api", "predictions", ":id"]
-              }
-            }
-          },
-          {
-            "name": "Create Prediction",
-            "request": {
-              "method": "POST",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n    \"employeeId\": \"employee123\",\n    \"riskScore\": 0.75,\n    \"predictionDate\": \"2024-02-20\"\n}"
-              },
-              "url": {
-                "raw": "{{base_url}}/api/predictions",
-                "host": ["{{base_url}}"],
-                "path": ["api", "predictions"]
-              }
-            }
-          },
-          {
-            "name": "Update Prediction",
-            "request": {
-              "method": "PUT",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n    \"riskScore\": 0.80,\n    \"status\": \"high\"\n}"
-              },
-              "url": {
-                "raw": "{{base_url}}/api/predictions/:id",
-                "host": ["{{base_url}}"],
-                "path": ["api", "predictions", ":id"]
-              }
-            }
-          },
-          {
-            "name": "Delete Prediction",
-            "request": {
-              "method": "DELETE",
-              "header": [
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "url": {
-                "raw": "{{base_url}}/api/predictions/:id",
-                "host": ["{{base_url}}"],
-                "path": ["api", "predictions", ":id"]
+                "path": ["api", "claims", "{{claim_id}}", "status"]
               }
             }
           }
@@ -632,11 +721,23 @@
     "variable": [
       {
         "key": "base_url",
-        "value": "http://localhost:3000"
+        "value": "http://localhost:3000",
+        "type": "string"
       },
       {
         "key": "token",
-        "value": "your_jwt_token_here"
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "user_id",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "claim_id",
+        "value": "",
+        "type": "string"
       }
     ]
   }

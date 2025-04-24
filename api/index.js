@@ -73,6 +73,11 @@ const wearableLogRoutes = require('../routes/wearableLogRoutes');
 const reportRoutes = require('../routes/reportRoutes');
 const authRoutes = require('../routes/authRoutes');
 const feedbackRoutes = require('../routes/feedbackRoutes');
+const policyRoutes = require('../routes/policyRoutes');
+const claimRoutes = require('../routes/claimRoutes');
+const providerRoutes = require('../routes/providerRoutes');
+const ticketRoutes = require('../routes/ticketRoutes');
+const fileRoutes = require('../routes/fileRoutes');
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
@@ -106,6 +111,11 @@ app.use('/api/wearable-logs', auth, dataSubmissionLimiter, wearableLogRoutes);
 app.use('/api/employees', auth, employeeRoutes);
 app.use('/api/reports', auth, reportRoutes);
 app.use('/api/feedback', auth, feedbackRoutes);
+app.use('/api/policy', auth, policyRoutes);
+app.use('/api/claims', auth, claimRoutes);
+app.use('/api/providers', auth, providerRoutes);
+app.use('/api/tickets', auth, ticketRoutes);
+app.use('/api/files', auth, fileRoutes);
 
 // Add a route for getting health data by employee ID
 app.get('/api/health-data/:id', auth, (req, res, next) => {
