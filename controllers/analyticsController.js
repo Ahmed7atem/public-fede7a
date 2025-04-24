@@ -350,24 +350,62 @@ router.get('/alerts', async (req, res) => {
 router.get('/all-data', async (req, res) => {
   try {
     // Get all employees with more fields
-    const employees = await Employee.find().select('name email role department joinDate age gender');
+    const employees = await Employee.find().select('_id name email role department joinDate age gender');
     
-    // Get all related data
+    // Get all related data with proper indexing
     const [healthData, wearableData, sleepData, claims, policies] = await Promise.all([
-      HealthData.find().select('employeeId weight height bloodPressure cholesterol bloodSugar date'),
-      WearableData.find().select('employeeId steps heartRate sleepHours caloriesBurned date'),
-      SleepData.find().select('employeeId sleepHours sleepQuality date'),
-      Claim.find().select('employeeId claimAmount status date type'),
-      Policy.find().select('employeeId policyNumber coverageType startDate endDate')
+      HealthData.find().select('employeeId weight height bloodPressure cholesterol bloodSugar date').lean(),
+      WearableData.find().select('employeeId steps heartRate sleepHours caloriesBurned date').lean(),
+      SleepData.find().select('employeeId sleepHours sleepQuality date').lean(),
+      Claim.find().select('employeeId claimAmount status date type').lean(),
+      Policy.find().select('employeeId policyNumber coverageType startDate endDate').lean()
     ]);
+
+    // Create lookup maps for faster access
+    const healthMap = new Map();
+    const wearableMap = new Map();
+    const sleepMap = new Map();
+    const claimsMap = new Map();
+    const policyMap = new Map();
+
+    // Populate maps
+    healthData.forEach(h => {
+      const key = h.employeeId?.toString();
+      if (!healthMap.has(key)) healthMap.set(key, []);
+      healthMap.get(key).push(h);
+    });
+
+    wearableData.forEach(w => {
+      const key = w.employeeId?.toString();
+      if (!wearableMap.has(key)) wearableMap.set(key, []);
+      wearableMap.get(key).push(w);
+    });
+
+    sleepData.forEach(s => {
+      const key = s.employeeId?.toString();
+      if (!sleepMap.has(key)) sleepMap.set(key, []);
+      sleepMap.get(key).push(s);
+    });
+
+    claims.forEach(c => {
+      const key = c.employeeId?.toString();
+      if (!claimsMap.has(key)) claimsMap.set(key, []);
+      claimsMap.get(key).push(c);
+    });
+
+    policies.forEach(p => {
+      const key = p.employeeId?.toString();
+      policyMap.set(key, p);
+    });
 
     // Organize data by employee
     const employeeData = employees.map(employee => {
-      const employeeHealth = healthData.filter(h => h.employeeId.toString() === employee._id.toString());
-      const employeeWearable = wearableData.filter(w => w.employeeId.toString() === employee._id.toString());
-      const employeeSleep = sleepData.filter(s => s.employeeId.toString() === employee._id.toString());
-      const employeeClaims = claims.filter(c => c.employeeId.toString() === employee._id.toString());
-      const employeePolicy = policies.find(p => p.employeeId.toString() === employee._id.toString());
+      const employeeId = employee._id.toString();
+      const employeeHealth = healthMap.get(employeeId) || [];
+      const employeeWearable = wearableMap.get(employeeId) || [];
+      const employeeSleep = sleepMap.get(employeeId) || [];
+      const employeeClaims = claimsMap.get(employeeId) || [];
+      const employeePolicy = policyMap.get(employeeId);
 
       // Calculate BMI if we have weight and height
       const latestHealth = employeeHealth[0] || {};
