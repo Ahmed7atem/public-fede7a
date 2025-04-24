@@ -1,0 +1,312 @@
+{
+  "info": {
+    "name": "MedBond Analytics APIs",
+    "description": "Collection of analytics endpoints for MedBond health insurance system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Employee Analytics",
+      "item": [
+        {
+          "name": "Get Employee Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/employee/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "employee", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "employee_id_here",
+                  "description": "Employee ID"
+                }
+              ]
+            },
+            "description": "Get comprehensive analytics for a specific employee including health metrics, activity data, and claims history"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/analytics/employee/:id"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "personalInfo": {
+                  "id": "string",
+                  "name": "string",
+                  "email": "string",
+                  "phone": "string",
+                  "address": "string",
+                  "dateOfBirth": "date",
+                  "gender": "string",
+                  "age": "number",
+                  "ageGroup": "string",
+                  "maritalStatus": "string",
+                  "emergencyContact": "object"
+                },
+                "employmentInfo": {
+                  "employeeId": "string",
+                  "department": "string",
+                  "role": "string",
+                  "joiningDate": "date",
+                  "employmentType": "string",
+                  "status": "string"
+                },
+                "healthMetrics": {
+                  "height": "number",
+                  "weight": "number",
+                  "bmi": "number",
+                  "bmiCategory": "string",
+                  "bloodPressure": "string",
+                  "bloodSugar": "number",
+                  "cholesterol": "number",
+                  "hemoglobin": "number",
+                  "creatinine": "number",
+                  "lastCheckup": "date"
+                },
+                "activityMetrics": {
+                  "averageSteps": "number",
+                  "averageSleep": "number",
+                  "averageHeartRate": "number",
+                  "currentSteps": "number",
+                  "currentHeartRate": "number",
+                  "currentSleep": "number"
+                },
+                "trends": {
+                  "bmi": "array",
+                  "steps": "array",
+                  "sleep": "array"
+                },
+                "riskAssessment": {
+                  "score": "number",
+                  "level": "string",
+                  "factors": "array"
+                },
+                "insuranceInfo": {
+                  "policyNumber": "string",
+                  "coverageType": "string",
+                  "startDate": "date",
+                  "endDate": "date",
+                  "status": "string"
+                },
+                "claimsHistory": {
+                  "total": "number",
+                  "approved": "number",
+                  "pending": "number",
+                  "totalAmount": "number",
+                  "recentClaims": "array"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Organization Analytics",
+      "item": [
+        {
+          "name": "Get Organization Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/organization",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "organization"]
+            },
+            "description": "Get organization-wide analytics including health metrics, activity levels, and claims statistics"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/analytics/organization"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "overview": {
+                  "totalEmployees": "number",
+                  "averageAge": "number",
+                  "genderDistribution": {
+                    "male": "number",
+                    "female": "number"
+                  }
+                },
+                "healthMetrics": {
+                  "averageBMI": "number",
+                  "bmiDistribution": {
+                    "underweight": "number",
+                    "normal": "number",
+                    "overweight": "number",
+                    "obese": "number"
+                  },
+                  "averageSteps": "number",
+                  "averageSleep": "number",
+                  "averageHeartRate": "number"
+                },
+                "activityAnalysis": {
+                  "activityLevels": {
+                    "sedentary": "number",
+                    "moderate": "number",
+                    "active": "number"
+                  },
+                  "sedentaryPercentage": "number",
+                  "activePercentage": "number"
+                },
+                "sleepAnalysis": {
+                  "sleepQuality": {
+                    "insufficient": "number",
+                    "adequate": "number",
+                    "optimal": "number"
+                  },
+                  "insufficientSleepPercentage": "number",
+                  "optimalSleepPercentage": "number"
+                },
+                "claimsAnalysis": {
+                  "total": "number",
+                  "approved": "number",
+                  "pending": "number",
+                  "rejected": "number",
+                  "totalAmount": "number",
+                  "averageAmount": "number",
+                  "approvalRate": "number",
+                  "averageClaimPerEmployee": "number"
+                },
+                "providerAnalysis": {
+                  "total": "number",
+                  "bySpecialty": "object",
+                  "averageClaimsPerProvider": "number"
+                },
+                "complaintAnalysis": {
+                  "total": "number",
+                  "byStatus": "object",
+                  "byCategory": "object",
+                  "resolutionRate": "number"
+                },
+                "riskFactors": {
+                  "highBMI": "number",
+                  "lowActivity": "number",
+                  "poorSleep": "number",
+                  "totalAtRisk": "number"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health Alerts",
+      "item": [
+        {
+          "name": "Get Health Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "alerts"]
+            },
+            "description": "Get real-time health alerts and anomalies across the organization"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/analytics/alerts"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "totalAlerts": "number",
+                "highPriority": "number",
+                "mediumPriority": "number",
+                "alerts": [
+                  {
+                    "type": "string",
+                    "employeeId": "string",
+                    "value": "number",
+                    "threshold": "string",
+                    "severity": "string",
+                    "date": "date"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your_auth_token_here",
+      "type": "string"
+    }
+  ]
+} 

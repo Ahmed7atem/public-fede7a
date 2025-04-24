@@ -7,6 +7,29 @@ const { Employee } = require('../models/schemas');
 const mongoose = require('mongoose');
 const { HealthData, WearableData, SleepData, Claim, Policy } = require('../models/schemas');
 
+// Authentication middleware
+const auth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    // Simple token validation
+    if (token !== 'ADMIN_TOKEN' && token !== 'EMPLOYEE_TOKEN') {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // For demo purposes, we'll use a default user ID
+    // In production, you would decode the token and get the user ID
+    req.user = { id: 'default_user_id' };
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Authentication failed' });
+  }
+};
+
 // Helper function to determine age group
 const getAgeGroup = (age) => {
   if (age < 25) return '18-24';
@@ -113,11 +136,10 @@ router.post('/register', async (req, res) => {
 // Get user profile with comprehensive data
 router.get('/profile', auth, async (req, res) => {
   try {
-    const employee = await Employee.findById(req.user.id)
-      .select('-password')
-      .populate('department', 'name')
-      .populate('role', 'name');
-
+    // For demo purposes, we'll get the first employee
+    // In production, you would use req.user.id
+    const employee = await Employee.findOne();
+    
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
