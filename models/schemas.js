@@ -153,27 +153,51 @@ const reviewSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Create and export models
-const Employee = mongoose.model('Employee', employeeSchema);
-const HealthData = mongoose.model('HealthData', healthDataSchema);
-const WearableData = mongoose.model('WearableData', wearableDataSchema);
-const SleepData = mongoose.model('SleepData', SleepDataSchema);
-const Prediction = mongoose.model('Prediction', predictionSchema);
-const Policy = mongoose.model('Policy', policySchema);
-const Claim = mongoose.model('Claim', claimSchema);
-const Provider = mongoose.model('Provider', providerSchema);
-const Review = mongoose.model('Review', reviewSchema);
-const ComplaintTicket = mongoose.model('ComplaintTicket', complaintSchema);
+// Complaint Schema
+const complaintSchema = new mongoose.Schema({
+  subject: { type: String, required: true },
+  category: { 
+    type: String, 
+    enum: ['Claim', 'Policy', 'Others'],
+    default: 'Others'
+  },
+  description: { type: String, required: true },
+  employeeId: { type: String, required: true },
+  status: { 
+    type: String, 
+    enum: ['Open', 'In Progress', 'Resolved', 'Closed'],
+    default: 'Open'
+  },
+  attachments: [{
+    filename: String,
+    url: String,
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
 
+// Create and export models with checks to prevent overwriting
+const models = {};
+
+// Helper function to get or create model
+function getModel(name, schema) {
+  if (!models[name]) {
+    models[name] = mongoose.model(name, schema);
+  }
+  return models[name];
+}
+
+// Export models
 module.exports = {
-  Employee,
-  HealthData,
-  WearableData,
-  SleepData,
-  Prediction,
-  Policy,
-  Claim,
-  Provider,
-  Review,
-  ComplaintTicket
+  Employee: getModel('Employee', employeeSchema),
+  HealthData: getModel('HealthData', healthDataSchema),
+  WearableData: getModel('WearableData', wearableDataSchema),
+  SleepData: getModel('SleepData', SleepDataSchema),
+  Prediction: getModel('Prediction', predictionSchema),
+  Policy: getModel('Policy', policySchema),
+  Claim: getModel('Claim', claimSchema),
+  Provider: getModel('Provider', providerSchema),
+  Review: getModel('Review', reviewSchema),
+  ComplaintTicket: getModel('ComplaintTicket', complaintSchema)
 }; 
