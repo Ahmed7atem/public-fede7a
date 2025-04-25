@@ -177,27 +177,16 @@ const complaintSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Create and export models with checks to prevent overwriting
-const models = {};
-
-// Helper function to get or create model
-function getModel(name, schema) {
-  if (!models[name]) {
-    models[name] = mongoose.model(name, schema);
-  }
-  return models[name];
-}
-
-// Export models
+// Export models using Mongoose's built-in model caching
 module.exports = {
-  Employee: getModel('Employee', employeeSchema),
-  HealthData: getModel('HealthData', healthDataSchema),
-  WearableData: getModel('WearableData', wearableDataSchema),
-  SleepData: getModel('SleepData', SleepDataSchema),
-  Prediction: getModel('Prediction', predictionSchema),
-  Policy: getModel('Policy', policySchema),
-  Claim: getModel('Claim', claimSchema),
-  Provider: getModel('Provider', providerSchema),
-  Review: getModel('Review', reviewSchema),
-  ComplaintTicket: getModel('ComplaintTicket', complaintSchema)
+  Employee: mongoose.models.Employee || mongoose.model('Employee', employeeSchema),
+  HealthData: mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema),
+  WearableData: mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema),
+  SleepData: mongoose.models.SleepData || mongoose.model('SleepData', SleepDataSchema),
+  Prediction: mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema),
+  Policy: mongoose.models.Policy || mongoose.model('Policy', policySchema),
+  Claim: mongoose.models.Claim || mongoose.model('Claim', claimSchema),
+  Provider: mongoose.models.Provider || mongoose.model('Provider', providerSchema),
+  Review: mongoose.models.Review || mongoose.model('Review', reviewSchema),
+  ComplaintTicket: mongoose.models.ComplaintTicket || mongoose.model('ComplaintTicket', complaintSchema)
 }; 
