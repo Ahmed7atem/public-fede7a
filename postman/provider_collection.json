@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "Healthcare Provider API",
+    "description": "APIs for managing healthcare providers and their reviews",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Providers",
+      "item": [
+        {
+          "name": "Get All Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/providers?specialty={{specialty}}&city={{city}}&rating={{rating}}&sortBy={{sortBy}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers"],
+              "query": [
+                {
+                  "key": "specialty",
+                  "value": "{{specialty}}",
+                  "description": "Filter by specialty (e.g., Cardiologist)"
+                },
+                {
+                  "key": "city",
+                  "value": "{{city}}",
+                  "description": "Filter by city"
+                },
+                {
+                  "key": "rating",
+                  "value": "{{rating}}",
+                  "description": "Filter by minimum rating"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "{{sortBy}}",
+                  "description": "Sort by field (default: rating.average)"
+                }
+              ]
+            },
+            "description": "Get all providers with optional filtering"
+          }
+        },
+        {
+          "name": "Get Provider by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/providers/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "provider-id-here",
+                  "description": "Provider ID"
+                }
+              ]
+            },
+            "description": "Get provider details and recent reviews"
+          }
+        },
+        {
+          "name": "Get Providers by Specialty",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/providers/specialty/:specialty?city={{city}}&rating={{rating}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers", "specialty", ":specialty"],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "{{city}}",
+                  "description": "Filter by city"
+                },
+                {
+                  "key": "rating",
+                  "value": "{{rating}}",
+                  "description": "Filter by minimum rating"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "specialty",
+                  "value": "Cardiologist",
+                  "description": "Provider specialty"
+                }
+              ]
+            },
+            "description": "Get providers filtered by specialty"
+          }
+        },
+        {
+          "name": "Create New Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Dr. John Smith\",\n    \"specialty\": \"Cardiologist\",\n    \"location\": {\n        \"city\": \"New York\",\n        \"address\": \"123 Medical Center Dr\",\n        \"coordinates\": {\n            \"lat\": 40.7128,\n            \"lng\": -74.0060\n        }\n    },\n    \"contactInfo\": {\n        \"phone\": \"(555) 123-4567\",\n        \"email\": \"dr.smith@example.com\",\n        \"website\": \"www.drsmith.com\"\n    },\n    \"qualifications\": [\n        {\n            \"degree\": \"MD\",\n            \"institution\": \"Harvard Medical School\",\n            \"year\": 2010\n        }\n    ],\n    \"experience\": {\n        \"years\": 12,\n        \"previousHospitals\": [\"NYU Langone\", \"Mount Sinai\"]\n    },\n    \"availability\": {\n        \"days\": [\"Monday\", \"Wednesday\", \"Friday\"],\n        \"hours\": {\n            \"start\": \"09:00\",\n            \"end\": \"17:00\"\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/providers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers"]
+            },
+            "description": "Create a new provider"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Add Review for Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"patientId\": \"patient-123\",\n    \"rating\": 5,\n    \"comment\": \"Excellent service and very professional\",\n    \"visitDate\": \"2024-03-20\",\n    \"treatmentType\": \"Consultation\",\n    \"waitTime\": 15,\n    \"staffFriendliness\": 5,\n    \"facilityCleanliness\": 5,\n    \"wouldRecommend\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/providers/:id/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers", ":id", "reviews"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "provider-id-here",
+                  "description": "Provider ID"
+                }
+              ]
+            },
+            "description": "Add a new review for a provider"
+          }
+        },
+        {
+          "name": "Get Provider Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/providers/:id/reviews?sortBy={{sortBy}}&limit={{limit}}&page={{page}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "providers", ":id", "reviews"],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "{{sortBy}}",
+                  "description": "Sort field (default: createdAt)"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}",
+                  "description": "Number of reviews per page (default: 10)"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Page number (default: 1)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "provider-id-here",
+                  "description": "Provider ID"
+                }
+              ]
+            },
+            "description": "Get reviews for a specific provider"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "specialty",
+      "value": "Cardiologist",
+      "type": "string"
+    },
+    {
+      "key": "city",
+      "value": "New York",
+      "type": "string"
+    },
+    {
+      "key": "rating",
+      "value": "4.5",
+      "type": "string"
+    },
+    {
+      "key": "sortBy",
+      "value": "rating.average",
+      "type": "string"
+    },
+    {
+      "key": "limit",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "page",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+} 

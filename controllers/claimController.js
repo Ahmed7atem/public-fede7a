@@ -68,9 +68,9 @@ router.get('/:id', async (req, res) => {
 // Get claims by employee ID
 router.get('/employee/:employeeId', async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.params.employeeId);
+    const employeeId = req.params.employeeId; // Keep as string for UUID
     
-    // Find all claims for the employee
+    // Find all claims for the employee using employeeId field
     const claims = await Claim.find({ employeeId })
       .populate('provider', 'name specialty')
       .sort({ date: -1 });

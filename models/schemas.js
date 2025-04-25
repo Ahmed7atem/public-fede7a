@@ -80,17 +80,78 @@ const claimSchema = new mongoose.Schema({
 // Provider Schema - Essential provider information
 const providerSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  type: { type: String, required: true },
-  location: { type: String, required: true }
-});
+  specialty: { 
+    type: String, 
+    required: true,
+    enum: [
+      'Allergist', 'Andrologist', 'Anesthesiologist', 'Audiologist',
+      'Cardiologist', 'Cardiothoracic Surgeon', 'Dentist', 'Dermatologist',
+      'Endocrinologist', 'ENT Doctor', 'Family Doctor', 'Gastroenterologist',
+      'General Surgeon', 'Gynecologist', 'Hematologist', 'Hepatologist',
+      'Infertility Specialist', 'Internist', 'Laboratory', 'Nephrologist',
+      'Neurologist', 'Neurosurgeon', 'Nutritionist', 'Obesity Surgeon',
+      'Oncologist', 'Ophthalmologist', 'Orthopedist', 'Pediatric Surgeon',
+      'Pediatrician', 'Phoniater', 'Physiotherapist', 'Plastic Surgeon',
+      'Psychiatrist', 'Pulmonologist', 'Rheumatologist', 'Scan Center',
+      'Spinal Surgeon', 'Surgical Oncologist', 'Urologist', 'Vascular Surgeon'
+    ]
+  },
+  location: { 
+    city: { type: String, required: true },
+    address: { type: String, required: true },
+    coordinates: {
+      lat: Number,
+      lng: Number
+    }
+  },
+  contactInfo: {
+    phone: String,
+    email: String,
+    website: String
+  },
+  qualifications: [{
+    degree: String,
+    institution: String,
+    year: Number
+  }],
+  experience: {
+    years: Number,
+    previousHospitals: [String]
+  },
+  availability: {
+    days: [String],
+    hours: {
+      start: String,
+      end: String
+    }
+  },
+  rating: {
+    average: { type: Number, default: 0 },
+    count: { type: Number, default: 0 }
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
 
-// Complaint Schema - Basic complaint tracking
-const complaintSchema = new mongoose.Schema({
-  subject: { type: String, required: true },
-  description: { type: String, required: true },
-  employeeId: { type: String, required: true },
-  status: { type: String, default: 'Open' }
-});
+// Review Schema for providers
+const reviewSchema = new mongoose.Schema({
+  providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Provider', required: true },
+  patientId: { type: String, required: true },
+  rating: { 
+    type: Number, 
+    required: true,
+    min: 1,
+    max: 5
+  },
+  comment: String,
+  visitDate: Date,
+  treatmentType: String,
+  waitTime: Number, // in minutes
+  staffFriendliness: { type: Number, min: 1, max: 5 },
+  facilityCleanliness: { type: Number, min: 1, max: 5 },
+  wouldRecommend: Boolean,
+  createdAt: { type: Date, default: Date.now }
+}, { timestamps: true });
 
 // Create and export models
 const Employee = mongoose.model('Employee', employeeSchema);
@@ -101,6 +162,7 @@ const Prediction = mongoose.model('Prediction', predictionSchema);
 const Policy = mongoose.model('Policy', policySchema);
 const Claim = mongoose.model('Claim', claimSchema);
 const Provider = mongoose.model('Provider', providerSchema);
+const Review = mongoose.model('Review', reviewSchema);
 const ComplaintTicket = mongoose.model('ComplaintTicket', complaintSchema);
 
 module.exports = {
@@ -112,5 +174,6 @@ module.exports = {
   Policy,
   Claim,
   Provider,
+  Review,
   ComplaintTicket
 }; 
