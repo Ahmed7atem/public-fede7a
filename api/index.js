@@ -9,6 +9,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Headers:', JSON.stringify(req.headers));
+  next();
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
@@ -31,6 +38,15 @@ app.get('/api', (req, res) => {
       '/api/analytics',
       '/api/complaints'
     ]
+  });
+});
+
+// Direct test route for debugging
+app.get('/api/employees/test/:id', (req, res) => {
+  res.json({ 
+    message: 'Test employee route working',
+    receivedId: req.params.id,
+    timestamp: new Date().toISOString()
   });
 });
 
