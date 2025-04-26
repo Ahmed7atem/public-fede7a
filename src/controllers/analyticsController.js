@@ -334,7 +334,7 @@ const getAllData = async (req, res) => {
     const employees = await Employee.find()
       .select('_id email role employeeId Age Gender Weight_kg Height_cm BMI Chronic_Disease Policy_ID policyNumber Plan_Name BMI_Score Hemoglobin_Score Sugar_Score Cholesterol_Score Creatinine_Score Physical_Score Wellness_Score')
       .lean();
-    
+
     const totalEmployees = employees.length;
     console.log(`Found ${totalEmployees} employees`);
 
@@ -342,57 +342,58 @@ const getAllData = async (req, res) => {
     const employeeData = await Promise.all(employees.map(async (employee) => {
       try {
         const employeeId = employee.employeeId;
-        console.log(`\nProcessing employee ${employeeId}`);
+        const employeeObjectId = employee._id.toString(); // Use _id as fallback
+        console.log(`\nProcessing employee ${employeeId} (_id: ${employeeObjectId})`);
 
-        // Try 'employeeId' first, fall back to 'employee'
+        // Query with employeeId and fallback to _id
         const [healthData, wearableData, sleepData, predictions, claims] = await Promise.all([
-          HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean()
+          HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean()
             .then(data => {
-              console.log(`Health data (employeeId: ${employeeId}): ${data.length} records`);
+              console.log(`Health data (employee: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employee field for HealthData...`);
-                return HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean()
+                console.log(`Trying _id for HealthData...`);
+                return HealthData.find({ employee: employeeObjectId }).sort({ recordedAt: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Health data (employee: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Health data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean()
+          WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean()
             .then(data => {
-              console.log(`Wearable data (employeeId: ${employeeId}): ${data.length} records`);
+              console.log(`Wearable data (employee: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employee field for WearableData...`);
-                return WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean()
+                console.log(`Trying _id for WearableData...`);
+                return WearableData.find({ employee: employeeObjectId }).sort({ date: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Wearable data (employee: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Wearable data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean()
+          SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean()
             .then(data => {
-              console.log(`Sleep data (employeeId: ${employeeId}): ${data.length} records`);
+              console.log(`Sleep data (employee: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employee field for SleepData...`);
-                return SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean()
+                console.log(`Trying _id for SleepData...`);
+                return SleepData.find({ employee: employeeObjectId }).sort({ startTime: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Sleep data (employee: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Sleep data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          Prediction.find({ employeeId: employeeId }).lean()
+          Prediction.find({ employee: employeeId }).lean()
             .then(data => {
-              console.log(`Predictions (employeeId: ${employeeId}): ${data.length} records`);
+              console.log(`Predictions (employee: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employee field for Prediction...`);
-                return Prediction.find({ employee: employeeId }).lean()
+                console.log(`Trying _id for Prediction...`);
+                return Prediction.find({ employee: employeeObjectId }).lean()
                   .then(fallbackData => {
-                    console.log(`Predictions (employee: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Predictions (_id: ${employeeObjectId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
@@ -407,21 +408,21 @@ const getAllData = async (req, res) => {
 
         // Calculate wearable stats
         const wearableStats = {
-          avgHeartRate: wearableData.length > 0 
-            ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2) 
+          avgHeartRate: wearableData.length > 0
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2)
             : null,
-          avgHRV: wearableData.length > 0 
-            ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2) 
+          avgHRV: wearableData.length > 0
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2)
             : null,
         };
 
         // Calculate sleep stats
         const sleepStats = {
-          avgSleepEfficiency: sleepData.length > 0 
-            ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2) 
+          avgSleepEfficiency: sleepData.length > 0
+            ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2)
             : null,
-          avgHeartRate: sleepData.length > 0 
-            ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2) 
+          avgHeartRate: sleepData.length > 0
+            ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2)
             : null,
         };
 
