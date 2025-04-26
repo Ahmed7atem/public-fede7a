@@ -1,21 +1,19 @@
 {
-    "version": 2,
-    "builds": [
-      { "src": "api/*.js", "use": "@vercel/node" }
-    ],
-    "routes": [
-      { "src": "/api/debug", "dest": "/api/debug.js" },
-      { "src": "/api/employee", "dest": "/api/employee.js" },
-      { "src": "/api/index", "dest": "/api/index.js" },
-      { "src": "/api", "dest": "/api/index.js" },
-      { "src": "/health", "dest": "/api/index.js" },
-      { "src": "/api/(.*)", "dest": "/api/index.js" },
-      { "src": "/(.*)", "dest": "/api/index.js" }
-    ],
-    "env": {
-      "MONGODB_URI": "mongodb+srv://ahmedhatem:Rk23610359@cluster0.wz0tern.mongodb.net/health_prediction?retryWrites=true&w=majority",
-      "MONGODB_CONNECT_URI": "mongodb+srv://ahmedhatem:Rk23610359@cluster0.wz0tern.mongodb.net/health_prediction?retryWrites=true&w=majority",
-      "JWT_SECRET": "your-secure-jwt-secret-key",
-      "NODE_ENV": "production"
+  "version": 2,
+  "name": "medbond-api",
+  "builds": [
+    {
+      "src": "src/server.js",
+      "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/server.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
   }
+} 

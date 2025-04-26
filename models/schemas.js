@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Employee Schema - Simplified for basic auth
+// Employee Schema - Based on actual data in MongoDB
 const employeeSchema = new mongoose.Schema({
   employeeId: { type: String, unique: true },
   email: { type: String, required: true, unique: true },
@@ -56,182 +56,166 @@ const employeeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Set id as the primary key
-employeeSchema.set('id', false);
-
-// Health Data Schema - Basic health metrics
+// Health Data Schema - Based on actual MongoDB structure
 const healthDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true }, // Reference to employee UUID
+  employee: { type: String, required: true }, // Reference to employee UUID
+  recordedAt: { type: Date, default: Date.now },
   weight: Number,
   height: Number,
   bmi: Number,
-  bloodPressure: String,
-  recordDate: { type: Date, default: Date.now }
-});
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number, 
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true });
 
-// Wearable Data Schema - Essential tracking data
+// Wearable Data Schema - Based on actual MongoDB structure
 const wearableDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true }, // Reference to employee UUID
-  stepCount: Number,
-  heartRate: Number,
-  sleepHours: Number,
-  recordDate: { type: Date, default: Date.now }
-});
-
-// Sleep Data Schema - Sleep metrics
-const SleepDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true }, // Reference to employee UUID
+  employee: { type: String, required: true }, // Reference to employee UUID
   date: { type: Date, required: true },
-  sleepDuration: { type: Number, required: true },
-  sleepEfficiency: { type: Number, required: true },
-  sleepStages: {
-    deep: { type: Number, required: true },
-    light: { type: Number, required: true },
-    rem: { type: Number, required: true },
-    awake: { type: Number, required: true }
-  },
-  heartRate: {
-    min: { type: Number, required: true },
-    max: { type: Number, required: true },
-    avg: { type: Number, required: true }
-  },
+  activeEnergy: Number,
+  exerciseTime: Number,
+  standHours: Number,
+  standTime: Number,
+  environmentalAudioExposure: Number,
+  flightsClimbed: Number,
+  headphoneAudioExposure: Number,
+  heartRateMin: Number,
+  heartRateMax: Number,
+  heartRateAvg: Number,
+  heartRateVariability: Number,
+  physicalEffort: Number,
+  restingEnergy: Number,
+  restingHeartRate: Number,
+  stepCount: Number,
+  walkingRunningDistance: Number,
+  walkingHeartRateAvg: Number,
+  walkingSpeed: Number,
+  walkingStepLength: Number,
+  version: String
+}, { timestamps: true });
+
+// Sleep Data Schema - Based on actual MongoDB structure
+const sleepDataSchema = new mongoose.Schema({
+  employee: { type: String, required: true }, // Reference to employee UUID
+  startTime: { type: Date, required: true },
+  endTime: { type: Date, required: true },
+  sleepQuality: { type: Number, required: true },
+  timeInBed: { type: Number, required: true },
+  sleepNotes: { type: Array, default: [] },
+  heartRate: { type: Number },
   version: { type: String, default: '1.0' }
 }, { timestamps: true });
 
-// Prediction Schema - Basic health predictions
+// Prediction Schema - Based on actual MongoDB structure
 const predictionSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true }, // Reference to employee UUID
+  employee: { type: String, required: true }, // Reference to employee UUID
+  predictedAt: { type: Date, default: Date.now },
   predictionType: { type: String, required: true },
-  predictionValue: Number,
-  predictedAt: { type: Date, default: Date.now }
-});
+  predictionValue: { type: String, required: true },
+  confidence: { type: Number, required: true },
+  factors: { type: Array, default: [] }
+}, { timestamps: true });
 
-// Policy Schema - Essential policy information
+// Policy Schema - Based on expected structure (though collection is empty)
 const policySchema = new mongoose.Schema({
+  policyId: { type: String, required: true, unique: true },
   policyNumber: { type: String, required: true },
   type: { type: String, required: true },
-  status: { type: String, default: 'Active' },
+  coverage: { type: Object, required: true },
+  premium: { type: Number, required: true },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
   employeeId: { type: String, required: true }
-});
+}, { timestamps: true });
 
-// Claim Schema - Basic claim details
+// Claim Schema - Based on actual MongoDB structure
 const claimSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true },
-  provider: { type: String, required: true },
+  id: { type: String, required: true },
+  patientId: { type: String, required: true },
+  providerId: { type: String, required: true },
   claimAmount: { type: Number, required: true },
-  status: { type: String, default: 'Submitted' }
+  claimDate: { type: Date, required: true },
+  patientAge: { type: Number, required: true },
+  providerSpecialty: { type: String, required: true },
+  claimStatus: { type: String, required: true },
+  patientIncome: { type: Number, required: true },
+  patientMaritalStatus: { type: String, required: true },
+  patientEmploymentStatus: { type: String, required: true },
+  claimType: { type: String, required: true },
+  claimSubmissionMethod: { type: String, required: true },
+  diagnosisDescription: { type: String, required: true },
+  procedureDescription: { type: String, required: true }
+}, { timestamps: true });
+
+// Doctor Schema - Based on actual MongoDB structure
+const doctorSchema = new mongoose.Schema({
+  specialization: { type: String, required: true },
+  fees: { type: String, required: true },
+  avg_rate: { type: Number, required: true },
+  waiting_time: { type: String, required: true },
+  clinic_location: { type: String, required: true },
+  rate_count: { type: Number, required: true }
 });
 
-// Provider Schema - Essential provider information
-const providerSchema = new mongoose.Schema({
+// Feedback Schema - Based on actual MongoDB structure
+const feedbackSchema = new mongoose.Schema({
+  employee: { type: String, required: true },
+  message: { type: String, required: true },
+  rating: { type: Number, required: true },
+  submittedAt: { type: Date, required: true },
+  status: { type: String, required: true }
+}, { timestamps: true });
+
+// Attachment Schema - Based on actual MongoDB structure
+const attachmentSchema = new mongoose.Schema({
+  fileId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  filename: { type: String, required: true },
+  contentType: { type: String, required: true },
+  size: { type: Number, required: true },
+  uploadedBy: { type: String, required: true },
+  type: { type: String, required: true },
+  referenceId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  description: { type: String },
+  uploadDate: { type: Date, default: Date.now }
+});
+
+// Policy Document Schema - Based on actual MongoDB structure
+const policyDocumentSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  specialty: { 
-    type: String, 
-    required: true,
-    enum: [
-      'Allergist', 'Andrologist', 'Anesthesiologist', 'Audiologist',
-      'Cardiologist', 'Cardiothoracic Surgeon', 'Dentist', 'Dermatologist',
-      'Endocrinologist', 'ENT Doctor', 'Family Doctor', 'Gastroenterologist',
-      'General Surgeon', 'Gynecologist', 'Hematologist', 'Hepatologist',
-      'Infertility Specialist', 'Internist', 'Laboratory', 'Nephrologist',
-      'Neurologist', 'Neurosurgeon', 'Nutritionist', 'Obesity Surgeon',
-      'Oncologist', 'Ophthalmologist', 'Orthopedist', 'Pediatric Surgeon',
-      'Pediatrician', 'Phoniater', 'Physiotherapist', 'Plastic Surgeon',
-      'Psychiatrist', 'Pulmonologist', 'Rheumatologist', 'Scan Center',
-      'Spinal Surgeon', 'Surgical Oncologist', 'Urologist', 'Vascular Surgeon'
-    ]
-  },
-  location: { 
-    city: { type: String, required: true },
-    address: { type: String, required: true },
-    coordinates: {
-      lat: Number,
-      lng: Number
-    }
-  },
-  contactInfo: {
-    phone: String,
-    email: String,
-    website: String
-  },
-  qualifications: [{
-    degree: String,
-    institution: String,
-    year: Number
-  }],
-  experience: {
-    years: Number,
-    previousHospitals: [String]
-  },
-  availability: {
-    days: [String],
-    hours: {
-      start: String,
-      end: String
-    }
-  },
-  rating: {
-    average: { type: Number, default: 0 },
-    count: { type: Number, default: 0 }
-  },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, { timestamps: true });
-
-// Review Schema for providers
-const reviewSchema = new mongoose.Schema({
-  providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Provider', required: true },
-  patientId: { type: String, required: true },
-  rating: { 
-    type: Number, 
-    required: true,
-    min: 1,
-    max: 5
-  },
-  comment: String,
-  visitDate: Date,
-  treatmentType: String,
-  waitTime: Number, // in minutes
-  staffFriendliness: { type: Number, min: 1, max: 5 },
-  facilityCleanliness: { type: Number, min: 1, max: 5 },
-  wouldRecommend: Boolean,
-  createdAt: { type: Date, default: Date.now }
-}, { timestamps: true });
-
-// Complaint Schema
-const complaintSchema = new mongoose.Schema({
-  subject: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['Claim', 'Policy', 'Others'],
-    default: 'Others'
-  },
-  description: { type: String, required: true },
-  employeeId: { type: String, required: true },
-  status: { 
-    type: String, 
-    enum: ['Open', 'In Progress', 'Resolved', 'Closed'],
-    default: 'Open'
-  },
-  attachments: [{
-    filename: String,
-    url: String,
-    uploadedAt: { type: Date, default: Date.now }
-  }],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+  fileUrl: { type: String, required: true },
+  isActive: { type: Boolean, default: true },
+  uploadDate: { type: Date, default: Date.now }
+});
 
 // Export models using Mongoose's built-in model caching
 module.exports = {
   Employee: mongoose.models.Employee || mongoose.model('Employee', employeeSchema),
   HealthData: mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema),
   WearableData: mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema),
-  SleepData: mongoose.models.SleepData || mongoose.model('SleepData', SleepDataSchema),
+  SleepData: mongoose.models.SleepData || mongoose.model('SleepData', sleepDataSchema),
   Prediction: mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema),
   Policy: mongoose.models.Policy || mongoose.model('Policy', policySchema),
   Claim: mongoose.models.Claim || mongoose.model('Claim', claimSchema),
-  Provider: mongoose.models.Provider || mongoose.model('Provider', providerSchema),
-  Review: mongoose.models.Review || mongoose.model('Review', reviewSchema),
-  ComplaintTicket: mongoose.models.ComplaintTicket || mongoose.model('ComplaintTicket', complaintSchema)
+  Doctor: mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema),
+  Feedback: mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema),
+  Attachment: mongoose.models.Attachment || mongoose.model('Attachment', attachmentSchema),
+  PolicyDocument: mongoose.models.PolicyDocument || mongoose.model('PolicyDocument', policyDocumentSchema)
 }; 

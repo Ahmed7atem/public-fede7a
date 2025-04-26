@@ -1,36 +1,54 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
+const { Employee, SleepData } = require('./models');
 
-const uri = 'mongodb+srv://ahmedhatem:Rk23610359@cluster0.wz0tern.mongodb.net/health_prediction?retryWrites=true&w=majority';
+// Connect to MongoDB
+console.log('Connection string:', process.env.MONGODB_URI);
 
-async function checkConnection() {
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(async () => {
+  console.log('✅ Connected to MongoDB Atlas');
+  
   try {
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(uri);
-    console.log('Connected to MongoDB');
-
-    // Get the employees collection
-    const employeesCollection = mongoose.connection.db.collection('employees');
-
-    // Try to find the specific employee
-    const employeeId = '8f7b7927-6c04-401a-ab0b-61000132f970';
-    console.log('Looking for employee with ID:', employeeId);
+    // Get all collections
+    const collections = await mongoose.connection.db.collections();
+    console.log('Available collections:', collections.map(c => c.collectionName));
     
-    const employee = await employeesCollection.findOne({ employeeId });
-    console.log('Employee found:', employee ? 'Yes' : 'No');
-    if (employee) {
-      console.log('Employee data:', JSON.stringify(employee, null, 2));
+    // Count employees
+    const employeeCount = await Employee.countDocuments();
+    console.log(`Total employees: ${employeeCount}`);
+    
+    // Get one sample employee
+    if (employeeCount > 0) {
+      const sampleEmployee = await Employee.findOne().lean();
+      console.log('Sample employee ID:', sampleEmployee.employeeId || sampleEmployee._id);
+      console.log('Sample employee data:', JSON.stringify(sampleEmployee, null, 2).substring(0, 300) + '...');
     }
-
-    // Get total count of employees
-    const count = await employeesCollection.countDocuments();
-    console.log('Total employees:', count);
-
+    
+    // Count sleep records
+    const sleepCount = await SleepData.countDocuments();
+    console.log(`Total sleep records: ${sleepCount}`);
+    
+    // Get one sample sleep record
+    if (sleepCount > 0) {
+      const sampleSleep = await SleepData.findOne().lean();
+      console.log('Sample sleep record:', JSON.stringify(sampleSleep, null, 2).substring(0, 300) + '...');
+    }
+    
+    console.log('✅ Connection test complete');
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error during connection test:', error);
   } finally {
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    // Close the connection
+    await mongoose.connection.close();
+    console.log('Connection closed');
+    process.exit(0);
   }
-}
-
-checkConnection(); 
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+}); 
