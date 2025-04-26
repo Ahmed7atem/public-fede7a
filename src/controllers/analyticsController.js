@@ -535,9 +535,139 @@ const getAllData = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all employee data
+ * @route   GET /api/analytics/employees
+ * @access  Private/Admin
+ */
+const getAllEmployeesData = async (req, res) => {
+  try {
+    // Get all employees with their basic info
+    const employees = await Employee.find()
+      .select('_id email role employeeId Age Gender Weight_kg Height_cm BMI Chronic_Disease Policy_ID policyNumber Plan_Name BMI_Score Hemoglobin_Score Sugar_Score Cholesterol_Score Creatinine_Score Physical_Score Wellness_Score')
+      .lean();
+    
+    const totalEmployees = employees.length;
+    console.log(`Found ${totalEmployees} employees`);
+
+    // Process each employee's data
+    const employeeData = await Promise.all(employees.map(async (employee) => {
+      try {
+        const employeeId = employee.employeeId;
+        console.log(`\nProcessing employee ${employeeId}`);
+
+        // Get all related data
+        const [healthData, wearableData, sleepData, claims] = await Promise.all([
+          HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean(),
+          WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean(),
+          SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean(),
+          Claim.find({ patientId: employeeId }).lean()
+        ]);
+
+        // Calculate averages
+        const wearableStats = {
+          avgHeartRate: wearableData.length > 0 
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2) 
+            : null,
+          avgHRV: wearableData.length > 0 
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2) 
+            : null,
+        };
+
+        const sleepStats = {
+          avgSleepEfficiency: sleepData.length > 0 
+            ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2) 
+            : null,
+          avgHeartRate: sleepData.length > 0 
+            ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2) 
+            : null,
+        };
+
+        return {
+          employee: {
+            _id: employee._id,
+            email: employee.email,
+            role: employee.role,
+            age: employee.Age,
+            gender: employee.Gender,
+            weight: employee.Weight_kg,
+            height: employee.Height_cm,
+            bmi: employee.BMI,
+            chronicDisease: employee.Chronic_Disease,
+            insurance: {
+              policyId: employee.Policy_ID,
+              policyNumber: employee.policyNumber,
+              planName: employee.Plan_Name,
+            },
+          },
+          health: {
+            latest: healthData[0] || {},
+            history: healthData,
+          },
+          wearable: {
+            latest: wearableData[0] || {},
+            history: wearableData,
+            stats: wearableStats,
+          },
+          sleep: {
+            latest: sleepData[0] || {},
+            history: sleepData,
+            stats: sleepStats,
+          },
+          insurance: {
+            policy: employee.Policy_ID ? {
+              id: employee.Policy_ID,
+              number: employee.policyNumber,
+              plan: employee.Plan_Name,
+            } : null,
+            claims: claims.map(claim => ({
+              id: claim.id,
+              amount: claim.claimAmount,
+              date: claim.claimDate,
+              status: claim.claimStatus,
+              type: claim.claimType,
+              diagnosis: claim.diagnosisDescription,
+              procedure: claim.procedureDescription,
+            })),
+          },
+          scores: {
+            bmi: employee.BMI_Score || null,
+            hemoglobin: employee.Hemoglobin_Score || null,
+            sugar: employee.Sugar_Score || null,
+            cholesterol: employee.Cholesterol_Score || null,
+            creatinine: employee.Creatinine_Score || null,
+            physical: employee.Physical_Score || null,
+            wellness: employee.Wellness_Score || null,
+          }
+        };
+      } catch (error) {
+        console.error(`Error processing employee ${employee.employeeId}:`, error);
+        return {
+          employee: {
+            _id: employee._id,
+            employeeId: employee.employeeId,
+            email: employee.email,
+            role: employee.role,
+          },
+          error: error.message,
+        };
+      }
+    }));
+
+    res.json({
+      totalEmployees,
+      employees: employeeData,
+    });
+  } catch (error) {
+    console.error('Error getting all employees data:', error);
+    res.status(500).json({ message: 'Error getting all employees data', error: error.message });
+  }
+};
+
 module.exports = {
   getEmployeeAnalytics,
   getOrganizationAnalytics,
   getHealthAlerts,
-  getAllData
+  getAllData,
+  getAllEmployeesData,
 }; 

@@ -6,6 +6,7 @@ const {
   getHealthAlerts,
   getAllData
 } = require('../controllers/analyticsController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/analytics/employee/:id
 // @desc    Get employee analytics
@@ -30,6 +31,11 @@ router.get('/all-data', getAllData);
 // @route   GET /api/analytics/all
 // @desc    Get comprehensive data for all employees
 // @access  Private/Admin
-router.get('/all', getAllData);
+router.get('/all', protect, admin, getAllData);
+
+// @route   GET /api/analytics/employees
+// @desc    Get all employee data
+// @access  Private/Admin
+router.get('/employees', protect, admin, getAllEmployeesData);
 
 module.exports = router; 
