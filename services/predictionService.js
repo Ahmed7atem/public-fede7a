@@ -50,7 +50,7 @@ exports.predictHealthRisk = async (healthData) => {
 // Get prediction for an employee
 exports.predict = async (employeeId) => {
   try {
-    const healthData = await HealthData.findOne({ employee: employeeId });
+    const healthData = await HealthData.findOne({ employeeId });
     if (!healthData) {
       throw new Error('No health data found for employee');
     }

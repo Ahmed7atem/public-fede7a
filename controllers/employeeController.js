@@ -41,7 +41,24 @@ const getAgeGroup = (age) => {
 router.get('/', async (req, res) => {
   try {
     const employees = await Employee.find({}, '-password');
-    res.json(employees);
+    const formattedEmployees = employees.map(emp => ({
+      employeeId: emp.id,
+      _id: emp._id,
+      name: emp.name,
+      email: emp.email,
+      role: emp.role,
+      age: emp.age,
+      gender: emp.gender,
+      children: emp.children,
+      smoker: emp.smoker,
+      region: emp.region,
+      bmi: emp.bmi,
+      bloodPressure: emp.bloodPressure,
+      diabetic: emp.diabetic,
+      policyId: emp.policyId,
+      charges: emp.charges
+    }));
+    res.json(formattedEmployees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -54,7 +71,23 @@ router.get('/:id', async (req, res) => {
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-    res.json(employee);
+    res.json({
+      employeeId: employee.id,
+      _id: employee._id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+      age: employee.age,
+      gender: employee.gender,
+      children: employee.children,
+      smoker: employee.smoker,
+      region: employee.region,
+      bmi: employee.bmi,
+      bloodPressure: employee.bloodPressure,
+      diabetic: employee.diabetic,
+      policyId: employee.policyId,
+      charges: employee.charges
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -90,7 +123,8 @@ router.post('/', async (req, res) => {
     const newEmployee = await employee.save();
 
     res.status(201).json({
-      id: newEmployee.id,
+      employeeId: newEmployee.id,
+      _id: newEmployee._id,
       name: newEmployee.name,
       email: newEmployee.email,
       role: newEmployee.role
@@ -129,7 +163,8 @@ router.put('/:id', async (req, res) => {
     const updatedEmployee = await employee.save();
 
     res.json({
-      id: updatedEmployee.id,
+      employeeId: updatedEmployee.id,
+      _id: updatedEmployee._id,
       name: updatedEmployee.name,
       email: updatedEmployee.email,
       role: updatedEmployee.role
@@ -163,7 +198,21 @@ router.get('/all/data', async (req, res) => {
       const sleepData = await SleepData.find({ employeeId: employee.id });
       
       return {
-        ...employee.toObject(),
+        employeeId: employee.id,
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+        age: employee.age,
+        gender: employee.gender,
+        children: employee.children,
+        smoker: employee.smoker,
+        region: employee.region,
+        bmi: employee.bmi,
+        bloodPressure: employee.bloodPressure,
+        diabetic: employee.diabetic,
+        policyId: employee.policyId,
+        charges: employee.charges,
         healthData,
         wearableData,
         sleepData

@@ -2,10 +2,24 @@ const mongoose = require('mongoose');
 
 // Employee Schema - Simplified for basic auth
 const employeeSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  id: { type: String, required: true, unique: true }, // UUID for the employee
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['employee', 'admin'], default: 'employee' }
+  name: { type: String, required: true },
+  age: { type: Number, required: true },
+  gender: { type: String, required: true },
+  children: { type: Number, default: 0 },
+  smoker: { type: Boolean, default: false },
+  region: { type: String, required: true },
+  bmi: { type: Number },
+  bloodPressure: {
+    systolic: { type: Number },
+    diastolic: { type: Number }
+  },
+  diabetic: { type: Boolean, default: false },
+  role: { type: String, enum: ['employee', 'admin'], default: 'employee' },
+  policyId: { type: String, required: true }, // Reference to policy UUID
+  charges: { type: Number }
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
@@ -16,7 +30,7 @@ employeeSchema.set('id', false);
 
 // Health Data Schema - Basic health metrics
 const healthDataSchema = new mongoose.Schema({
-  employee: { type: String, required: true },
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   weight: Number,
   height: Number,
   bmi: Number,
@@ -26,7 +40,7 @@ const healthDataSchema = new mongoose.Schema({
 
 // Wearable Data Schema - Essential tracking data
 const wearableDataSchema = new mongoose.Schema({
-  employee: { type: String, required: true },
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   stepCount: Number,
   heartRate: Number,
   sleepHours: Number,
@@ -35,7 +49,7 @@ const wearableDataSchema = new mongoose.Schema({
 
 // Sleep Data Schema - Sleep metrics
 const SleepDataSchema = new mongoose.Schema({
-  employee: { type: String, required: true },
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   date: { type: Date, required: true },
   sleepDuration: { type: Number, required: true },
   sleepEfficiency: { type: Number, required: true },
@@ -55,7 +69,7 @@ const SleepDataSchema = new mongoose.Schema({
 
 // Prediction Schema - Basic health predictions
 const predictionSchema = new mongoose.Schema({
-  employee: { type: String, required: true },
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   predictionType: { type: String, required: true },
   predictionValue: Number,
   predictedAt: { type: Date, default: Date.now }

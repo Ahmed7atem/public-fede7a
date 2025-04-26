@@ -57,56 +57,15 @@ const calculateHealthRisk = (healthData, wearableData) => {
 // Get comprehensive employee analytics
 router.get('/employee/:id', async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.params.id);
-    
-    // Get all related data
-    const [employee, healthData, wearableData, sleepData, claims, policy] = await Promise.all([
-      Employee.findOne({ _id: employeeId }),
-      HealthData.find({ employeeId }).sort({ recordDate: -1 }),
-      WearableData.find({ employeeId }).sort({ recordDate: -1 }),
-      SleepData.find({ employeeId }).sort({ date: -1 }),
-      Claim.find({ employeeId }).sort({ date: -1 }),
-      Policy.findOne({ employeeId })
-    ]);
-
+    const employee = await Employee.findOne({ id: req.params.id });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    // Calculate health metrics
-    const latestHealth = healthData[0] || {};
-    const bmi = latestHealth.weight && latestHealth.height ? 
-      (latestHealth.weight / ((latestHealth.height / 100) ** 2)).toFixed(2) : null;
-
-    // Calculate wearable metrics
-    const wearableStats = wearableData.reduce((acc, data) => ({
-      totalSteps: (acc.totalSteps || 0) + (data.stepCount || 0),
-      totalActiveEnergy: (acc.totalActiveEnergy || 0) + (data.activeEnergy || 0),
-      totalExerciseTime: (acc.totalExerciseTime || 0) + (data.exerciseTime || 0),
-      avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
-      avgHRV: ((acc.avgHRV || 0) + (data.heartRateVariability || 0)) / (acc.count || 1),
-      totalWalkingDistance: (acc.totalWalkingDistance || 0) + (data.walkingDistance || 0),
-      count: (acc.count || 0) + 1
-    }), {});
-
-    // Calculate sleep metrics
-    const sleepStats = sleepData.reduce((acc, data) => ({
-      totalSleepHours: (acc.totalSleepHours || 0) + (data.sleepDuration || 0),
-      avgSleepEfficiency: ((acc.avgSleepEfficiency || 0) + (data.sleepEfficiency || 0)) / (acc.count || 1),
-      avgDeepSleep: ((acc.avgDeepSleep || 0) + ((data.sleepStages?.deep) || 0)) / (acc.count || 1),
-      avgLightSleep: ((acc.avgLightSleep || 0) + ((data.sleepStages?.light) || 0)) / (acc.count || 1),
-      avgRemSleep: ((acc.avgRemSleep || 0) + ((data.sleepStages?.rem) || 0)) / (acc.count || 1),
-      avgAwakeSleep: ((acc.avgAwakeSleep || 0) + ((data.sleepStages?.awake) || 0)) / (acc.count || 1),
-      count: (acc.count || 0) + 1
-    }), {});
-
-    // Calculate health risk
-    const healthRisk = calculateHealthRisk(latestHealth, wearableData[0]);
-
     res.json({
       employee: {
+        employeeId: employee.id,
         _id: employee._id,
-        id: employee.id,
         name: employee.name,
         email: employee.email,
         role: employee.role,
@@ -127,21 +86,21 @@ router.get('/employee/:id', async (req, res) => {
       },
       health: {
         latest: {
-          weight: latestHealth.weight,
-          height: latestHealth.height,
-          bmi: bmi,
-          bmiCategory: bmi ? getBMICategory(bmi) : null,
-          bloodPressure: latestHealth.bloodPressure,
-          cholesterol: latestHealth.cholesterol,
-          bloodSugar: latestHealth.bloodSugar,
-          hemoglobin: latestHealth.hemoglobin,
-          creatinine: latestHealth.creatinine,
-          chronic_disease: latestHealth.chronic_disease,
-          chronic_diseases_count: latestHealth.chronic_diseases_count,
-          family_medical_history: latestHealth.family_medical_history,
-          lastUpdated: latestHealth.recordDate || latestHealth.updatedAt
+          weight: employee.weight,
+          height: employee.height,
+          bmi: employee.bmi ? (employee.weight / ((employee.height / 100) ** 2)).toFixed(2) : null,
+          bmiCategory: employee.bmi ? getBMICategory(employee.bmi) : null,
+          bloodPressure: employee.bloodPressure,
+          cholesterol: employee.cholesterol,
+          bloodSugar: employee.bloodSugar,
+          hemoglobin: employee.hemoglobin,
+          creatinine: employee.creatinine,
+          chronic_disease: employee.chronic_disease,
+          chronic_diseases_count: employee.chronic_diseases_count,
+          family_medical_history: employee.family_medical_history,
+          lastUpdated: employee.updatedAt
         },
-        history: healthData.map(h => ({
+        history: employee.healthData.map(h => ({
           weight: h.weight,
           height: h.height,
           bmi: h.bmi,
@@ -155,59 +114,59 @@ router.get('/employee/:id', async (req, res) => {
           family_medical_history: h.family_medical_history,
           recordDate: h.recordDate
         })),
-        riskScore: healthRisk
+        riskScore: calculateHealthRisk(employee.healthData[0], employee.wearableData[0])
       },
       wearable: {
-        latest: wearableData[0] ? {
-          stepCount: wearableData[0].stepCount,
-          heartRate: wearableData[0].heartRate,
-          sleepHours: wearableData[0].sleepHours,
-          activeEnergy: wearableData[0].activeEnergy,
-          exerciseTime: wearableData[0].exerciseTime,
-          heartRateVariability: wearableData[0].heartRateVariability,
-          timeInBed: wearableData[0].timeInBed,
-          walkingDistance: wearableData[0].walkingDistance,
-          recordDate: wearableData[0].recordDate
+        latest: employee.wearableData[0] ? {
+          stepCount: employee.wearableData[0].stepCount,
+          heartRate: employee.wearableData[0].heartRate,
+          sleepHours: employee.wearableData[0].sleepHours,
+          activeEnergy: employee.wearableData[0].activeEnergy,
+          exerciseTime: employee.wearableData[0].exerciseTime,
+          heartRateVariability: employee.wearableData[0].heartRateVariability,
+          timeInBed: employee.wearableData[0].timeInBed,
+          walkingDistance: employee.wearableData[0].walkingDistance,
+          recordDate: employee.wearableData[0].recordDate
         } : null,
         summary: {
-          totalSteps: wearableStats.totalSteps,
-          totalActiveEnergy: wearableStats.totalActiveEnergy,
-          totalExerciseTime: wearableStats.totalExerciseTime,
-          avgHeartRate: wearableStats.avgHeartRate ? wearableStats.avgHeartRate.toFixed(2) : null,
-          avgHRV: wearableStats.avgHRV ? wearableStats.avgHRV.toFixed(2) : null,
-          totalWalkingDistance: wearableStats.totalWalkingDistance,
-          lastUpdated: wearableData[0]?.recordDate || wearableData[0]?.date
+          totalSteps: employee.wearableData.reduce((acc, data) => acc + (data.stepCount || 0), 0),
+          totalActiveEnergy: employee.wearableData.reduce((acc, data) => acc + (data.activeEnergy || 0), 0),
+          totalExerciseTime: employee.wearableData.reduce((acc, data) => acc + (data.exerciseTime || 0), 0),
+          avgHeartRate: employee.wearableData.reduce((acc, data) => acc + (data.heartRate || 0), 0) / employee.wearableData.length,
+          avgHRV: employee.wearableData.reduce((acc, data) => acc + (data.heartRateVariability || 0), 0) / employee.wearableData.length,
+          totalWalkingDistance: employee.wearableData.reduce((acc, data) => acc + (data.walkingDistance || 0), 0),
+          lastUpdated: employee.wearableData[0]?.recordDate || employee.wearableData[0]?.date
         }
       },
       sleep: {
-        latest: sleepData[0] ? {
-          sleepDuration: sleepData[0].sleepDuration,
-          sleepEfficiency: sleepData[0].sleepEfficiency,
-          sleepStages: sleepData[0].sleepStages,
-          heartRate: sleepData[0].heartRate,
-          date: sleepData[0].date
+        latest: employee.sleepData[0] ? {
+          sleepDuration: employee.sleepData[0].sleepDuration,
+          sleepEfficiency: employee.sleepData[0].sleepEfficiency,
+          sleepStages: employee.sleepData[0].sleepStages,
+          heartRate: employee.sleepData[0].heartRate,
+          date: employee.sleepData[0].date
         } : null,
         summary: {
-          totalSleepHours: sleepStats.totalSleepHours,
-          avgSleepEfficiency: sleepStats.avgSleepEfficiency ? sleepStats.avgSleepEfficiency.toFixed(2) : null,
-          avgDeepSleep: sleepStats.avgDeepSleep ? sleepStats.avgDeepSleep.toFixed(2) : null,
-          avgLightSleep: sleepStats.avgLightSleep ? sleepStats.avgLightSleep.toFixed(2) : null,
-          avgRemSleep: sleepStats.avgRemSleep ? sleepStats.avgRemSleep.toFixed(2) : null,
-          avgAwakeSleep: sleepStats.avgAwakeSleep ? sleepStats.avgAwakeSleep.toFixed(2) : null,
-          lastUpdated: sleepData[0]?.date
+          totalSleepHours: employee.sleepData.reduce((acc, data) => acc + (data.sleepDuration || 0), 0),
+          avgSleepEfficiency: employee.sleepData.reduce((acc, data) => acc + (data.sleepEfficiency || 0), 0) / employee.sleepData.length,
+          avgDeepSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.deep) || 0), 0) / employee.sleepData.length,
+          avgLightSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.light) || 0), 0) / employee.sleepData.length,
+          avgRemSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.rem) || 0), 0) / employee.sleepData.length,
+          avgAwakeSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.awake) || 0), 0) / employee.sleepData.length,
+          lastUpdated: employee.sleepData[0]?.date
         }
       },
       insurance: {
-        policy: policy ? {
-          policyNumber: policy.policyNumber,
-          type: policy.type,
-          status: policy.status,
-          planName: policy.planName,
-          coverageDetails: policy.coverageDetails,
-          startDate: policy.startDate,
-          endDate: policy.endDate
+        policy: employee.policy ? {
+          policyNumber: employee.policy.policyNumber,
+          type: employee.policy.type,
+          status: employee.policy.status,
+          planName: employee.policy.planName,
+          coverageDetails: employee.policy.coverageDetails,
+          startDate: employee.policy.startDate,
+          endDate: employee.policy.endDate
         } : null,
-        claims: claims.map(c => ({
+        claims: employee.claims.map(c => ({
           claimId: c._id,
           provider: c.provider,
           claimAmount: c.claimAmount,
@@ -218,17 +177,17 @@ router.get('/employee/:id', async (req, res) => {
         }))
       },
       scores: {
-        insurance_score: latestHealth.insurance_score,
-        smoker_score: latestHealth.smoker_score,
-        family_score: latestHealth.family_score,
-        lifestyle_score: latestHealth.lifestyle_score,
-        bmi_score: latestHealth.bmi_score,
-        hemoglobin_score: latestHealth.hemoglobin_score,
-        sugar_score: latestHealth.sugar_score,
-        cholesterol_score: latestHealth.cholesterol_score,
-        creatinine_score: latestHealth.creatinine_score,
-        physical_score: latestHealth.physical_score,
-        wellness_score: latestHealth.wellness_score
+        insurance_score: employee.insurance_score,
+        smoker_score: employee.smoker_score,
+        family_score: employee.family_score,
+        lifestyle_score: employee.lifestyle_score,
+        bmi_score: employee.bmi_score,
+        hemoglobin_score: employee.hemoglobin_score,
+        sugar_score: employee.sugar_score,
+        cholesterol_score: employee.cholesterol_score,
+        creatinine_score: employee.creatinine_score,
+        physical_score: employee.physical_score,
+        wellness_score: employee.wellness_score
       }
     });
   } catch (error) {
@@ -486,297 +445,149 @@ router.get('/alerts', async (req, res) => {
 // Get comprehensive data for all employees
 router.get('/all-data', async (req, res) => {
   try {
-    // Get all employees with all needed fields
-    const employees = await Employee.find().select('_id id name email role department joinDate age ageGroup gender children smoker education recruitmentChannel noOfTrainings previousYearRating lengthOfService kpisMet80 avgTrainingScore planName coverageDetails startDate endDate');
-    
-    // Get all related data
-    const [healthData, wearableData, sleepData, claims, policies, predictions, complaints] = await Promise.all([
-      HealthData.find().lean(),
-      WearableData.find().lean(),
-      SleepData.find().lean(),
-      Claim.find().lean(),
-      Policy.find().lean(),
-      Prediction.find().lean(),
-      ComplaintTicket.find().lean()
-    ]);
-
-    // Create lookup maps for faster access
-    const healthMap = new Map();
-    const wearableMap = new Map();
-    const sleepMap = new Map();
-    const claimsMap = new Map();
-    const policyMap = new Map();
-    const predictionMap = new Map();
-    const complaintMap = new Map();
-
-    // Populate maps - check for both employee and employeeId fields
-    healthData.forEach(h => {
-      const key = (h.employee || h.employeeId)?.toString();
-      if (key && !healthMap.has(key)) healthMap.set(key, []);
-      if (key) healthMap.get(key).push(h);
-    });
-
-    wearableData.forEach(w => {
-      const key = (w.employee || w.employeeId)?.toString();
-      if (key && !wearableMap.has(key)) wearableMap.set(key, []);
-      if (key) wearableMap.get(key).push(w);
-    });
-
-    sleepData.forEach(s => {
-      const key = (s.employee || s.employeeId)?.toString();
-      if (key && !sleepMap.has(key)) sleepMap.set(key, []);
-      if (key) sleepMap.get(key).push(s);
-    });
-
-    claims.forEach(c => {
-      const key = c.employeeId?.toString();
-      if (key && !claimsMap.has(key)) claimsMap.set(key, []);
-      if (key) claimsMap.get(key).push(c);
-    });
-
-    policies.forEach(p => {
-      const key = p.employeeId?.toString();
-      if (key) policyMap.set(key, p);
-    });
-    
-    predictions.forEach(p => {
-      const key = (p.employee || p.employeeId)?.toString();
-      if (key && !predictionMap.has(key)) predictionMap.set(key, []);
-      if (key) predictionMap.get(key).push(p);
-    });
-    
-    complaints.forEach(c => {
-      const key = c.employeeId?.toString();
-      if (key && !complaintMap.has(key)) complaintMap.set(key, []);
-      if (key) complaintMap.get(key).push(c);
-    });
-
-    // Organize data by employee
-    const employeeData = employees.map(employee => {
-      // Try both _id and id for lookup
-      const employeeIdStr = employee._id?.toString();
-      const idStr = employee.id?.toString();
-      
-      // Get data using both IDs to ensure we find matches
-      const employeeHealth = healthMap.get(employeeIdStr) || healthMap.get(idStr) || [];
-      const employeeWearable = wearableMap.get(employeeIdStr) || wearableMap.get(idStr) || [];
-      const employeeSleep = sleepMap.get(employeeIdStr) || sleepMap.get(idStr) || [];
-      const employeeClaims = claimsMap.get(employeeIdStr) || claimsMap.get(idStr) || [];
-      const employeePolicy = policyMap.get(employeeIdStr) || policyMap.get(idStr);
-      const employeePredictions = predictionMap.get(employeeIdStr) || predictionMap.get(idStr) || [];
-      const employeeComplaints = complaintMap.get(employeeIdStr) || complaintMap.get(idStr) || [];
-
-      // Calculate BMI if we have weight and height
-      const latestHealth = employeeHealth[0] || {};
-      const bmi = latestHealth.weight && latestHealth.height ? 
-        (latestHealth.weight / ((latestHealth.height / 100) ** 2)).toFixed(2) : null;
-
-      // Calculate wearable stats
-      const wearableStats = employeeWearable.reduce((acc, data) => ({
-        totalSteps: (acc.totalSteps || 0) + (data.stepCount || 0),
-        totalActiveEnergy: (acc.totalActiveEnergy || 0) + (data.activeEnergy || 0),
-        totalExerciseTime: (acc.totalExerciseTime || 0) + (data.exerciseTime || 0),
-        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRateAvg || 0)) / (acc.count || 1),
-        avgHRV: ((acc.avgHRV || 0) + (data.heartRateVariability || 0)) / (acc.count || 1),
-        totalWalkingDistance: (acc.totalWalkingDistance || 0) + (data.walkingRunningDistance || 0),
-        count: (acc.count || 0) + 1
-      }), {});
-
-      // Calculate sleep stats
-      const sleepStats = employeeSleep.reduce((acc, data) => ({
-        totalSleepHours: (acc.totalSleepHours || 0) + (data.timeInBed || 0),
-        avgSleepEfficiency: ((acc.avgSleepEfficiency || 0) + (data.sleepQuality || 0)) / (acc.count || 1),
-        avgHeartRate: ((acc.avgHeartRate || 0) + (data.heartRate || 0)) / (acc.count || 1),
-        count: (acc.count || 0) + 1
-      }), {});
-
-      return {
-        employee: {
-          _id: employee._id,
-          id: employee.id,
-          name: employee.name,
-          email: employee.email,
-          role: employee.role,
-          department: employee.department,
-          joinDate: employee.joinDate,
-          age: employee.age,
-          ageGroup: employee.ageGroup,
-          gender: employee.gender,
-          children: employee.children,
-          smoker: employee.smoker,
-          education: employee.education,
-          recruitmentChannel: employee.recruitmentChannel,
-          noOfTrainings: employee.noOfTrainings,
-          previousYearRating: employee.previousYearRating,
-          lengthOfService: employee.lengthOfService,
-          kpisMet80: employee.kpisMet80,
-          avgTrainingScore: employee.avgTrainingScore,
-          planName: employee.planName,
-          coverageDetails: employee.coverageDetails,
-          startDate: employee.startDate,
-          endDate: employee.endDate
-        },
-        health: {
-          latest: latestHealth ? {
-            weight: latestHealth.weight,
-            height: latestHealth.height,
-            bmi: bmi,
-            hemoglobin: latestHealth.hemoglobin,
-            cholesterol: latestHealth.cholesterol,
-            bloodSugar: latestHealth.bloodSugar,
-            creatinine: latestHealth.creatinine,
-            chronicDisease: latestHealth.chronicDisease,
-            chronicDiseaseCount: latestHealth.chronicDiseaseCount,
-            familyMedicalHistory: latestHealth.familyMedicalHistory,
-            claimedAmount: latestHealth.claimedAmount,
-            recordDate: latestHealth.recordedAt
-          } : {},
-          history: employeeHealth.map(h => ({
-            weight: h.weight,
-            height: h.height,
-            bmi: h.bmi,
-            hemoglobin: h.hemoglobin,
-            cholesterol: h.cholesterol,
-            bloodSugar: h.bloodSugar,
-            creatinine: h.creatinine,
-            chronicDisease: h.chronicDisease,
-            chronicDiseaseCount: h.chronicDiseaseCount,
-            familyMedicalHistory: h.familyMedicalHistory,
-            claimedAmount: h.claimedAmount,
-            recordDate: h.recordedAt
-          }))
-        },
-        wearable: {
-          latest: employeeWearable[0] ? {
-            activeEnergy: employeeWearable[0].activeEnergy,
-            exerciseTime: employeeWearable[0].exerciseTime,
-            standHours: employeeWearable[0].standHours,
-            standTime: employeeWearable[0].standTime,
-            environmentalAudioExposure: employeeWearable[0].environmentalAudioExposure,
-            flightsClimbed: employeeWearable[0].flightsClimbed,
-            headphoneAudioExposure: employeeWearable[0].headphoneAudioExposure,
-            heartRateMin: employeeWearable[0].heartRateMin,
-            heartRateMax: employeeWearable[0].heartRateMax,
-            heartRateAvg: employeeWearable[0].heartRateAvg,
-            heartRateVariability: employeeWearable[0].heartRateVariability,
-            physicalEffort: employeeWearable[0].physicalEffort,
-            restingEnergy: employeeWearable[0].restingEnergy,
-            restingHeartRate: employeeWearable[0].restingHeartRate,
-            stepCount: employeeWearable[0].stepCount,
-            walkingRunningDistance: employeeWearable[0].walkingRunningDistance,
-            walkingHeartRateAvg: employeeWearable[0].walkingHeartRateAvg,
-            walkingSpeed: employeeWearable[0].walkingSpeed,
-            walkingStepLength: employeeWearable[0].walkingStepLength,
-            recordDate: employeeWearable[0].date
-          } : {},
-          history: employeeWearable.map(w => ({
-            activeEnergy: w.activeEnergy,
-            exerciseTime: w.exerciseTime,
-            standHours: w.standHours,
-            standTime: w.standTime,
-            environmentalAudioExposure: w.environmentalAudioExposure,
-            flightsClimbed: w.flightsClimbed,
-            headphoneAudioExposure: w.headphoneAudioExposure,
-            heartRateMin: w.heartRateMin,
-            heartRateMax: w.heartRateMax,
-            heartRateAvg: w.heartRateAvg,
-            heartRateVariability: w.heartRateVariability,
-            physicalEffort: w.physicalEffort,
-            restingEnergy: w.restingEnergy,
-            restingHeartRate: w.restingHeartRate,
-            stepCount: w.stepCount,
-            walkingRunningDistance: w.walkingRunningDistance,
-            walkingHeartRateAvg: w.walkingHeartRateAvg,
-            walkingSpeed: w.walkingSpeed,
-            walkingStepLength: w.walkingStepLength,
-            recordDate: w.date
-          })),
-          stats: {
-            totalSteps: wearableStats.totalSteps,
-            avgHeartRate: wearableStats.avgHeartRate ? wearableStats.avgHeartRate.toFixed(2) : null,
-            avgHRV: wearableStats.avgHRV ? wearableStats.avgHRV.toFixed(2) : null,
-            totalActiveEnergy: wearableStats.totalActiveEnergy,
-            totalExerciseTime: wearableStats.totalExerciseTime,
-            totalWalkingDistance: wearableStats.totalWalkingDistance,
-            totalDays: wearableStats.count
-          }
-        },
-        sleep: {
-          latest: employeeSleep[0] ? {
-            startTime: employeeSleep[0].startTime,
-            endTime: employeeSleep[0].endTime,
-            sleepQuality: employeeSleep[0].sleepQuality,
-            timeInBed: employeeSleep[0].timeInBed,
-            sleepNotes: employeeSleep[0].sleepNotes,
-            heartRate: employeeSleep[0].heartRate,
-            date: employeeSleep[0].date
-          } : {},
-          history: employeeSleep.map(s => ({
-            startTime: s.startTime,
-            endTime: s.endTime,
-            sleepQuality: s.sleepQuality,
-            timeInBed: s.timeInBed,
-            sleepNotes: s.sleepNotes,
-            heartRate: s.heartRate,
-            date: s.date
-          })),
-          stats: {
-            totalSleepHours: sleepStats.totalSleepHours,
-            avgSleepEfficiency: sleepStats.avgSleepEfficiency ? sleepStats.avgSleepEfficiency.toFixed(2) : null,
-            avgHeartRate: sleepStats.avgHeartRate ? sleepStats.avgHeartRate.toFixed(2) : null,
-            totalDays: sleepStats.count
-          }
-        },
-        insurance: {
-          policy: employeePolicy ? {
-            policyNumber: employeePolicy.policyNumber,
-            type: employeePolicy.type,
-            status: employeePolicy.status,
-            planName: employeePolicy.planName,
-            coverageDetails: employeePolicy.coverageDetails,
-            startDate: employeePolicy.startDate,
-            endDate: employeePolicy.endDate
-          } : null,
-          claims: employeeClaims.map(c => ({
-            provider: c.provider,
-            claimAmount: c.claimAmount,
-            status: c.status,
-            date: c.date,
-            department: c.department,
-            claimedAmount: c.claimedAmount
-          }))
-        },
-        scores: {
-          insuranceScore: latestHealth?.insuranceScore,
-          smokerScore: latestHealth?.smokerScore,
-          familyScore: latestHealth?.familyScore,
-          lifestyleScore: latestHealth?.lifestyleScore,
-          bmiScore: latestHealth?.bmiScore,
-          hemoglobinScore: latestHealth?.hemoglobinScore,
-          sugarScore: latestHealth?.sugarScore,
-          cholesterolScore: latestHealth?.cholesterolScore,
-          creatinineScore: latestHealth?.creatinineScore,
-          physicalScore: latestHealth?.physicalScore,
-          wellnessScore: latestHealth?.wellnessScore
-        },
-        predictions: employeePredictions.map(p => ({
-          predictionType: p.predictionType,
-          predictionValue: p.predictionValue,
-          predictedAt: p.predictedAt
+    const employees = await Employee.find();
+    const employeeData = employees.map(employee => ({
+      employee: {
+        employeeId: employee.id,
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+        department: employee.department,
+        joinDate: employee.joinDate,
+        age: employee.age,
+        ageGroup: employee.ageGroup,
+        gender: employee.gender,
+        children: employee.children,
+        smoker: employee.smoker,
+        education: employee.education,
+        recruitmentChannel: employee.recruitmentChannel,
+        noOfTrainings: employee.noOfTrainings,
+        previousYearRating: employee.previousYearRating,
+        lengthOfService: employee.lengthOfService,
+        kpisMet80: employee.kpisMet80,
+        avgTrainingScore: employee.avgTrainingScore,
+        planName: employee.planName,
+        coverageDetails: employee.coverageDetails,
+        startDate: employee.startDate,
+        endDate: employee.endDate
+      },
+      health: {
+        latest: employee.healthData[0] || {},
+        history: employee.healthData.map(h => ({
+          weight: h.weight,
+          height: h.height,
+          bmi: h.bmi,
+          bloodPressure: h.bloodPressure,
+          cholesterol: h.cholesterol,
+          bloodSugar: h.bloodSugar,
+          hemoglobin: h.hemoglobin,
+          creatinine: h.creatinine,
+          chronicDisease: h.chronicDisease,
+          chronicDiseaseCount: h.chronicDiseaseCount,
+          familyMedicalHistory: h.familyMedicalHistory,
+          claimedAmount: h.claimedAmount,
+          recordDate: h.recordedAt
         })),
-        complaints: employeeComplaints.map(c => ({
-          subject: c.subject,
-          description: c.description,
+        riskScore: calculateHealthRisk(employee.healthData[0], employee.wearableData[0])
+      },
+      wearable: {
+        latest: employee.wearableData[0] || {},
+        history: employee.wearableData.map(w => ({
+          activeEnergy: w.activeEnergy,
+          exerciseTime: w.exerciseTime,
+          standHours: w.standHours,
+          standTime: w.standTime,
+          environmentalAudioExposure: w.environmentalAudioExposure,
+          flightsClimbed: w.flightsClimbed,
+          headphoneAudioExposure: w.headphoneAudioExposure,
+          heartRateMin: w.heartRateMin,
+          heartRateMax: w.heartRateMax,
+          heartRateAvg: w.heartRateAvg,
+          heartRateVariability: w.heartRateVariability,
+          physicalEffort: w.physicalEffort,
+          restingEnergy: w.restingEnergy,
+          restingHeartRate: w.restingHeartRate,
+          stepCount: w.stepCount,
+          walkingRunningDistance: w.walkingRunningDistance,
+          walkingHeartRateAvg: w.walkingHeartRateAvg,
+          walkingSpeed: w.walkingSpeed,
+          walkingStepLength: w.walkingStepLength,
+          recordDate: w.date
+        })),
+        stats: {
+          totalSteps: employee.wearableData.reduce((acc, data) => acc + (data.stepCount || 0), 0),
+          avgHeartRate: employee.wearableData.reduce((acc, data) => acc + (data.heartRate || 0), 0) / employee.wearableData.length,
+          avgHRV: employee.wearableData.reduce((acc, data) => acc + (data.heartRateVariability || 0), 0) / employee.wearableData.length,
+          totalActiveEnergy: employee.wearableData.reduce((acc, data) => acc + (data.activeEnergy || 0), 0),
+          totalExerciseTime: employee.wearableData.reduce((acc, data) => acc + (data.exerciseTime || 0), 0),
+          totalWalkingDistance: employee.wearableData.reduce((acc, data) => acc + (data.walkingDistance || 0), 0),
+          totalDays: employee.wearableData.length
+        }
+      },
+      sleep: {
+        latest: employee.sleepData[0] || {},
+        history: employee.sleepData.map(s => ({
+          startTime: s.startTime,
+          endTime: s.endTime,
+          sleepQuality: s.sleepQuality,
+          timeInBed: s.timeInBed,
+          sleepNotes: s.sleepNotes,
+          heartRate: s.heartRate,
+          date: s.date
+        })),
+        stats: {
+          totalSleepHours: employee.sleepData.reduce((acc, data) => acc + (data.sleepDuration || 0), 0),
+          avgSleepEfficiency: employee.sleepData.reduce((acc, data) => acc + (data.sleepEfficiency || 0), 0) / employee.sleepData.length,
+          avgHeartRate: employee.sleepData.reduce((acc, data) => acc + (data.heartRate || 0), 0) / employee.sleepData.length,
+          totalDays: employee.sleepData.length
+        }
+      },
+      insurance: {
+        policy: employee.policy ? {
+          policyNumber: employee.policy.policyNumber,
+          type: employee.policy.type,
+          status: employee.policy.status,
+          planName: employee.policy.planName,
+          coverageDetails: employee.policy.coverageDetails,
+          startDate: employee.policy.startDate,
+          endDate: employee.policy.endDate
+        } : null,
+        claims: employee.claims.map(c => ({
+          provider: c.provider,
+          claimAmount: c.claimAmount,
           status: c.status,
-          createdAt: c.createdAt
+          date: c.date,
+          department: c.department,
+          claimedAmount: c.claimedAmount
         }))
-      };
-    });
-
-    res.json({
-      totalEmployees: employeeData.length,
-      employees: employeeData.slice(0, 10) // Return only first 10 for faster response
-    });
+      },
+      scores: {
+        insuranceScore: employee.insurance_score,
+        smokerScore: employee.smoker_score,
+        familyScore: employee.family_score,
+        lifestyleScore: employee.lifestyle_score,
+        bmiScore: employee.bmi_score,
+        hemoglobinScore: employee.hemoglobin_score,
+        sugarScore: employee.sugar_score,
+        cholesterolScore: employee.cholesterol_score,
+        creatinineScore: employee.creatinine_score,
+        physicalScore: employee.physical_score,
+        wellnessScore: employee.wellness_score
+      },
+      predictions: employee.predictions.map(p => ({
+        predictionType: p.predictionType,
+        predictionValue: p.predictionValue,
+        predictedAt: p.predictedAt
+      })),
+      complaints: employee.complaints.map(c => ({
+        subject: c.subject,
+        description: c.description,
+        status: c.status,
+        createdAt: c.createdAt
+      }))
+    }));
+    res.json(employeeData);
   } catch (error) {
     console.error('Error in all-data endpoint:', error);
     res.status(500).json({ 

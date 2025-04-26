@@ -3,7 +3,7 @@ const { HealthData, WearableData, Employee } = require('../models/schemas');
 // Get employee health data
 exports.getEmployeeHealthData = async (employeeId) => {
   try {
-    const healthData = await HealthData.findOne({ employee: employeeId });
+    const healthData = await HealthData.findOne({ employeeId });
     return healthData || null;
   } catch (error) {
     console.error('Error getting health data:', error);
@@ -14,7 +14,7 @@ exports.getEmployeeHealthData = async (employeeId) => {
 // Get employee wearable data
 exports.getEmployeeWearableData = async (employeeId) => {
   try {
-    const wearableData = await WearableData.findOne({ employee: employeeId });
+    const wearableData = await WearableData.findOne({ employeeId });
     return wearableData || null;
   } catch (error) {
     console.error('Error getting wearable data:', error);
@@ -27,7 +27,7 @@ exports.saveHealthData = async (employeeId, data) => {
   try {
     const healthData = new HealthData({
       ...data,
-      employee: employeeId
+      employeeId
     });
     await healthData.save();
     return healthData;
@@ -42,7 +42,7 @@ exports.saveWearableData = async (employeeId, data) => {
   try {
     const wearableData = new WearableData({
       ...data,
-      employee: employeeId
+      employeeId
     });
     await wearableData.save();
     return wearableData;
