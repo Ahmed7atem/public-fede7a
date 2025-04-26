@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
     const query = {};
     
     if (specialty) {
-      query.specialization = specialty;
+      query.specialization = { $regex: specialty, $options: 'i' };
     }
     
     if (city) {
@@ -151,7 +151,7 @@ router.get('/specialty/:specialty', async (req, res) => {
     const { specialty } = req.params;
     const { city, rating } = req.query;
 
-    const query = { specialization: specialty };
+    const query = { specialization: { $regex: specialty, $options: 'i' } };
     
     if (city) {
       query.clinic_location = { $regex: city, $options: 'i' };

@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = convertToObjectId(req.params.id);
-    const healthData = await HealthData.findOne({ employeeId: id });
+    const healthData = await HealthData.findOne({ employee: id });
     if (!healthData) {
       return res.status(404).json({ message: 'Health data not found' });
     }
@@ -70,13 +70,13 @@ router.get('/:id', async (req, res) => {
 // Get health data by employee ID
 router.get('/employee/:employeeId', async (req, res) => {
   try {
-    const healthData = await HealthData.find({ employeeId: req.params.employeeId });
+    const healthData = await HealthData.find({ employee: req.params.employeeId });
     if (!healthData || healthData.length === 0) {
       return res.status(404).json({ message: 'Health data not found for this employee' });
     }
     res.json(healthData.map(data => ({
       _id: data._id,
-      employeeId: data.employeeId,
+      employee: data.employee,
       weight: data.weight,
       height: data.height,
       bmi: data.bmi,

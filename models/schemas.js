@@ -2,9 +2,20 @@ const mongoose = require('mongoose');
 
 // Employee Schema - Simplified for basic auth
 const employeeSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true }, // UUID for the employee
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  employeeId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
   name: { type: String, required: true },
   age: { type: Number, required: true },
   gender: { type: String, required: true },
@@ -17,12 +28,56 @@ const employeeSchema = new mongoose.Schema({
     diastolic: { type: Number }
   },
   diabetic: { type: Boolean, default: false },
-  role: { type: String, enum: ['employee', 'admin'], default: 'employee' },
+  role: {
+    type: String,
+    default: 'employee'
+  },
   policyId: { type: String, required: true }, // Reference to policy UUID
-  charges: { type: Number }
+  charges: { type: Number },
+  Age: String,
+  Age_Group: String,
+  Gender: String,
+  Weight_kg: String,
+  Height_cm: String,
+  BMI: String,
+  Children: String,
+  Smoker: String,
+  Chronic_Disease: String,
+  Chronic_diseases_count: String,
+  family_medical_history: String,
+  Hemoglobin: String,
+  Cholesterol: String,
+  Blood_Sugar: String,
+  Creatinine: String,
+  policyNumber: String,
+  Plan_Name: String,
+  Coverage_Details: String,
+  Start_Date: String,
+  End_Date: String,
+  Claimed_Amount: String,
+  Department: String,
+  Education: String,
+  Recruitment_Channel: String,
+  No_of_Trainings: String,
+  Previous_Year_Rating: String,
+  Length_of_Service: String,
+  KPIs_Met_80: String,
+  Avg_Training_Score: String,
+  Insurance_Score: String,
+  Smoker_Score: String,
+  Family_Score: String,
+  Lifestyle_Score: String,
+  BMI_Score: String,
+  Hemoglobin_Score: String,
+  Sugar_Score: String,
+  Cholesterol_Score: String,
+  Creatinine_Score: String,
+  Physical_Score: String,
+  Wellness_Score: String
 }, {
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
+  timestamps: true
 });
 
 // Set id as the primary key
