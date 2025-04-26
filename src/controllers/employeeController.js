@@ -9,6 +9,17 @@ const { Employee } = require('../../models');
 const getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find().limit(10).lean();
+    console.log(`Found ${employees.length} total employees`);
+    
+    // Log one employee to see its structure
+    if (employees.length > 0) {
+      console.log('Sample employee ID fields:', {
+        _id: employees[0]._id,
+        employeeId: employees[0].employeeId,
+        Policy_ID: employees[0].Policy_ID
+      });
+    }
+    
     res.json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -29,55 +40,35 @@ const getEmployeeById = async (req, res) => {
     const id = req.params.id;
     console.log('Looking up employee with ID:', id);
     
-    // First try direct match on employeeId
-    let employee = await Employee.findOne({ employeeId: id }).lean();
-    console.log('Direct match on employeeId:', employee ? 'Found' : 'Not found');
+    // We now know the field is definitely 'employeeId' in the employees collection
+    // Build a targeted query with variations of the ID format
+    const query = {
+      $or: [
+        // Primary match on employeeId
+        { employeeId: id },
+        
+        // Fall back to Policy_ID as an alternative
+        { Policy_ID: id },
+        
+        // Try without dashes
+        { employeeId: id.replace(/-/g, '') },
+        { Policy_ID: id.replace(/-/g, '') },
+        
+        // Try case-insensitive regex as last resort
+        { employeeId: { $regex: new RegExp(id, 'i') } }
+      ]
+    };
     
-    // If not found, try other fields and formats
-    if (!employee) {
-      // Try Policy_ID
-      console.log('Trying Policy_ID match');
-      employee = await Employee.findOne({ Policy_ID: id }).lean();
-      console.log('Policy_ID match:', employee ? 'Found' : 'Not found');
-      
-      // Try the _id field if it's a valid ObjectId
-      if (!employee && mongoose.Types.ObjectId.isValid(id)) {
-        console.log('Trying ObjectId match');
-        employee = await Employee.findById(id).lean();
-        console.log('ObjectId match:', employee ? 'Found' : 'Not found');
-      }
-      
-      // Try employeeId without dashes
-      if (!employee && id.includes('-')) {
-        const idWithoutDashes = id.replace(/-/g, '');
-        console.log('Trying employeeId without dashes:', idWithoutDashes);
-        employee = await Employee.findOne({ employeeId: idWithoutDashes }).lean();
-        console.log('Without dashes match:', employee ? 'Found' : 'Not found');
-      }
-      
-      // Try case-insensitive regex match
-      if (!employee) {
-        console.log('Trying regex match');
-        const regex = new RegExp(id, 'i');
-        employee = await Employee.findOne({
-          $or: [
-            { employeeId: { $regex: regex } },
-            { Policy_ID: { $regex: regex } }
-          ]
-        }).lean();
-        console.log('Regex match:', employee ? 'Found' : 'Not found');
-      }
+    // Add ObjectId check if valid
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
     }
     
-    if (!employee) {
-      console.log('Employee not found with any ID format');
-      return res.status(404).json({ 
-        message: 'Employee not found',
-        debug: { idProvided: id }
-      });
-    }
-
-    console.log('Found employee:', employee.employeeId);
+    console.log('Executing targeted query for employee on employeeId field');
+    const employee = await Employee.findOne(query).lean();
+    console.log('Employee found:', employee ? 'Yes' : 'No');
+    
+    // Always return the result, even if null (status 200)
     res.json(employee);
   } catch (error) {
     console.error('Error fetching employee:', error);
@@ -111,12 +102,17 @@ const updateEmployee = async (req, res) => {
     const id = req.params.id;
     const updates = req.body;
     
-    // Find employee by any of the ID types
-    let query = {};
+    // Use the specific field names we know are in the collection
+    const query = {
+      $or: [
+        { employeeId: id },
+        { Policy_ID: id }
+      ]
+    };
+    
+    // Include ObjectId check
     if (mongoose.Types.ObjectId.isValid(id)) {
-      query._id = id;
-    } else {
-      query = { $or: [{ employeeId: id }, { Policy_ID: id }] };
+      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
     }
     
     const employee = await Employee.findOneAndUpdate(query, updates, { new: true });
@@ -141,12 +137,17 @@ const deleteEmployee = async (req, res) => {
   try {
     const id = req.params.id;
     
-    // Find employee by any of the ID types
-    let query = {};
+    // Use the specific field names we know are in the collection
+    const query = {
+      $or: [
+        { employeeId: id },
+        { Policy_ID: id }
+      ]
+    };
+    
+    // Include ObjectId check
     if (mongoose.Types.ObjectId.isValid(id)) {
-      query._id = id;
-    } else {
-      query = { $or: [{ employeeId: id }, { Policy_ID: id }] };
+      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
     }
     
     const employee = await Employee.findOneAndDelete(query);

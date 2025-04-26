@@ -8,6 +8,13 @@ const { HealthData } = require('../../models');
 const getAllHealthData = async (req, res) => {
   try {
     const healthData = await HealthData.find().limit(10).lean();
+    console.log(`Found ${healthData.length} total health records`);
+    
+    // Log the first record's employee ID format for debugging
+    if (healthData.length > 0) {
+      console.log(`Sample health data - employee field format: ${healthData[0].employee}`);
+    }
+    
     res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data:', error);
@@ -25,48 +32,26 @@ const getHealthDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for health data with employee ID: ${id}`);
     
-    // First try direct match
-    let healthData = await HealthData.findOne({ employee: id }).lean();
-    console.log(`Result of direct match: ${healthData ? 'Found' : 'Not found'}`);
+    // We now know the field name is definitely 'employee' for health data
+    // Build a targeted query with variations of the ID format
+    const query = {
+      $or: [
+        // Try exact match
+        { employee: id },
+        
+        // Try without dashes
+        { employee: id.replace(/-/g, '') },
+        
+        // Try case-insensitive regex as fallback
+        { employee: { $regex: new RegExp(id, 'i') } }
+      ]
+    };
     
-    // If no results, try different approaches
-    if (!healthData) {
-      // Try without dashes if ID has them
-      if (id.includes('-')) {
-        const idWithoutDashes = id.replace(/-/g, '');
-        console.log(`Trying without dashes: ${idWithoutDashes}`);
-        healthData = await HealthData.findOne({ employee: idWithoutDashes }).lean();
-        console.log(`Results without dashes: ${healthData ? 'Found' : 'Not found'}`);
-      }
-      
-      // Try case-insensitive regex
-      if (!healthData) {
-        console.log('Trying case-insensitive regex match');
-        const regex = new RegExp(id, 'i');
-        healthData = await HealthData.findOne({ employee: { $regex: regex } }).lean();
-        console.log(`Results with regex: ${healthData ? 'Found' : 'Not found'}`);
-      }
-      
-      // Try multiple field match
-      if (!healthData) {
-        console.log('Trying multiple field match');
-        healthData = await HealthData.findOne({
-          $or: [
-            { employee: id },
-            { employeeId: id }
-          ]
-        }).lean();
-        console.log(`Results with multiple fields: ${healthData ? 'Found' : 'Not found'}`);
-      }
-    }
+    console.log(`Executing targeted query for health data on 'employee' field`);
+    const healthData = await HealthData.findOne(query).lean();
+    console.log(`Health data found: ${healthData ? 'Yes' : 'No'}`);
     
-    if (!healthData) {
-      return res.status(404).json({ 
-        message: 'Health data not found for this employee',
-        debug: { employeeIdProvided: id } 
-      });
-    }
-    
+    // Always return the result, even if null (status 200)
     res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data:', error);
