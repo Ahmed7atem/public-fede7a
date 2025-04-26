@@ -18,7 +18,7 @@ router.put('/:employeeId', async (req, res) => {
 
     // Create new prediction
     const newPrediction = new Prediction({
-      employee: employeeId,
+      employeeId: employeeId,
       predictionType,
       predictionValue,
       confidence,
@@ -27,12 +27,12 @@ router.put('/:employeeId', async (req, res) => {
     });
 
     // Save the prediction
-    await newPrediction.save();
+    const savedPrediction = await newPrediction.save();
 
     res.status(201).json({
       success: true,
       message: 'Prediction added successfully',
-      data: newPrediction
+      data: savedPrediction
     });
   } catch (error) {
     console.error('Error adding prediction:', error);
@@ -49,7 +49,7 @@ router.get('/:employeeId', async (req, res) => {
   try {
     const { employeeId } = req.params;
     
-    const predictions = await Prediction.find({ employee: employeeId })
+    const predictions = await Prediction.find({ employeeId: employeeId })
       .sort({ predictedAt: -1 });
 
     res.status(200).json({

@@ -127,7 +127,7 @@ const sleepDataSchema = new mongoose.Schema({
 
 // Prediction Schema - Based on actual MongoDB structure
 const predictionSchema = new mongoose.Schema({
-  employee: { type: String, required: true }, // Reference to employee UUID
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   predictedAt: { type: Date, default: Date.now },
   predictionType: { type: String, required: true },
   predictionValue: { type: String, required: true },
