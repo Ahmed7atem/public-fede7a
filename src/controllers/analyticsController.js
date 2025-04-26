@@ -335,16 +335,14 @@ const getAllData = async (req, res) => {
         const employeeId = employee.employeeId;
         console.log(`\nProcessing employee ${employeeId}`);
 
-        // Get health data
+        // Use 'employeeId' field for all related data queries
         const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
-        console.log(`Health data query: { employeeId: "${employeeId}" }`);
-        console.log(`Found ${healthData.length} health records`);
-
-        // Get wearable data
         const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
-        console.log(`Wearable data query: { employeeId: "${employeeId}" }`);
-        console.log(`Found ${wearableData.length} wearable records`);
-        
+        const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
+        const predictions = await Prediction.find({ employeeId: employeeId }).lean();
+        // Claims use 'patientId'
+        const claims = await Claim.find({ patientId: employeeId }).lean();
+
         // Calculate wearable stats
         const wearableStats = {
           avgHeartRate: wearableData.length > 0 
@@ -355,11 +353,6 @@ const getAllData = async (req, res) => {
             : null
         };
 
-        // Get sleep data
-        const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
-        console.log(`Sleep data query: { employeeId: "${employeeId}" }`);
-        console.log(`Found ${sleepData.length} sleep records`);
-        
         // Calculate sleep stats
         const sleepStats = {
           avgSleepEfficiency: sleepData.length > 0 
@@ -369,16 +362,6 @@ const getAllData = async (req, res) => {
             ? sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length 
             : null
         };
-
-        // Get claims
-        const claims = await Claim.find({ patientId: employeeId }).lean();
-        console.log(`Claims query: { patientId: "${employeeId}" }`);
-        console.log(`Found ${claims.length} claims`);
-
-        // Get predictions
-        const predictions = await Prediction.find({ employeeId: employeeId }).lean();
-        console.log(`Predictions query: { employeeId: "${employeeId}" }`);
-        console.log(`Found ${predictions.length} predictions`);
 
         const result = {
           employee: {
@@ -464,7 +447,6 @@ const getAllData = async (req, res) => {
           complaints: []
         };
 
-        console.log(`Completed processing employee ${employeeId}`);
         return result;
       } catch (error) {
         console.error(`Error processing employee ${employee.employeeId}:`, error);
@@ -480,7 +462,6 @@ const getAllData = async (req, res) => {
       }
     }));
 
-    console.log('\nCompleted processing all employees');
     res.json({
       totalEmployees,
       employees: employeeData
