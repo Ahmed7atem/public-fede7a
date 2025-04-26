@@ -339,17 +339,11 @@ const getAllData = async (req, res) => {
         const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
         console.log(`Health data query: { employeeId: "${employeeId}" }`);
         console.log(`Found ${healthData.length} health records`);
-        if (healthData.length > 0) {
-          console.log('Sample health data:', JSON.stringify(healthData[0], null, 2));
-        }
 
         // Get wearable data
         const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
         console.log(`Wearable data query: { employeeId: "${employeeId}" }`);
         console.log(`Found ${wearableData.length} wearable records`);
-        if (wearableData.length > 0) {
-          console.log('Sample wearable data:', JSON.stringify(wearableData[0], null, 2));
-        }
         
         // Calculate wearable stats
         const wearableStats = {
@@ -365,9 +359,6 @@ const getAllData = async (req, res) => {
         const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
         console.log(`Sleep data query: { employeeId: "${employeeId}" }`);
         console.log(`Found ${sleepData.length} sleep records`);
-        if (sleepData.length > 0) {
-          console.log('Sample sleep data:', JSON.stringify(sleepData[0], null, 2));
-        }
         
         // Calculate sleep stats
         const sleepStats = {
@@ -383,17 +374,11 @@ const getAllData = async (req, res) => {
         const claims = await Claim.find({ patientId: employeeId }).lean();
         console.log(`Claims query: { patientId: "${employeeId}" }`);
         console.log(`Found ${claims.length} claims`);
-        if (claims.length > 0) {
-          console.log('Sample claim:', JSON.stringify(claims[0], null, 2));
-        }
 
         // Get predictions
         const predictions = await Prediction.find({ employeeId: employeeId }).lean();
         console.log(`Predictions query: { employeeId: "${employeeId}" }`);
         console.log(`Found ${predictions.length} predictions`);
-        if (predictions.length > 0) {
-          console.log('Sample prediction:', JSON.stringify(predictions[0], null, 2));
-        }
 
         const result = {
           employee: {
