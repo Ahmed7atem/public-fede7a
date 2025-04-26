@@ -57,147 +57,142 @@ const calculateHealthRisk = (healthData, wearableData) => {
 // Get comprehensive employee analytics
 router.get('/employee/:id', async (req, res) => {
   try {
-    const employee = await Employee.findOne({ id: req.params.id });
+    const employeeId = convertToObjectId(req.params.id);
+    
+    // Find employee by either UUID or ObjectId
+    const employee = await Employee.findOne({ 
+      $or: [
+        { _id: employeeId },
+        { id: employeeId }
+      ]
+    });
+    
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
+    // Get health data
+    const healthData = await HealthData.findOne({ employeeId: employee.id || employee._id });
+    
+    // Get wearable data
+    const wearableData = await WearableData.find({ employeeId: employee.id || employee._id })
+      .sort({ timestamp: -1 })
+      .limit(30);
+    
+    // Get sleep data
+    const sleepData = await SleepData.find({ employeeId: employee.id || employee._id })
+      .sort({ date: -1 })
+      .limit(7);
+
+    // Calculate health metrics
+    const healthMetrics = {
+      bmi: employee.bmi || 0,
+      bloodPressure: employee.bloodPressure || { systolic: 0, diastolic: 0 },
+      diabetic: employee.diabetic || false,
+      smoker: employee.smoker || false,
+      children: employee.children || 0,
+      region: employee.region || 'Unknown'
+    };
+
+    // Calculate activity metrics from wearable data
+    const activityMetrics = {
+      averageSteps: wearableData.length > 0 
+        ? wearableData.reduce((sum, data) => sum + (data.steps || 0), 0) / wearableData.length 
+        : 0,
+      averageHeartRate: wearableData.length > 0 
+        ? wearableData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / wearableData.length 
+        : 0,
+      averageCalories: wearableData.length > 0 
+        ? wearableData.reduce((sum, data) => sum + (data.calories || 0), 0) / wearableData.length 
+        : 0
+    };
+
+    // Calculate sleep metrics
+    const sleepMetrics = {
+      averageDuration: sleepData.length > 0 
+        ? sleepData.reduce((sum, data) => sum + (data.duration || 0), 0) / sleepData.length 
+        : 0,
+      averageQuality: sleepData.length > 0 
+        ? sleepData.reduce((sum, data) => sum + (data.quality || 0), 0) / sleepData.length 
+        : 0,
+      averageDeepSleep: sleepData.length > 0 
+        ? sleepData.reduce((sum, data) => sum + (data.deepSleep || 0), 0) / sleepData.length 
+        : 0
+    };
+
+    // Calculate health risk score
+    const healthRiskScore = calculateHealthRiskScore(healthMetrics, activityMetrics, sleepMetrics);
+
     res.json({
       employee: {
-        employeeId: employee.id,
-        _id: employee._id,
+        id: employee.id || employee._id,
         name: employee.name,
         email: employee.email,
-        role: employee.role,
-        department: employee.department,
-        joinDate: employee.joinDate,
         age: employee.age,
-        ageGroup: employee.ageGroup,
-        gender: employee.gender,
-        children: employee.children,
-        smoker: employee.smoker,
-        education: employee.education,
-        recruitment_channel: employee.recruitment_channel,
-        no_of_trainings: employee.no_of_trainings,
-        previous_year_rating: employee.previous_year_rating,
-        length_of_service: employee.length_of_service,
-        kpis_met_80: employee.kpis_met_80,
-        avg_training_score: employee.avg_training_score
+        gender: employee.gender
       },
-      health: {
-        latest: {
-          weight: employee.weight,
-          height: employee.height,
-          bmi: employee.bmi ? (employee.weight / ((employee.height / 100) ** 2)).toFixed(2) : null,
-          bmiCategory: employee.bmi ? getBMICategory(employee.bmi) : null,
-          bloodPressure: employee.bloodPressure,
-          cholesterol: employee.cholesterol,
-          bloodSugar: employee.bloodSugar,
-          hemoglobin: employee.hemoglobin,
-          creatinine: employee.creatinine,
-          chronic_disease: employee.chronic_disease,
-          chronic_diseases_count: employee.chronic_diseases_count,
-          family_medical_history: employee.family_medical_history,
-          lastUpdated: employee.updatedAt
-        },
-        history: employee.healthData.map(h => ({
-          weight: h.weight,
-          height: h.height,
-          bmi: h.bmi,
-          bloodPressure: h.bloodPressure,
-          cholesterol: h.cholesterol,
-          bloodSugar: h.bloodSugar,
-          hemoglobin: h.hemoglobin,
-          creatinine: h.creatinine,
-          chronic_disease: h.chronic_disease,
-          chronic_diseases_count: h.chronic_diseases_count,
-          family_medical_history: h.family_medical_history,
-          recordDate: h.recordDate
-        })),
-        riskScore: calculateHealthRisk(employee.healthData[0], employee.wearableData[0])
-      },
-      wearable: {
-        latest: employee.wearableData[0] ? {
-          stepCount: employee.wearableData[0].stepCount,
-          heartRate: employee.wearableData[0].heartRate,
-          sleepHours: employee.wearableData[0].sleepHours,
-          activeEnergy: employee.wearableData[0].activeEnergy,
-          exerciseTime: employee.wearableData[0].exerciseTime,
-          heartRateVariability: employee.wearableData[0].heartRateVariability,
-          timeInBed: employee.wearableData[0].timeInBed,
-          walkingDistance: employee.wearableData[0].walkingDistance,
-          recordDate: employee.wearableData[0].recordDate
-        } : null,
-        summary: {
-          totalSteps: employee.wearableData.reduce((acc, data) => acc + (data.stepCount || 0), 0),
-          totalActiveEnergy: employee.wearableData.reduce((acc, data) => acc + (data.activeEnergy || 0), 0),
-          totalExerciseTime: employee.wearableData.reduce((acc, data) => acc + (data.exerciseTime || 0), 0),
-          avgHeartRate: employee.wearableData.reduce((acc, data) => acc + (data.heartRate || 0), 0) / employee.wearableData.length,
-          avgHRV: employee.wearableData.reduce((acc, data) => acc + (data.heartRateVariability || 0), 0) / employee.wearableData.length,
-          totalWalkingDistance: employee.wearableData.reduce((acc, data) => acc + (data.walkingDistance || 0), 0),
-          lastUpdated: employee.wearableData[0]?.recordDate || employee.wearableData[0]?.date
-        }
-      },
-      sleep: {
-        latest: employee.sleepData[0] ? {
-          sleepDuration: employee.sleepData[0].sleepDuration,
-          sleepEfficiency: employee.sleepData[0].sleepEfficiency,
-          sleepStages: employee.sleepData[0].sleepStages,
-          heartRate: employee.sleepData[0].heartRate,
-          date: employee.sleepData[0].date
-        } : null,
-        summary: {
-          totalSleepHours: employee.sleepData.reduce((acc, data) => acc + (data.sleepDuration || 0), 0),
-          avgSleepEfficiency: employee.sleepData.reduce((acc, data) => acc + (data.sleepEfficiency || 0), 0) / employee.sleepData.length,
-          avgDeepSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.deep) || 0), 0) / employee.sleepData.length,
-          avgLightSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.light) || 0), 0) / employee.sleepData.length,
-          avgRemSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.rem) || 0), 0) / employee.sleepData.length,
-          avgAwakeSleep: employee.sleepData.reduce((acc, data) => acc + ((data.sleepStages?.awake) || 0), 0) / employee.sleepData.length,
-          lastUpdated: employee.sleepData[0]?.date
-        }
-      },
-      insurance: {
-        policy: employee.policy ? {
-          policyNumber: employee.policy.policyNumber,
-          type: employee.policy.type,
-          status: employee.policy.status,
-          planName: employee.policy.planName,
-          coverageDetails: employee.policy.coverageDetails,
-          startDate: employee.policy.startDate,
-          endDate: employee.policy.endDate
-        } : null,
-        claims: employee.claims.map(c => ({
-          claimId: c._id,
-          provider: c.provider,
-          claimAmount: c.claimAmount,
-          claimedAmount: c.claimedAmount,
-          department: c.department,
-          date: c.date,
-          status: c.status
-        }))
-      },
-      scores: {
-        insurance_score: employee.insurance_score,
-        smoker_score: employee.smoker_score,
-        family_score: employee.family_score,
-        lifestyle_score: employee.lifestyle_score,
-        bmi_score: employee.bmi_score,
-        hemoglobin_score: employee.hemoglobin_score,
-        sugar_score: employee.sugar_score,
-        cholesterol_score: employee.cholesterol_score,
-        creatinine_score: employee.creatinine_score,
-        physical_score: employee.physical_score,
-        wellness_score: employee.wellness_score
-      }
+      healthMetrics,
+      activityMetrics,
+      sleepMetrics,
+      healthRiskScore,
+      recentWearableData: wearableData,
+      recentSleepData: sleepData
     });
   } catch (error) {
-    console.error('Error in employee analytics:', error);
+    console.error('Error fetching comprehensive employee data:', error);
     res.status(500).json({ 
       message: 'Error fetching comprehensive employee data',
       error: error.message 
     });
   }
 });
+
+// Helper function to calculate health risk score
+function calculateHealthRiskScore(healthMetrics, activityMetrics, sleepMetrics) {
+  let score = 0;
+  
+  // BMI contribution (0-30)
+  if (healthMetrics.bmi < 18.5) score += 10; // Underweight
+  else if (healthMetrics.bmi >= 18.5 && healthMetrics.bmi < 25) score += 0; // Normal
+  else if (healthMetrics.bmi >= 25 && healthMetrics.bmi < 30) score += 10; // Overweight
+  else score += 20; // Obese
+
+  // Blood pressure contribution (0-20)
+  if (healthMetrics.bloodPressure.systolic > 140 || healthMetrics.bloodPressure.diastolic > 90) {
+    score += 20;
+  } else if (healthMetrics.bloodPressure.systolic > 120 || healthMetrics.bloodPressure.diastolic > 80) {
+    score += 10;
+  }
+
+  // Activity contribution (0-20)
+  if (activityMetrics.averageSteps < 5000) score += 20;
+  else if (activityMetrics.averageSteps < 7500) score += 10;
+
+  // Sleep contribution (0-15)
+  if (sleepMetrics.averageDuration < 6) score += 15;
+  else if (sleepMetrics.averageDuration < 7) score += 10;
+  else if (sleepMetrics.averageDuration < 8) score += 5;
+
+  // Additional risk factors (0-15)
+  if (healthMetrics.diabetic) score += 10;
+  if (healthMetrics.smoker) score += 5;
+
+  // Calculate final score (0-100)
+  const finalScore = Math.min(100, score);
+  
+  return {
+    score: finalScore,
+    level: finalScore < 25 ? 'Low' : finalScore < 50 ? 'Moderate' : finalScore < 75 ? 'High' : 'Very High',
+    contributingFactors: {
+      bmi: healthMetrics.bmi,
+      bloodPressure: healthMetrics.bloodPressure,
+      activity: activityMetrics.averageSteps,
+      sleep: sleepMetrics.averageDuration,
+      diabetic: healthMetrics.diabetic,
+      smoker: healthMetrics.smoker
+    }
+  };
+}
 
 // Get organization-wide analytics
 router.get('/organization', async (req, res) => {

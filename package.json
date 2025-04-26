@@ -1,25 +1,14 @@
 {
-  "name": "medbond-api",
+  "name": "health-prediction",
   "version": "1.0.0",
-  "description": "MedBond Health Insurance API",
-  "main": "api/index.js",
+  "description": "Health prediction system with doctor data population",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "nodemon api/index.js",
-    "test": "jest"
+    "populate-doctors": "node scripts/populateDoctors.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.3",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.2.1",
-    "multer": "^1.4.5-lts.1",
-    "validator": "^13.11.0"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.0"
+    "csv-parse": "^5.5.3",
+    "iconv-lite": "^0.6.3",
+    "mongodb": "^6.3.0"
   }
-} 
+}
