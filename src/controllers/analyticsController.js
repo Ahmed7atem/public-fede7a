@@ -1,10 +1,5 @@
 const mongoose = require('mongoose');
-const Employee = mongoose.model('Employee');
-const HealthData = mongoose.model('HealthData');
-const WearableData = mongoose.model('WearableData');
-const SleepData = mongoose.model('SleepData');
-const Claim = mongoose.model('Claim');
-const Prediction = mongoose.model('Prediction');
+const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
 
 /**
  * @desc    Get employee analytics
@@ -341,12 +336,12 @@ const getAllData = async (req, res) => {
         console.log(`Processing employee ${employeeId}`);
 
         // Get health data
-        const healthData = await HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 });
+        const healthData = await HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean();
         console.log(`Found ${healthData.length} health records for employee ${employeeId}`);
         const latestHealth = healthData[0] || {};
 
         // Get wearable data
-        const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 });
+        const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean();
         console.log(`Found ${wearableData.length} wearable records for employee ${employeeId}`);
         const latestWearable = wearableData[0] || {};
         
@@ -361,7 +356,7 @@ const getAllData = async (req, res) => {
         };
 
         // Get sleep data
-        const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 });
+        const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
         console.log(`Found ${sleepData.length} sleep records for employee ${employeeId}`);
         const latestSleep = sleepData[0] || {};
         
@@ -376,11 +371,11 @@ const getAllData = async (req, res) => {
         };
 
         // Get claims
-        const claims = await Claim.find({ patientId: employeeId });
+        const claims = await Claim.find({ patientId: employeeId }).lean();
         console.log(`Found ${claims.length} claims for employee ${employeeId}`);
 
         // Get predictions
-        const predictions = await Prediction.find({ employee: employeeId });
+        const predictions = await Prediction.find({ employee: employeeId }).lean();
         console.log(`Found ${predictions.length} predictions for employee ${employeeId}`);
 
         return {
