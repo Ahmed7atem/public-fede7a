@@ -1,4 +1,4 @@
-const { Employee, HealthData, WearableData, SleepData } = require('../../models');
+const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
 
 /**
  * @desc    Get employee analytics
@@ -143,66 +143,109 @@ const getHealthAlerts = async (req, res) => {
 };
 
 /**
- * @desc    Get all data for analytics
- * @route   GET /api/analytics/all-data
+ * @desc    Get comprehensive data for all employees
+ * @route   GET /api/analytics/all
  * @access  Private/Admin
  */
 const getAllData = async (req, res) => {
   try {
-    // In a real app, we would fetch comprehensive data from multiple collections
-    // For now, we'll return a mock response with aggregated data
-    
+    // Get all employees
+    const employees = await Employee.find().lean();
+    const totalEmployees = employees.length;
+
+    // Process each employee's data
+    const employeeData = await Promise.all(employees.map(async (employee) => {
+      const employeeId = employee.employeeId;
+
+      // Get health data
+      const healthData = await HealthData.find({ employeeId }).sort({ recordedAt: -1 }).lean();
+      const latestHealth = healthData[0] || {};
+
+      // Get wearable data
+      const wearableData = await WearableData.find({ employeeId }).sort({ date: -1 }).lean();
+      const latestWearable = wearableData[0] || {};
+      
+      // Calculate wearable stats
+      const wearableStats = {
+        avgHeartRate: wearableData.length > 0 
+          ? wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length 
+          : null,
+        avgHRV: wearableData.length > 0 
+          ? wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length 
+          : null
+      };
+
+      // Get sleep data
+      const sleepData = await SleepData.find({ employeeId }).sort({ startTime: -1 }).lean();
+      const latestSleep = sleepData[0] || {};
+      
+      // Calculate sleep stats
+      const sleepStats = {
+        avgSleepEfficiency: sleepData.length > 0 
+          ? sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length 
+          : null,
+        avgHeartRate: sleepData.length > 0 
+          ? sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length 
+          : null
+      };
+
+      // Get claims
+      const claims = await Claim.find({ employeeId }).lean();
+
+      // Get predictions
+      const predictions = await Prediction.find({ employeeId }).lean();
+
+      return {
+        employee: {
+          _id: employee._id,
+          email: employee.email,
+          role: employee.role
+        },
+        health: {
+          latest: {
+            bmi: latestHealth.bmi || null
+          },
+          history: healthData
+        },
+        wearable: {
+          latest: latestWearable,
+          history: wearableData,
+          stats: wearableStats
+        },
+        sleep: {
+          latest: latestSleep,
+          history: sleepData,
+          stats: sleepStats
+        },
+        insurance: {
+          policy: employee.Policy_ID ? {
+            id: employee.Policy_ID,
+            number: employee.policyNumber,
+            plan: employee.Plan_Name
+          } : null,
+          claims: claims
+        },
+        scores: {
+          bmi: employee.BMI_Score || null,
+          hemoglobin: employee.Hemoglobin_Score || null,
+          sugar: employee.Sugar_Score || null,
+          cholesterol: employee.Cholesterol_Score || null,
+          creatinine: employee.Creatinine_Score || null,
+          physical: employee.Physical_Score || null,
+          wellness: employee.Wellness_Score || null
+        },
+        predictions: predictions,
+        complaints: [] // This would be populated if we had a complaints collection
+      };
+    }));
+
     res.json({
-      employeeCount: 1250,
-      healthMetrics: {
-        averages: {
-          bmi: 24.2,
-          cholesterol: 195,
-          bloodSugar: 98
-        },
-        distribution: {
-          normalWeight: 65,
-          overweight: 28,
-          obese: 7
-        }
-      },
-      activityData: {
-        averages: {
-          steps: 7800,
-          sleepHours: 6.9,
-          activeMinutes: 42
-        },
-        trends: {
-          stepsByMonth: [7600, 7650, 7800, 7900, 8000, 7950],
-          sleepByMonth: [6.8, 6.8, 6.9, 7.0, 6.9, 6.9]
-        }
-      },
-      claims: {
-        totalAmount: 1998500,
-        averageAmount: 2350,
-        byCategory: [
-          { category: "Preventive", amount: 559580 },
-          { category: "Specialist", amount: 439670 },
-          { category: "Prescription", amount: 359730 },
-          { category: "Emergency", amount: 299775 },
-          { category: "Other", amount: 339745 }
-        ]
-      },
-      riskAssessment: {
-        lowRisk: 72,
-        mediumRisk: 23,
-        highRisk: 5,
-        topRiskFactors: [
-          "Sedentary lifestyle",
-          "Poor sleep habits",
-          "Stress",
-          "Family history"
-        ]
-      }
+      totalEmployees,
+      employees: employeeData
     });
   } catch (error) {
-    console.error('Error getting all analytics data:', error);
-    res.status(500).json({ message: 'Error getting analytics data', error: error.message });
+    console.error('Error getting all data:', error);
+    res.status(500).json({ message: 'Error getting all data', error: error.message });
   }
 };
 

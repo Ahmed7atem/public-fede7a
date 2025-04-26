@@ -23,16 +23,12 @@ const getAllEmployees = async (req, res) => {
 const getEmployeeById = async (req, res) => {
   try {
     const id = req.params.id;
-    let employee = await Employee.findOne({ employeeId: id }).lean();
-    if (!employee) {
-      employee = await Employee.findOne({ Policy_ID: id }).lean();
-    }
-    if (!employee && mongoose.Types.ObjectId.isValid(id)) {
-      employee = await Employee.findById(id).lean();
-    }
+    const employee = await Employee.findOne({ employeeId: id }).lean();
+    
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
+    
     res.json(employee);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching employee', error: error.message });

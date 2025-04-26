@@ -27,4 +27,7 @@ router.get('/alerts', getHealthAlerts);
 // @access  Private/Admin
 router.get('/all-data', getAllData);
 
+// Get comprehensive data for all employees
+router.get('/all', getAllData);
+
 module.exports = router; 
