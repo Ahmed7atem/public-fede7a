@@ -15,6 +15,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const policyRoutes = require('./routes/policyRoutes');
 const claimRoutes = require('./routes/claimRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
+const predictionRoutes = require('./routes/predictions');
 
 // Load environment variables
 require('dotenv').config();
@@ -70,6 +71,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/predictions', predictionRoutes);
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
