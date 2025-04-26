@@ -1,4 +1,10 @@
-const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
+const mongoose = require('mongoose');
+const Employee = mongoose.model('Employee');
+const HealthData = mongoose.model('HealthData');
+const WearableData = mongoose.model('WearableData');
+const SleepData = mongoose.model('SleepData');
+const Claim = mongoose.model('Claim');
+const Prediction = mongoose.model('Prediction');
 
 /**
  * @desc    Get employee analytics

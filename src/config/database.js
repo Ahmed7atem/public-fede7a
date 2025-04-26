@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+// Import models
+const { 
+  Employee, 
+  HealthData, 
+  WearableData, 
+  SleepData, 
+  Policy, 
+  Claim,
+  Doctor,
+  Feedback,
+  Attachment,
+  PolicyDocument,
+  Prediction
+} = require('../../models');
+
 const connectDB = async () => {
   try {
     console.log('Connecting to MongoDB with URI:', process.env.MONGODB_URI);

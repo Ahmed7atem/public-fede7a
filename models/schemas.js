@@ -48,6 +48,7 @@ const employeeSchema = new mongoose.Schema({
   Wellness_Score: String,
   role: {
     type: String,
+    enum: ['admin', 'employee'],
     default: 'employee'
   }
 }, {
@@ -205,17 +206,29 @@ const policyDocumentSchema = new mongoose.Schema({
   uploadDate: { type: Date, default: Date.now }
 });
 
-// Export models using Mongoose's built-in model caching
+// Register models
+const Employee = mongoose.model('Employee', employeeSchema);
+const HealthData = mongoose.model('HealthData', healthDataSchema);
+const WearableData = mongoose.model('WearableData', wearableDataSchema);
+const SleepData = mongoose.model('SleepData', sleepDataSchema);
+const Policy = mongoose.model('Policy', policySchema);
+const Claim = mongoose.model('Claim', claimSchema);
+const Doctor = mongoose.model('Doctor', doctorSchema);
+const Feedback = mongoose.model('Feedback', feedbackSchema);
+const Attachment = mongoose.model('Attachment', attachmentSchema);
+const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
+const Prediction = mongoose.model('Prediction', predictionSchema);
+
 module.exports = {
-  Employee: mongoose.models.Employee || mongoose.model('Employee', employeeSchema),
-  HealthData: mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema),
-  WearableData: mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema),
-  SleepData: mongoose.models.SleepData || mongoose.model('SleepData', sleepDataSchema),
-  Prediction: mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema),
-  Policy: mongoose.models.Policy || mongoose.model('Policy', policySchema),
-  Claim: mongoose.models.Claim || mongoose.model('Claim', claimSchema),
-  Doctor: mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema),
-  Feedback: mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema),
-  Attachment: mongoose.models.Attachment || mongoose.model('Attachment', attachmentSchema),
-  PolicyDocument: mongoose.models.PolicyDocument || mongoose.model('PolicyDocument', policyDocumentSchema)
+  Employee,
+  HealthData,
+  WearableData,
+  SleepData,
+  Policy,
+  Claim,
+  Doctor,
+  Feedback,
+  Attachment,
+  PolicyDocument,
+  Prediction
 }; 

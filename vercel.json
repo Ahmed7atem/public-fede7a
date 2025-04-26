@@ -15,12 +15,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "includeFiles": [
-    "src/**",
-    "models/**",
-    "package.json",
-    "package-lock.json",
-    ".env"
-  ]
+  }
 } 
