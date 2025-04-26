@@ -1,4 +1,4 @@
-const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../models');
+const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
 
 /**
  * @desc    Get employee analytics
