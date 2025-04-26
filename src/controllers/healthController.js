@@ -25,10 +25,46 @@ const getHealthDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for health data with employee ID: ${id}`);
     
-    const healthData = await HealthData.findOne({ employee: id }).lean();
+    // First try direct match
+    let healthData = await HealthData.findOne({ employee: id }).lean();
+    console.log(`Result of direct match: ${healthData ? 'Found' : 'Not found'}`);
+    
+    // If no results, try different approaches
+    if (!healthData) {
+      // Try without dashes if ID has them
+      if (id.includes('-')) {
+        const idWithoutDashes = id.replace(/-/g, '');
+        console.log(`Trying without dashes: ${idWithoutDashes}`);
+        healthData = await HealthData.findOne({ employee: idWithoutDashes }).lean();
+        console.log(`Results without dashes: ${healthData ? 'Found' : 'Not found'}`);
+      }
+      
+      // Try case-insensitive regex
+      if (!healthData) {
+        console.log('Trying case-insensitive regex match');
+        const regex = new RegExp(id, 'i');
+        healthData = await HealthData.findOne({ employee: { $regex: regex } }).lean();
+        console.log(`Results with regex: ${healthData ? 'Found' : 'Not found'}`);
+      }
+      
+      // Try multiple field match
+      if (!healthData) {
+        console.log('Trying multiple field match');
+        healthData = await HealthData.findOne({
+          $or: [
+            { employee: id },
+            { employeeId: id }
+          ]
+        }).lean();
+        console.log(`Results with multiple fields: ${healthData ? 'Found' : 'Not found'}`);
+      }
+    }
     
     if (!healthData) {
-      return res.status(404).json({ message: 'Health data not found for this employee' });
+      return res.status(404).json({ 
+        message: 'Health data not found for this employee',
+        debug: { employeeIdProvided: id } 
+      });
     }
     
     res.json(healthData);

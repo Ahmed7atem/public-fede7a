@@ -31,25 +31,50 @@ const getEmployeeById = async (req, res) => {
     
     // First try direct match on employeeId
     let employee = await Employee.findOne({ employeeId: id }).lean();
+    console.log('Direct match on employeeId:', employee ? 'Found' : 'Not found');
     
+    // If not found, try other fields and formats
     if (!employee) {
-      console.log('No employee found with employeeId:', id);
-      // Try matching against Policy_ID
+      // Try Policy_ID
+      console.log('Trying Policy_ID match');
       employee = await Employee.findOne({ Policy_ID: id }).lean();
+      console.log('Policy_ID match:', employee ? 'Found' : 'Not found');
       
+      // Try the _id field if it's a valid ObjectId
+      if (!employee && mongoose.Types.ObjectId.isValid(id)) {
+        console.log('Trying ObjectId match');
+        employee = await Employee.findById(id).lean();
+        console.log('ObjectId match:', employee ? 'Found' : 'Not found');
+      }
+      
+      // Try employeeId without dashes
+      if (!employee && id.includes('-')) {
+        const idWithoutDashes = id.replace(/-/g, '');
+        console.log('Trying employeeId without dashes:', idWithoutDashes);
+        employee = await Employee.findOne({ employeeId: idWithoutDashes }).lean();
+        console.log('Without dashes match:', employee ? 'Found' : 'Not found');
+      }
+      
+      // Try case-insensitive regex match
       if (!employee) {
-        console.log('No employee found with Policy_ID:', id);
-        // Try converting to ObjectId if valid
-        if (mongoose.Types.ObjectId.isValid(id)) {
-          console.log('Trying ObjectId match for:', id);
-          employee = await Employee.findOne({ _id: new mongoose.Types.ObjectId(id) }).lean();
-        }
+        console.log('Trying regex match');
+        const regex = new RegExp(id, 'i');
+        employee = await Employee.findOne({
+          $or: [
+            { employeeId: { $regex: regex } },
+            { Policy_ID: { $regex: regex } }
+          ]
+        }).lean();
+        console.log('Regex match:', employee ? 'Found' : 'Not found');
       }
     }
     
     if (!employee) {
-      console.log('Employee not found with any ID type');
-      return res.status(404).json({ message: 'Employee not found' });
+      console.log('Employee not found with any ID format');
+      return res.status(404).json({ 
+        message: 'Employee not found',
+        debug: { idProvided: id }
+      });
     }
 
     console.log('Found employee:', employee.employeeId);

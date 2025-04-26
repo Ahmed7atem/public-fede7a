@@ -25,28 +25,49 @@ const getWearableDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for wearable data with employee ID: ${id}`);
     
-    // Added for debugging - check what documents exist in the collection
-    const allWearableData = await WearableData.find().limit(2).lean();
-    console.log('First 2 wearable data documents:', JSON.stringify(allWearableData));
+    // First, try exact match as provided
+    let wearableData = await WearableData.find({ employee: id }).sort({ date: -1 }).lean();
     
-    // Added for debugging - try exact match by string
-    const wearableData = await WearableData.find({ employee: id.toString() }).sort({ date: -1 }).lean();
-    console.log(`Found ${wearableData.length} wearable data records`);
+    // Log results for debugging
+    console.log(`Found ${wearableData.length} records with direct ID match`);
+    
+    // If no results found with direct match, try alternative query approaches
+    if (wearableData.length === 0) {
+      console.log('Trying alternative query approaches');
+      
+      // Try without dashes if the ID has them
+      if (id.includes('-')) {
+        const idWithoutDashes = id.replace(/-/g, '');
+        console.log(`Trying without dashes: ${idWithoutDashes}`);
+        wearableData = await WearableData.find({ employee: idWithoutDashes }).sort({ date: -1 }).lean();
+        console.log(`Found ${wearableData.length} records without dashes`);
+      }
+      
+      // If still no results, try case-insensitive regex match
+      if (wearableData.length === 0) {
+        console.log('Trying case-insensitive match');
+        const regex = new RegExp(id, 'i');
+        wearableData = await WearableData.find({ employee: { $regex: regex } }).sort({ date: -1 }).lean();
+        console.log(`Found ${wearableData.length} records with regex match`);
+      }
+      
+      // If still no results, try using $or to match both employee and employeeId fields
+      if (wearableData.length === 0) {
+        console.log('Trying to match multiple fields');
+        wearableData = await WearableData.find({
+          $or: [
+            { employee: id },
+            { employeeId: id }
+          ]
+        }).sort({ date: -1 }).lean();
+        console.log(`Found ${wearableData.length} records with multiple field match`);
+      }
+    }
     
     if (wearableData.length === 0) {
-      // Added for debugging - try different query approaches
-      console.log('Trying alternative query approaches...');
-      const regex = new RegExp(id, 'i');
-      const alternativeQuery = await WearableData.find({ employee: { $regex: regex } }).limit(5).lean();
-      console.log(`Alternative query found ${alternativeQuery.length} records`);
-      
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: 'Wearable data not found for this employee',
-        debug: {
-          employeeId: id,
-          sampleData: allWearableData.length > 0 ? allWearableData[0].employee : 'No sample data',
-          alternativeQueryResults: alternativeQuery.length
-        }
+        debug: { employeeIdProvided: id }
       });
     }
     
