@@ -34,11 +34,17 @@ router.get('/', async (req, res) => {
 // Get sleep data by employee ID
 router.get('/employee/:employeeId', async (req, res) => {
   try {
-    console.log(`Looking for sleep data with employee ID: ${req.params.employeeId}`);
     const id = req.params.employeeId;
+    console.log(`Looking for sleep data with employee ID: ${id}`);
+    console.log('User role:', req.user ? req.user.role : 'unknown');
     
-    // Try multiple field names for the employee ID
-    const sleepData = await SleepData.find({
+    // Log available sleep data to debug
+    const allSleepData = await SleepData.find().limit(5);
+    console.log('Sample sleep data records:', JSON.stringify(allSleepData.slice(0, 2)));
+    console.log('Sample employee field in sleep data:', allSleepData.length > 0 ? allSleepData[0].employee : 'No data');
+    
+    // Try multiple field names for the employee ID with improved logging
+    const query = {
       $or: [
         { employeeId: id },
         { employee: id },
@@ -46,13 +52,26 @@ router.get('/employee/:employeeId', async (req, res) => {
         { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
         { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
       ]
-    }).sort({ date: -1 });
+    };
+    
+    console.log('Query:', JSON.stringify(query));
+    
+    const sleepData = await SleepData.find(query).sort({ date: -1 });
     
     console.log(`Found ${sleepData.length} sleep data records for employee: ${id}`);
+    
+    if (sleepData.length === 0) {
+      return res.status(404).json({ message: 'Sleep data not found for this employee' });
+    }
+    
     res.json(sleepData);
   } catch (error) {
     console.error('Error fetching sleep data:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: 'Error fetching sleep data',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -75,32 +94,49 @@ router.get('/range/:startDate/:endDate', async (req, res) => {
 // Get sleep data by ID - must come after more specific routes
 router.get('/:id', async (req, res) => {
   try {
-    console.log(`Looking for sleep data with ID: ${req.params.id}`);
     const id = req.params.id;
+    console.log(`Looking for sleep data with ID: ${id}`);
+    console.log('User role:', req.user ? req.user.role : 'unknown');
     
-    // Try to find by different ID formats
-    const sleepData = await SleepData.findOne({
+    // Check if the ID is a valid ObjectId
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+    console.log(`Is valid ObjectId: ${isValidObjectId}`);
+    
+    // Try to find by different ID formats with detailed logging
+    const query = {
       $or: [
         { _id: id },
         { employeeId: id },
-        { employee: id },
-        // Also try to match if it's stored as string or ObjectId
-        { _id: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
-        { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
-        { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+        { employee: id }
       ]
-    });
+    };
+    
+    // Add ObjectId versions if valid
+    if (isValidObjectId) {
+      const objectId = new mongoose.Types.ObjectId(id);
+      query.$or.push({ _id: objectId });
+      query.$or.push({ employeeId: objectId });
+      query.$or.push({ employee: objectId });
+    }
+    
+    console.log('Query:', JSON.stringify(query));
+    
+    const sleepData = await SleepData.findOne(query);
     
     if (!sleepData) {
       console.log(`No sleep data found for id: ${id}`);
       return res.status(404).json({ message: 'Sleep data not found' });
     }
     
-    console.log(`Found sleep data: ${JSON.stringify(sleepData)}`);
+    console.log(`Found sleep data with _id: ${sleepData._id}`);
     res.json(sleepData);
   } catch (error) {
     console.error('Error fetching sleep data:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: 'Error fetching sleep data',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

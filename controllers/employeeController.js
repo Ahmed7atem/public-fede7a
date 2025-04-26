@@ -51,7 +51,12 @@ exports.getEmployeeById = async (req, res) => {
   try {
     const id = req.params.id;
     console.log('Looking up employee with ID:', id);
-    console.log('User role:', req.user.role);
+    console.log('User role:', req.user ? req.user.role : 'unknown');
+    
+    // Log all employees first to check available IDs
+    const allEmployees = await Employee.find().select('employeeId Policy_ID _id email').lean();
+    console.log('Available employees:', JSON.stringify(allEmployees.slice(0, 5)));
+    console.log(`Total employees in database: ${allEmployees.length}`);
     
     // First try direct match on employeeId
     let employee = await Employee.findOne({ employeeId: id }).select('-password').lean();
