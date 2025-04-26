@@ -335,17 +335,13 @@ const getAllData = async (req, res) => {
         const employeeId = employee.employeeId;
         console.log(`Processing employee ${employeeId}`);
 
-        // Get health data
-        const healthData = await HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean();
-        console.log(`Found ${healthData.length} health records for employee ${employeeId}`);
-        console.log('Health data sample:', JSON.stringify(healthData[0] || {}, null, 2));
-        const latestHealth = healthData[0] || {};
+        // Get health data - using findOne like healthController
+        const healthData = await HealthData.findOne({ employee: employeeId }).lean();
+        console.log(`Found health data for employee ${employeeId}:`, healthData);
 
-        // Get wearable data
-        const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean();
+        // Get wearable data - using find like wearableController
+        const wearableData = await WearableData.find({ employee: employeeId }).lean();
         console.log(`Found ${wearableData.length} wearable records for employee ${employeeId}`);
-        console.log('Wearable data sample:', JSON.stringify(wearableData[0] || {}, null, 2));
-        const latestWearable = wearableData[0] || {};
         
         // Calculate wearable stats
         const wearableStats = {
@@ -357,11 +353,9 @@ const getAllData = async (req, res) => {
             : null
         };
 
-        // Get sleep data
+        // Get sleep data - using find like sleepController
         const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
         console.log(`Found ${sleepData.length} sleep records for employee ${employeeId}`);
-        console.log('Sleep data sample:', JSON.stringify(sleepData[0] || {}, null, 2));
-        const latestSleep = sleepData[0] || {};
         
         // Calculate sleep stats
         const sleepStats = {
@@ -376,14 +370,12 @@ const getAllData = async (req, res) => {
         // Get claims
         const claims = await Claim.find({ patientId: employeeId }).lean();
         console.log(`Found ${claims.length} claims for employee ${employeeId}`);
-        console.log('Claims sample:', JSON.stringify(claims[0] || {}, null, 2));
 
         // Get predictions
         const predictions = await Prediction.find({ employee: employeeId }).lean();
         console.log(`Found ${predictions.length} predictions for employee ${employeeId}`);
-        console.log('Predictions sample:', JSON.stringify(predictions[0] || {}, null, 2));
 
-        const result = {
+        return {
           employee: {
             _id: employee._id,
             email: employee.email,
@@ -404,34 +396,34 @@ const getAllData = async (req, res) => {
             }
           },
           health: {
-            latest: {
-              bmi: latestHealth.bmi || null,
-              hemoglobin: latestHealth.hemoglobin || null,
-              cholesterol: latestHealth.cholesterol || null,
-              bloodSugar: latestHealth.bloodSugar || null,
-              creatinine: latestHealth.creatinine || null
-            },
-            history: healthData
+            latest: healthData ? {
+              bmi: healthData.bmi || null,
+              hemoglobin: healthData.hemoglobin || null,
+              cholesterol: healthData.cholesterol || null,
+              bloodSugar: healthData.bloodSugar || null,
+              creatinine: healthData.creatinine || null
+            } : null,
+            history: healthData ? [healthData] : []
           },
           wearable: {
-            latest: {
-              heartRateAvg: latestWearable.heartRateAvg || null,
-              heartRateVariability: latestWearable.heartRateVariability || null,
-              stepCount: latestWearable.stepCount || null,
-              activeEnergy: latestWearable.activeEnergy || null,
-              exerciseTime: latestWearable.exerciseTime || null
-            },
+            latest: wearableData.length > 0 ? {
+              heartRateAvg: wearableData[0].heartRateAvg || null,
+              heartRateVariability: wearableData[0].heartRateVariability || null,
+              stepCount: wearableData[0].stepCount || null,
+              activeEnergy: wearableData[0].activeEnergy || null,
+              exerciseTime: wearableData[0].exerciseTime || null
+            } : null,
             history: wearableData,
             stats: wearableStats
           },
           sleep: {
-            latest: {
-              sleepQuality: latestSleep.sleepQuality || null,
-              timeInBed: latestSleep.timeInBed || null,
-              heartRate: latestSleep.heartRate || null,
-              startTime: latestSleep.startTime || null,
-              endTime: latestSleep.endTime || null
-            },
+            latest: sleepData.length > 0 ? {
+              sleepQuality: sleepData[0].sleepQuality || null,
+              timeInBed: sleepData[0].timeInBed || null,
+              heartRate: sleepData[0].heartRate || null,
+              startTime: sleepData[0].startTime || null,
+              endTime: sleepData[0].endTime || null
+            } : null,
             history: sleepData,
             stats: sleepStats
           },
@@ -476,9 +468,6 @@ const getAllData = async (req, res) => {
           })),
           complaints: []
         };
-
-        console.log(`Completed processing employee ${employeeId}`);
-        return result;
       } catch (error) {
         console.error(`Error processing employee ${employee.employeeId}:`, error);
         return {
