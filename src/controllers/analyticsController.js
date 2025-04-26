@@ -669,5 +669,5 @@ module.exports = {
   getOrganizationAnalytics,
   getHealthAlerts,
   getAllData,
-  getAllEmployeesData,
+  getAllEmployeesData
 }; 
