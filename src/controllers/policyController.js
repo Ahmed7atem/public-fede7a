@@ -23,7 +23,7 @@ const getAllPolicies = async (req, res) => {
  */
 const getPolicyById = async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id).lean();
+    const policy = await Policy.findOne({ policyId: req.params.id }).lean();
     
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });
@@ -65,8 +65,8 @@ const createPolicy = async (req, res) => {
  */
 const updatePolicy = async (req, res) => {
   try {
-    const policy = await Policy.findByIdAndUpdate(
-      req.params.id,
+    const policy = await Policy.findOneAndUpdate(
+      { policyId: req.params.id },
       req.body,
       { new: true }
     );
@@ -89,7 +89,7 @@ const updatePolicy = async (req, res) => {
  */
 const deletePolicy = async (req, res) => {
   try {
-    const policy = await Policy.findByIdAndDelete(req.params.id);
+    const policy = await Policy.findOneAndDelete({ policyId: req.params.id });
     
     if (!policy) {
       return res.status(404).json({ message: 'Policy not found' });

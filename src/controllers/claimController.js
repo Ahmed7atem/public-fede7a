@@ -23,12 +23,11 @@ const getAllClaims = async (req, res) => {
  */
 const getClaimById = async (req, res) => {
   try {
-    const claim = await Claim.findById(req.params.id).lean();
-    
+    const id = req.params.id;
+    const claim = await Claim.findOne({ id }).lean();
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
-    
     res.json(claim);
   } catch (error) {
     console.error('Error fetching claim:', error);
@@ -45,7 +44,6 @@ const getClaimsByEmployeeId = async (req, res) => {
   try {
     const employeeId = req.params.employeeId;
     const claims = await Claim.find({ patientId: employeeId }).lean();
-    
     res.json(claims);
   } catch (error) {
     console.error('Error fetching employee claims:', error);
@@ -60,24 +58,8 @@ const getClaimsByEmployeeId = async (req, res) => {
  */
 const createClaim = async (req, res) => {
   try {
-    // In a real app, we'd get the employeeId from the authenticated user
-    // For this mock, we'll just use the Authorization header
-    const isEmployee = req.headers.authorization === 'EMPLOYEE_TOKEN';
-    
-    if (!isEmployee) {
-      return res.status(403).json({ message: 'Not authorized to create claims' });
-    }
-    
-    const claimData = {
-      ...req.body,
-      id: `CLAIM-${Date.now().toString().slice(-6)}`,
-      claimStatus: 'Pending',
-      claimDate: new Date()
-    };
-    
-    const claim = new Claim(claimData);
+    const claim = new Claim(req.body);
     const savedClaim = await claim.save();
-    
     res.status(201).json(savedClaim);
   } catch (error) {
     console.error('Error creating claim:', error);
@@ -92,23 +74,10 @@ const createClaim = async (req, res) => {
  */
 const updateClaim = async (req, res) => {
   try {
-    // In a real app, we'd check if the user is an admin
-    const isAdmin = req.headers.authorization === 'ADMIN_TOKEN';
-    
-    if (!isAdmin) {
-      return res.status(403).json({ message: 'Not authorized to update claims' });
-    }
-    
-    const claim = await Claim.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
+    const claim = await Claim.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
-    
     res.json(claim);
   } catch (error) {
     console.error('Error updating claim:', error);
@@ -123,20 +92,11 @@ const updateClaim = async (req, res) => {
  */
 const deleteClaim = async (req, res) => {
   try {
-    // In a real app, we'd check if the user is an admin
-    const isAdmin = req.headers.authorization === 'ADMIN_TOKEN';
-    
-    if (!isAdmin) {
-      return res.status(403).json({ message: 'Not authorized to delete claims' });
-    }
-    
     const claim = await Claim.findByIdAndDelete(req.params.id);
-    
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
-    
-    res.json({ message: 'Claim deleted successfully' });
+    res.json({ message: 'Claim removed' });
   } catch (error) {
     console.error('Error deleting claim:', error);
     res.status(500).json({ message: 'Error deleting claim', error: error.message });
