@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -17,7 +16,22 @@ app.get('/', (req, res) => {
 
 // API root route
 app.get('/api', (req, res) => {
-  res.json({ status: 'ok', message: 'API endpoints available' });
+  res.json({ 
+    status: 'ok', 
+    message: 'API endpoints available',
+    endpoints: [
+      '/api/auth',
+      '/api/employees',
+      '/api/health',
+      '/api/wearables',
+      '/api/sleep',
+      '/api/policies',
+      '/api/claims',
+      '/api/providers',
+      '/api/analytics',
+      '/api/complaints'
+    ]
+  });
 });
 
 // Connect to MongoDB
@@ -47,28 +61,30 @@ mongoose.connect(process.env.MONGODB_URI, {
   process.exit(1);
 });
 
-// Determine the base directory
-const baseDir = path.join(__dirname, '..');
-console.log('Base directory:', baseDir);
-
-// Debug logging route paths
-const logRoutePath = (routePath, targetPath) => {
-  const resolvedPath = path.resolve(baseDir, targetPath);
-  console.log(`Route ${routePath} -> ${targetPath} (${resolvedPath})`);
-  return require(resolvedPath);
-};
+// Import routes and controllers directly
+console.log('Setting up routes...');
+const authController = require('../controllers/authController');
+const employeeRoutes = require('../routes/employeeRoutes');
+const healthDataController = require('../controllers/healthDataController');
+const wearableController = require('../controllers/wearableController');
+const sleepDataController = require('../controllers/sleepDataController');
+const policyController = require('../controllers/policyController');
+const claimController = require('../controllers/claimController');
+const providerController = require('../controllers/providerController');
+const analyticsController = require('../controllers/analyticsController');
+const complaintController = require('../controllers/complaintController');
 
 // Routes
-app.use('/api/auth', logRoutePath('/api/auth', './controllers/authController'));
-app.use('/api/employees', logRoutePath('/api/employees', './routes/employeeRoutes'));
-app.use('/api/health', logRoutePath('/api/health', './controllers/healthDataController'));
-app.use('/api/wearables', logRoutePath('/api/wearables', './controllers/wearableController'));
-app.use('/api/sleep', logRoutePath('/api/sleep', './controllers/sleepDataController'));
-app.use('/api/policies', logRoutePath('/api/policies', './controllers/policyController'));
-app.use('/api/claims', logRoutePath('/api/claims', './controllers/claimController'));
-app.use('/api/providers', logRoutePath('/api/providers', './controllers/providerController'));
-app.use('/api/analytics', logRoutePath('/api/analytics', './controllers/analyticsController'));
-app.use('/api/complaints', logRoutePath('/api/complaints', './controllers/complaintController'));
+app.use('/api/auth', authController);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/health', healthDataController);
+app.use('/api/wearables', wearableController);
+app.use('/api/sleep', sleepDataController);
+app.use('/api/policies', policyController);
+app.use('/api/claims', claimController);
+app.use('/api/providers', providerController);
+app.use('/api/analytics', analyticsController);
+app.use('/api/complaints', complaintController);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
