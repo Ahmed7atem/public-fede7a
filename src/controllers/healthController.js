@@ -8,13 +8,6 @@ const { HealthData } = require('../../models');
 const getAllHealthData = async (req, res) => {
   try {
     const healthData = await HealthData.find().limit(10).lean();
-    console.log(`Found ${healthData.length} total health records`);
-    
-    // Log the first record's employee ID format for debugging
-    if (healthData.length > 0) {
-      console.log(`Sample health data - employee field format: ${healthData[0].employee}`);
-    }
-    
     res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data:', error);
@@ -32,26 +25,13 @@ const getHealthDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for health data with employee ID: ${id}`);
     
-    // We now know the field name is definitely 'employee' for health data
-    // Build a targeted query with variations of the ID format
-    const query = {
-      $or: [
-        // Try exact match
-        { employee: id },
-        
-        // Try without dashes
-        { employee: id.replace(/-/g, '') },
-        
-        // Try case-insensitive regex as fallback
-        { employee: { $regex: new RegExp(id, 'i') } }
-      ]
-    };
+    // Simple direct approach - exact match like the sleep controller
+    const healthData = await HealthData.findOne({ employee: id }).lean();
     
-    console.log(`Executing targeted query for health data on 'employee' field`);
-    const healthData = await HealthData.findOne(query).lean();
-    console.log(`Health data found: ${healthData ? 'Yes' : 'No'}`);
+    if (!healthData) {
+      return res.status(404).json({ message: 'Health data not found for this employee' });
+    }
     
-    // Always return the result, even if null (status 200)
     res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data:', error);

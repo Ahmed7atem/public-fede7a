@@ -9,17 +9,6 @@ const { Employee } = require('../../models');
 const getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find().limit(10).lean();
-    console.log(`Found ${employees.length} total employees`);
-    
-    // Log one employee to see its structure
-    if (employees.length > 0) {
-      console.log('Sample employee ID fields:', {
-        _id: employees[0]._id,
-        employeeId: employees[0].employeeId,
-        Policy_ID: employees[0].Policy_ID
-      });
-    }
-    
     res.json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -40,35 +29,23 @@ const getEmployeeById = async (req, res) => {
     const id = req.params.id;
     console.log('Looking up employee with ID:', id);
     
-    // We now know the field is definitely 'employeeId' in the employees collection
-    // Build a targeted query with variations of the ID format
-    const query = {
-      $or: [
-        // Primary match on employeeId
-        { employeeId: id },
-        
-        // Fall back to Policy_ID as an alternative
-        { Policy_ID: id },
-        
-        // Try without dashes
-        { employeeId: id.replace(/-/g, '') },
-        { Policy_ID: id.replace(/-/g, '') },
-        
-        // Try case-insensitive regex as last resort
-        { employeeId: { $regex: new RegExp(id, 'i') } }
-      ]
-    };
+    // Simple direct approach - try both employeeId and Policy_ID
+    let employee = await Employee.findOne({ employeeId: id }).lean();
     
-    // Add ObjectId check if valid
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
+    // If not found by employeeId, try Policy_ID
+    if (!employee) {
+      employee = await Employee.findOne({ Policy_ID: id }).lean();
     }
     
-    console.log('Executing targeted query for employee on employeeId field');
-    const employee = await Employee.findOne(query).lean();
-    console.log('Employee found:', employee ? 'Yes' : 'No');
+    // If still not found, try ObjectId if valid
+    if (!employee && mongoose.Types.ObjectId.isValid(id)) {
+      employee = await Employee.findById(id).lean();
+    }
     
-    // Always return the result, even if null (status 200)
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    
     res.json(employee);
   } catch (error) {
     console.error('Error fetching employee:', error);
@@ -102,20 +79,21 @@ const updateEmployee = async (req, res) => {
     const id = req.params.id;
     const updates = req.body;
     
-    // Use the specific field names we know are in the collection
-    const query = {
-      $or: [
-        { employeeId: id },
-        { Policy_ID: id }
-      ]
-    };
+    // Simple query for the main ID fields
+    let employee = null;
     
-    // Include ObjectId check
+    // Try each ID type in sequence
     if (mongoose.Types.ObjectId.isValid(id)) {
-      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
+      employee = await Employee.findByIdAndUpdate(id, updates, { new: true });
     }
     
-    const employee = await Employee.findOneAndUpdate(query, updates, { new: true });
+    if (!employee) {
+      employee = await Employee.findOneAndUpdate({ employeeId: id }, updates, { new: true });
+    }
+    
+    if (!employee) {
+      employee = await Employee.findOneAndUpdate({ Policy_ID: id }, updates, { new: true });
+    }
     
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -137,20 +115,21 @@ const deleteEmployee = async (req, res) => {
   try {
     const id = req.params.id;
     
-    // Use the specific field names we know are in the collection
-    const query = {
-      $or: [
-        { employeeId: id },
-        { Policy_ID: id }
-      ]
-    };
+    // Simple query for the main ID fields
+    let employee = null;
     
-    // Include ObjectId check
+    // Try each ID type in sequence
     if (mongoose.Types.ObjectId.isValid(id)) {
-      query.$or.push({ _id: new mongoose.Types.ObjectId(id) });
+      employee = await Employee.findByIdAndDelete(id);
     }
     
-    const employee = await Employee.findOneAndDelete(query);
+    if (!employee) {
+      employee = await Employee.findOneAndDelete({ employeeId: id });
+    }
+    
+    if (!employee) {
+      employee = await Employee.findOneAndDelete({ Policy_ID: id });
+    }
     
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });

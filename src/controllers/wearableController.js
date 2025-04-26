@@ -8,13 +8,6 @@ const { WearableData } = require('../../models');
 const getAllWearableData = async (req, res) => {
   try {
     const wearableData = await WearableData.find().limit(10).lean();
-    console.log(`Found ${wearableData.length} total wearable records`);
-    
-    // Log the first record's employee ID format for debugging
-    if (wearableData.length > 0) {
-      console.log(`Sample wearable data - employee field format: ${wearableData[0].employee}`);
-    }
-    
     res.json(wearableData);
   } catch (error) {
     console.error('Error fetching wearable data:', error);
@@ -32,26 +25,10 @@ const getWearableDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for wearable data with employee ID: ${id}`);
     
-    // We now know the field name is definitely 'employee' for wearable data
-    // Build a targeted query with variations of the ID format
-    const query = {
-      $or: [
-        // Try exact match
-        { employee: id },
-        
-        // Try without dashes
-        { employee: id.replace(/-/g, '') },
-        
-        // Try case-insensitive regex as fallback
-        { employee: { $regex: new RegExp(id, 'i') } }
-      ]
-    };
+    // Simple direct approach - exact match like the sleep controller
+    const wearableData = await WearableData.find({ employee: id }).sort({ date: -1 }).lean();
     
-    console.log(`Executing targeted query for wearable data on 'employee' field`);
-    const wearableData = await WearableData.find(query).sort({ date: -1 }).lean();
-    console.log(`Found ${wearableData.length} wearable data records`);
-    
-    // Always return the array, even if empty (status 200)
+    // Return whatever we found, even if empty
     res.json(wearableData);
   } catch (error) {
     console.error('Error fetching wearable data:', error);
