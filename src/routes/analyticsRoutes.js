@@ -4,38 +4,33 @@ const {
   getEmployeeAnalytics,
   getOrganizationAnalytics,
   getHealthAlerts,
-  getAllData
+  getAllData,
+  getAllEmployeesData
 } = require('../controllers/analyticsController');
-const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/analytics/employee/:id
 // @desc    Get employee analytics
-// @access  Private/Admin
+// @access  Public
 router.get('/employee/:id', getEmployeeAnalytics);
 
 // @route   GET /api/analytics/organization
 // @desc    Get organization analytics
-// @access  Private/Admin
+// @access  Public
 router.get('/organization', getOrganizationAnalytics);
 
 // @route   GET /api/analytics/alerts
 // @desc    Get health alerts
-// @access  Private/Admin
+// @access  Public
 router.get('/alerts', getHealthAlerts);
-
-// @route   GET /api/analytics/all-data
-// @desc    Get all data for analytics
-// @access  Private/Admin
-router.get('/all-data', getAllData);
 
 // @route   GET /api/analytics/all
 // @desc    Get comprehensive data for all employees
-// @access  Private/Admin
-router.get('/all', protect, admin, getAllData);
+// @access  Public
+router.get('/all', getAllData);
 
 // @route   GET /api/analytics/employees
 // @desc    Get all employee data
-// @access  Private/Admin
-router.get('/employees', protect, admin, getAllEmployeesData);
+// @access  Public
+router.get('/employees', getAllEmployeesData);
 
 module.exports = router; 
