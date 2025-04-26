@@ -1,9 +1,7 @@
 const express = require('express');
-const router = express.Router();
 const mongoose = require('mongoose');
 const { Employee, HealthData, WearableData, SleepData, Policy, Claim } = require('../models/schemas');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 // Helper function to handle both UUID and ObjectId
 const convertToObjectId = (id) => {
@@ -31,8 +29,9 @@ const getAgeGroup = (age) => {
 };
 
 // Get all employees
-router.get('/', async (req, res) => {
+exports.getAllEmployees = async (req, res) => {
   try {
+    console.log('Getting all employees. User role:', req.user.role);
     const employees = await Employee.find()
       .select('-password')
       .lean();
@@ -45,37 +44,110 @@ router.get('/', async (req, res) => {
       error: error.message 
     });
   }
-});
+};
 
 // Get employee by ID
-router.get('/:id', async (req, res) => {
+exports.getEmployeeById = async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.params.id);
+    const id = req.params.id;
+    console.log('Looking up employee with ID:', id);
+    console.log('User role:', req.user.role);
     
-    const employee = await Employee.findOne({ 
-      $or: [
-        { _id: employeeId },
-        { employeeId: employeeId }
-      ]
-    }).select('-password');
+    // First try direct match on employeeId
+    let employee = await Employee.findOne({ employeeId: id }).select('-password').lean();
     
     if (!employee) {
+      console.log('No employee found with employeeId:', id);
+      // Try matching against Policy_ID
+      employee = await Employee.findOne({ Policy_ID: id }).select('-password').lean();
+      
+      if (!employee) {
+        console.log('No employee found with Policy_ID:', id);
+        // Try converting to ObjectId if valid
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          console.log('Trying ObjectId match for:', id);
+          employee = await Employee.findOne({ _id: new mongoose.Types.ObjectId(id) }).select('-password').lean();
+        }
+      }
+    }
+    
+    if (!employee) {
+      console.log('Employee not found with any ID type');
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    res.json(employee.toObject());
+    console.log('Found employee:', employee.employeeId);
+
+    // Transform the response to match the expected format
+    const transformedEmployee = {
+      _id: employee._id,
+      employeeId: employee.employeeId,
+      age: employee.Age,
+      gender: employee.Gender,
+      weight: employee.Weight_kg,
+      height: employee.Height_cm,
+      bmi: employee.BMI,
+      children: employee.Children,
+      smoker: employee.Smoker === 'Yes',
+      chronicDisease: employee.Chronic_Disease,
+      chronicDiseasesCount: employee.Chronic_diseases_count,
+      familyMedicalHistory: employee.family_medical_history,
+      healthMetrics: {
+        hemoglobin: employee.Hemoglobin,
+        cholesterol: employee.Cholesterol,
+        bloodSugar: employee.Blood_Sugar,
+        creatinine: employee.Creatinine
+      },
+      policy: {
+        id: employee.Policy_ID,
+        number: employee.policyNumber,
+        name: employee.Plan_Name,
+        coverageDetails: employee.Coverage_Details,
+        startDate: employee.Start_Date,
+        endDate: employee.End_Date,
+        claimedAmount: employee.Claimed_Amount
+      },
+      employment: {
+        department: employee.Department,
+        education: employee.Education,
+        recruitmentChannel: employee.Recruitment_Channel,
+        trainings: employee.No_of_Trainings,
+        rating: employee.Previous_Year_Rating,
+        lengthOfService: employee.Length_of_Service,
+        kpisMet: employee.KPIs_Met_80 === '1'
+      },
+      scores: {
+        training: employee.Avg_Training_Score,
+        insurance: employee.Insurance_Score,
+        smoker: employee.Smoker_Score,
+        family: employee.Family_Score,
+        lifestyle: employee.Lifestyle_Score,
+        bmi: employee.BMI_Score,
+        hemoglobin: employee.Hemoglobin_Score,
+        sugar: employee.Sugar_Score,
+        cholesterol: employee.Cholesterol_Score,
+        creatinine: employee.Creatinine_Score,
+        physical: employee.Physical_Score,
+        wellness: employee.Wellness_Score
+      },
+      email: employee.email
+    };
+
+    res.json(transformedEmployee);
   } catch (error) {
     console.error('Error fetching employee:', error);
     res.status(500).json({ 
       message: 'Error fetching employee',
-      error: error.message 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-});
+};
 
 // Create new employee
-router.post('/', async (req, res) => {
+exports.createEmployee = async (req, res) => {
   try {
+    console.log('Creating new employee. User role:', req.user.role);
     const { email, password, ...employeeData } = req.body;
     
     // Check if employee already exists
@@ -107,11 +179,12 @@ router.post('/', async (req, res) => {
       error: error.message 
     });
   }
-});
+};
 
 // Update employee
-router.put('/:id', async (req, res) => {
+exports.updateEmployee = async (req, res) => {
   try {
+    console.log('Updating employee. User role:', req.user.role);
     const employeeId = convertToObjectId(req.params.id);
     const { password, ...updateData } = req.body;
 
@@ -143,11 +216,12 @@ router.put('/:id', async (req, res) => {
       error: error.message 
     });
   }
-});
+};
 
 // Delete employee
-router.delete('/:id', async (req, res) => {
+exports.deleteEmployee = async (req, res) => {
   try {
+    console.log('Deleting employee. User role:', req.user.role);
     const employeeId = convertToObjectId(req.params.id);
     
     const employee = await Employee.findOneAndDelete({ 
@@ -169,10 +243,10 @@ router.delete('/:id', async (req, res) => {
       error: error.message 
     });
   }
-});
+};
 
 // Get all employee data
-router.get('/all/data', async (req, res) => {
+exports.getAllEmployeeData = async (req, res) => {
   try {
     const employees = await Employee.find()
       .select('-password')
@@ -180,15 +254,15 @@ router.get('/all/data', async (req, res) => {
 
     const employeeData = await Promise.all(employees.map(async (employee) => {
       // Get health data using employee.employeeId
-      const healthData = await HealthData.findOne({ employee: employee.employeeId });
+      const healthData = await HealthData.findOne({ employeeId: employee.employeeId });
       
       // Get wearable data using employee.employeeId
-      const wearableData = await WearableData.find({ employee: employee.employeeId })
+      const wearableData = await WearableData.find({ employeeId: employee.employeeId })
         .sort({ timestamp: -1 })
         .limit(30);
       
       // Get sleep data using employee.employeeId
-      const sleepData = await SleepData.find({ employee: employee.employeeId })
+      const sleepData = await SleepData.find({ employeeId: employee.employeeId })
         .sort({ date: -1 })
         .limit(7);
       
@@ -196,7 +270,7 @@ router.get('/all/data', async (req, res) => {
       const policy = await Policy.findOne({ policyId: employee.Policy_ID });
       
       // Get claims using employee.employeeId
-      const claims = await Claim.find({ employee: employee.employeeId });
+      const claims = await Claim.find({ employeeId: employee.employeeId });
 
       // Log the data for debugging
       console.log(`Employee ${employee.employeeId} data:`, {
@@ -235,6 +309,6 @@ router.get('/all/data', async (req, res) => {
       error: error.message 
     });
   }
-});
+};
 
-module.exports = router;
+module.exports = exports;

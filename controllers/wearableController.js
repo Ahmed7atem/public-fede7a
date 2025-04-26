@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { WearableData } = require('../models/schemas');
 
-// Helper function to handle both UUID and ObjectId
+// Improved helper function to handle both UUID and ObjectId
 const convertToObjectId = (id) => {
   if (!id) {
     throw new Error('ID is required');
@@ -16,7 +16,8 @@ const convertToObjectId = (id) => {
   if (mongoose.Types.ObjectId.isValid(id)) {
     return new mongoose.Types.ObjectId(id);
   }
-  throw new Error('Invalid ID format');
+  // If it's neither, return it as is (could be a string ID)
+  return id;
 };
 
 // Get all wearable data
@@ -29,27 +30,28 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get wearable data by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const id = convertToObjectId(req.params.id);
-    const wearableData = await WearableData.findOne({ employeeId: id });
-    if (!wearableData) {
-      return res.status(404).json({ message: 'Wearable data not found' });
-    }
-    res.json(wearableData);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
+// IMPORTANT: Employee routes must come before ID routes to avoid conflicts
 // Get wearable data by employee ID
 router.get('/employee/:employeeId', async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.params.employeeId);
-    const wearableData = await WearableData.find({ employeeId }).sort({ date: -1 });
+    console.log(`Looking for wearable data with employee ID: ${req.params.employeeId}`);
+    const id = req.params.employeeId;
+    
+    // Try multiple field names for the employee ID
+    const wearableData = await WearableData.find({ 
+      $or: [
+        { employeeId: id },
+        { employee: id },
+        // Also try to match if it's stored as string or ObjectId
+        { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+      ]
+    }).sort({ date: -1 });
+    
+    console.log(`Found ${wearableData.length} wearable data records for employee: ${id}`);
     res.json(wearableData);
   } catch (error) {
+    console.error('Error fetching wearable data:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -57,10 +59,20 @@ router.get('/employee/:employeeId', async (req, res) => {
 // Get wearable logs by employee ID
 router.get('/employee/:employeeId/logs', async (req, res) => {
   try {
-    const employeeId = convertToObjectId(req.params.employeeId);
+    console.log(`Looking for wearable logs with employee ID: ${req.params.employeeId}`);
+    const id = req.params.employeeId;
     const { startDate, endDate } = req.query;
     
-    let query = { employeeId };
+    let query = { 
+      $or: [
+        { employeeId: id },
+        { employee: id },
+        // Also try to match if it's stored as string or ObjectId
+        { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+      ]
+    };
+    
     if (startDate && endDate) {
       query.date = {
         $gte: new Date(startDate),
@@ -73,6 +85,7 @@ router.get('/employee/:employeeId/logs', async (req, res) => {
       .select('date steps heartRate sleepHours caloriesBurned');
 
     if (!logs || logs.length === 0) {
+      console.log(`No logs found for employee: ${id}`);
       return res.status(404).json({ message: 'No logs found for this employee' });
     }
 
@@ -84,12 +97,46 @@ router.get('/employee/:employeeId/logs', async (req, res) => {
       caloriesBurned: logs.reduce((acc, log) => acc + (log.caloriesBurned || 0), 0) / logs.length
     };
 
+    console.log(`Found ${logs.length} logs for employee: ${id}`);
     res.json({
       logs,
       averages,
       totalDays: logs.length
     });
   } catch (error) {
+    console.error('Error fetching wearable logs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get wearable data by ID - must come after more specific routes
+router.get('/:id', async (req, res) => {
+  try {
+    console.log(`Looking for wearable data with ID: ${req.params.id}`);
+    const id = req.params.id;
+    
+    // Try to find by different ID formats
+    const wearableData = await WearableData.findOne({ 
+      $or: [
+        { _id: id },
+        { employeeId: id },
+        { employee: id },
+        // Also try to match if it's stored as string or ObjectId
+        { _id: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+      ]
+    });
+    
+    if (!wearableData) {
+      console.log(`No wearable data found for id: ${id}`);
+      return res.status(404).json({ message: 'Wearable data not found' });
+    }
+    
+    console.log(`Found wearable data: ${JSON.stringify(wearableData)}`);
+    res.json(wearableData);
+  } catch (error) {
+    console.error('Error fetching wearable data:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -133,15 +180,28 @@ router.post('/log', async (req, res) => {
 // Update wearable data
 router.put('/:id', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
+    const id = req.params.id;
+    
     const wearableData = await WearableData.findOneAndUpdate(
-      { _id: id },
+      { 
+        $or: [
+          { _id: id },
+          { employeeId: id },
+          { employee: id },
+          // Also try to match if it's stored as string or ObjectId
+          { _id: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+          { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+          { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+        ]
+      },
       req.body,
       { new: true, runValidators: true }
     );
+    
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
+    
     res.json(wearableData);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -151,7 +211,7 @@ router.put('/:id', async (req, res) => {
 // Update wearable log
 router.put('/log/:id', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
+    const id = req.params.id;
     const { steps, heartRate, sleepHours, caloriesBurned } = req.body;
     
     const log = await WearableData.findByIdAndUpdate(
@@ -178,11 +238,24 @@ router.put('/log/:id', async (req, res) => {
 // Delete wearable data
 router.delete('/:id', async (req, res) => {
   try {
-    const id = convertToObjectId(req.params.id);
-    const wearableData = await WearableData.findOneAndDelete({ _id: id });
+    const id = req.params.id;
+    
+    const wearableData = await WearableData.findOneAndDelete({ 
+      $or: [
+        { _id: id },
+        { employeeId: id },
+        { employee: id },
+        // Also try to match if it's stored as string or ObjectId
+        { _id: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employeeId: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id },
+        { employee: mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id }
+      ]
+    });
+    
     if (!wearableData) {
       return res.status(404).json({ message: 'Wearable data not found' });
     }
+    
     res.json({ message: 'Wearable data deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

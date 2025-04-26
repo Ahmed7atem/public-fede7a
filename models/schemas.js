@@ -2,38 +2,9 @@ const mongoose = require('mongoose');
 
 // Employee Schema - Simplified for basic auth
 const employeeSchema = new mongoose.Schema({
-  employeeId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  name: { type: String, required: true },
-  age: { type: Number, required: true },
-  gender: { type: String, required: true },
-  children: { type: Number, default: 0 },
-  smoker: { type: Boolean, default: false },
-  region: { type: String, required: true },
-  bmi: { type: Number },
-  bloodPressure: {
-    systolic: { type: Number },
-    diastolic: { type: Number }
-  },
-  diabetic: { type: Boolean, default: false },
-  role: {
-    type: String,
-    default: 'employee'
-  },
-  policyId: { type: String, required: true }, // Reference to policy UUID
-  charges: { type: Number },
+  employeeId: { type: String, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
   Age: String,
   Age_Group: String,
   Gender: String,
@@ -49,6 +20,7 @@ const employeeSchema = new mongoose.Schema({
   Cholesterol: String,
   Blood_Sugar: String,
   Creatinine: String,
+  Policy_ID: String,
   policyNumber: String,
   Plan_Name: String,
   Coverage_Details: String,
@@ -73,7 +45,11 @@ const employeeSchema = new mongoose.Schema({
   Cholesterol_Score: String,
   Creatinine_Score: String,
   Physical_Score: String,
-  Wellness_Score: String
+  Wellness_Score: String,
+  role: {
+    type: String,
+    default: 'employee'
+  }
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
