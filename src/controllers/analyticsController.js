@@ -67,9 +67,9 @@ const getEmployeeAnalytics = async (req, res) => {
         bmi: employee.bmi,
         chronicDisease: employee.chronicDisease,
         insurance: {
-          policyId: employee.Policy_ID,
+          policyId: employee.policyId,
           policyNumber: employee.policyNumber,
-          planName: employee.Plan_Name
+          planName: employee.planName
         }
       },
       health: {
@@ -89,21 +89,21 @@ const getEmployeeAnalytics = async (req, res) => {
         stats: sleepStats
       },
       insurance: {
-        policy: employee.Policy_ID ? {
-          id: employee.Policy_ID,
+        policy: employee.policyId ? {
+          id: employee.policyId,
           number: employee.policyNumber,
-          plan: employee.Plan_Name
+          plan: employee.planName
         } : null,
         claims: claims
       },
       scores: {
-        bmi: employee.BMI_Score || null,
-        hemoglobin: employee.Hemoglobin_Score || null,
-        sugar: employee.Sugar_Score || null,
-        cholesterol: employee.Cholesterol_Score || null,
-        creatinine: employee.Creatinine_Score || null,
-        physical: employee.Physical_Score || null,
-        wellness: employee.Wellness_Score || null
+        bmi: employee.bmiScore || null,
+        hemoglobin: employee.hemoglobinScore || null,
+        sugar: employee.sugarScore || null,
+        cholesterol: employee.cholesterolScore || null,
+        creatinine: employee.creatinineScore || null,
+        physical: employee.physicalScore || null,
+        wellness: employee.wellnessScore || null
       },
       predictions: predictions,
       complaints: [] // This would be populated if we had a complaints collection
@@ -323,7 +323,7 @@ const getAllData = async (req, res) => {
   try {
     // Get all employees with their basic info
     const employees = await Employee.find()
-      .select('_id email role employeeId Age Gender Weight_kg Height_cm BMI Chronic_Disease Policy_ID policyNumber Plan_Name BMI_Score Hemoglobin_Score Sugar_Score Cholesterol_Score Creatinine_Score Physical_Score Wellness_Score')
+      .select('_id email role employeeId age gender weight height bmi chronicDisease policyId policyNumber planName bmiScore hemoglobinScore sugarScore cholesterolScore creatinineScore physicalScore wellnessScore')
       .lean();
     
     const totalEmployees = employees.length;
@@ -384,16 +384,16 @@ const getAllData = async (req, res) => {
             employeeId: employee.employeeId,
             email: employee.email,
             role: employee.role,
-            age: employee.Age,
-            gender: employee.Gender,
-            weight: employee.Weight_kg,
-            height: employee.Height_cm,
-            bmi: employee.BMI,
-            chronicDisease: employee.Chronic_Disease,
+            age: employee.age,
+            gender: employee.gender,
+            weight: employee.weight,
+            height: employee.height,
+            bmi: employee.bmi,
+            chronicDisease: employee.chronicDisease,
             insurance: {
-              policyId: employee.Policy_ID,
+              policyId: employee.policyId,
               policyNumber: employee.policyNumber,
-              planName: employee.Plan_Name
+              planName: employee.planName
             }
           },
           health: {
@@ -413,21 +413,21 @@ const getAllData = async (req, res) => {
             stats: sleepStats
           },
           insurance: {
-            policy: employee.Policy_ID ? {
-              id: employee.Policy_ID,
+            policy: employee.policyId ? {
+              id: employee.policyId,
               number: employee.policyNumber,
-              plan: employee.Plan_Name
+              plan: employee.planName
             } : null,
             claims: claims
           },
           scores: {
-            bmi: employee.BMI_Score || null,
-            hemoglobin: employee.Hemoglobin_Score || null,
-            sugar: employee.Sugar_Score || null,
-            cholesterol: employee.Cholesterol_Score || null,
-            creatinine: employee.Creatinine_Score || null,
-            physical: employee.Physical_Score || null,
-            wellness: employee.Wellness_Score || null
+            bmi: employee.bmiScore || null,
+            hemoglobin: employee.hemoglobinScore || null,
+            sugar: employee.sugarScore || null,
+            cholesterol: employee.cholesterolScore || null,
+            creatinine: employee.creatinineScore || null,
+            physical: employee.physicalScore || null,
+            wellness: employee.wellnessScore || null
           },
           predictions: predictions,
           complaints: []
