@@ -17,11 +17,11 @@ const getEmployeeAnalytics = async (req, res) => {
     }
 
     // Get health data
-    const healthData = await HealthData.find({ employeeId }).sort({ recordedAt: -1 });
+    const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
     const latestHealth = healthData[0] || {};
 
     // Get wearable data
-    const wearableData = await WearableData.find({ employeeId }).sort({ date: -1 });
+    const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
     const latestWearable = wearableData[0] || {};
     
     // Calculate wearable stats
@@ -35,7 +35,7 @@ const getEmployeeAnalytics = async (req, res) => {
     };
 
     // Get sleep data
-    const sleepData = await SleepData.find({ employeeId }).sort({ startTime: -1 });
+    const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
     const latestSleep = sleepData[0] || {};
     
     // Calculate sleep stats
@@ -49,10 +49,10 @@ const getEmployeeAnalytics = async (req, res) => {
     };
 
     // Get claims
-    const claims = await Claim.find({ employeeId });
+    const claims = await Claim.find({ patientId: employeeId }).lean();
 
     // Get predictions
-    const predictions = await Prediction.find({ employeeId });
+    const predictions = await Prediction.find({ employeeId: employeeId }).lean();
 
     res.json({
       employee: {
@@ -336,12 +336,12 @@ const getAllData = async (req, res) => {
         console.log(`Processing employee ${employeeId}`);
 
         // Get health data
-        const healthData = await HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean();
+        const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
         console.log(`Found ${healthData.length} health records for employee ${employeeId}`);
         const latestHealth = healthData[0] || {};
 
         // Get wearable data
-        const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean();
+        const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
         console.log(`Found ${wearableData.length} wearable records for employee ${employeeId}`);
         const latestWearable = wearableData[0] || {};
         
@@ -356,7 +356,7 @@ const getAllData = async (req, res) => {
         };
 
         // Get sleep data
-        const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
+        const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
         console.log(`Found ${sleepData.length} sleep records for employee ${employeeId}`);
         const latestSleep = sleepData[0] || {};
         
@@ -375,7 +375,7 @@ const getAllData = async (req, res) => {
         console.log(`Found ${claims.length} claims for employee ${employeeId}`);
 
         // Get predictions
-        const predictions = await Prediction.find({ employee: employeeId }).lean();
+        const predictions = await Prediction.find({ employeeId: employeeId }).lean();
         console.log(`Found ${predictions.length} predictions for employee ${employeeId}`);
 
         return {
