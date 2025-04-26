@@ -25,10 +25,29 @@ const getWearableDataByEmployeeId = async (req, res) => {
     const id = req.params.employeeId;
     console.log(`Looking for wearable data with employee ID: ${id}`);
     
-    const wearableData = await WearableData.find({ employee: id }).sort({ date: -1 }).lean();
+    // Added for debugging - check what documents exist in the collection
+    const allWearableData = await WearableData.find().limit(2).lean();
+    console.log('First 2 wearable data documents:', JSON.stringify(allWearableData));
+    
+    // Added for debugging - try exact match by string
+    const wearableData = await WearableData.find({ employee: id.toString() }).sort({ date: -1 }).lean();
+    console.log(`Found ${wearableData.length} wearable data records`);
     
     if (wearableData.length === 0) {
-      return res.status(404).json({ message: 'Wearable data not found for this employee' });
+      // Added for debugging - try different query approaches
+      console.log('Trying alternative query approaches...');
+      const regex = new RegExp(id, 'i');
+      const alternativeQuery = await WearableData.find({ employee: { $regex: regex } }).limit(5).lean();
+      console.log(`Alternative query found ${alternativeQuery.length} records`);
+      
+      return res.status(404).json({ 
+        message: 'Wearable data not found for this employee',
+        debug: {
+          employeeId: id,
+          sampleData: allWearableData.length > 0 ? allWearableData[0].employee : 'No sample data',
+          alternativeQueryResults: alternativeQuery.length
+        }
+      });
     }
     
     res.json(wearableData);
