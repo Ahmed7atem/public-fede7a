@@ -9,6 +9,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API is running' });
+});
+
+// API root route
+app.get('/api', (req, res) => {
+  res.json({ status: 'ok', message: 'API endpoints available' });
+});
+
 // Connect to MongoDB
 console.log('Connecting to MongoDB...');
 console.log('Connection string:', process.env.MONGODB_URI);
