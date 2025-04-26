@@ -338,11 +338,13 @@ const getAllData = async (req, res) => {
         // Get health data
         const healthData = await HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean();
         console.log(`Found ${healthData.length} health records for employee ${employeeId}`);
+        console.log('Health data sample:', JSON.stringify(healthData[0] || {}, null, 2));
         const latestHealth = healthData[0] || {};
 
         // Get wearable data
         const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean();
         console.log(`Found ${wearableData.length} wearable records for employee ${employeeId}`);
+        console.log('Wearable data sample:', JSON.stringify(wearableData[0] || {}, null, 2));
         const latestWearable = wearableData[0] || {};
         
         // Calculate wearable stats
@@ -358,6 +360,7 @@ const getAllData = async (req, res) => {
         // Get sleep data
         const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
         console.log(`Found ${sleepData.length} sleep records for employee ${employeeId}`);
+        console.log('Sleep data sample:', JSON.stringify(sleepData[0] || {}, null, 2));
         const latestSleep = sleepData[0] || {};
         
         // Calculate sleep stats
@@ -373,12 +376,14 @@ const getAllData = async (req, res) => {
         // Get claims
         const claims = await Claim.find({ patientId: employeeId }).lean();
         console.log(`Found ${claims.length} claims for employee ${employeeId}`);
+        console.log('Claims sample:', JSON.stringify(claims[0] || {}, null, 2));
 
         // Get predictions
         const predictions = await Prediction.find({ employee: employeeId }).lean();
         console.log(`Found ${predictions.length} predictions for employee ${employeeId}`);
+        console.log('Predictions sample:', JSON.stringify(predictions[0] || {}, null, 2));
 
-        return {
+        const result = {
           employee: {
             _id: employee._id,
             email: employee.email,
@@ -392,22 +397,41 @@ const getAllData = async (req, res) => {
             insurance: {
               policyId: employee.Policy_ID,
               policyNumber: employee.policyNumber,
-              planName: employee.Plan_Name
+              planName: employee.Plan_Name,
+              coverage: employee.Coverage_Details,
+              startDate: employee.Start_Date,
+              endDate: employee.End_Date
             }
           },
           health: {
             latest: {
-              bmi: latestHealth.bmi || null
+              bmi: latestHealth.bmi || null,
+              hemoglobin: latestHealth.hemoglobin || null,
+              cholesterol: latestHealth.cholesterol || null,
+              bloodSugar: latestHealth.bloodSugar || null,
+              creatinine: latestHealth.creatinine || null
             },
             history: healthData
           },
           wearable: {
-            latest: latestWearable,
+            latest: {
+              heartRateAvg: latestWearable.heartRateAvg || null,
+              heartRateVariability: latestWearable.heartRateVariability || null,
+              stepCount: latestWearable.stepCount || null,
+              activeEnergy: latestWearable.activeEnergy || null,
+              exerciseTime: latestWearable.exerciseTime || null
+            },
             history: wearableData,
             stats: wearableStats
           },
           sleep: {
-            latest: latestSleep,
+            latest: {
+              sleepQuality: latestSleep.sleepQuality || null,
+              timeInBed: latestSleep.timeInBed || null,
+              heartRate: latestSleep.heartRate || null,
+              startTime: latestSleep.startTime || null,
+              endTime: latestSleep.endTime || null
+            },
             history: sleepData,
             stats: sleepStats
           },
@@ -415,9 +439,20 @@ const getAllData = async (req, res) => {
             policy: employee.Policy_ID ? {
               id: employee.Policy_ID,
               number: employee.policyNumber,
-              plan: employee.Plan_Name
+              plan: employee.Plan_Name,
+              coverage: employee.Coverage_Details,
+              startDate: employee.Start_Date,
+              endDate: employee.End_Date
             } : null,
-            claims: claims
+            claims: claims.map(claim => ({
+              id: claim.id,
+              amount: claim.claimAmount,
+              date: claim.claimDate,
+              status: claim.claimStatus,
+              type: claim.claimType,
+              diagnosis: claim.diagnosisDescription,
+              procedure: claim.procedureDescription
+            }))
           },
           scores: {
             bmi: employee.BMI_Score || null,
@@ -426,11 +461,24 @@ const getAllData = async (req, res) => {
             cholesterol: employee.Cholesterol_Score || null,
             creatinine: employee.Creatinine_Score || null,
             physical: employee.Physical_Score || null,
-            wellness: employee.Wellness_Score || null
+            wellness: employee.Wellness_Score || null,
+            insurance: employee.Insurance_Score || null,
+            smoker: employee.Smoker_Score || null,
+            family: employee.Family_Score || null,
+            lifestyle: employee.Lifestyle_Score || null
           },
-          predictions: predictions,
+          predictions: predictions.map(prediction => ({
+            type: prediction.predictionType,
+            value: prediction.predictionValue,
+            confidence: prediction.confidence,
+            factors: prediction.factors,
+            predictedAt: prediction.predictedAt
+          })),
           complaints: []
         };
+
+        console.log(`Completed processing employee ${employeeId}`);
+        return result;
       } catch (error) {
         console.error(`Error processing employee ${employee.employeeId}:`, error);
         return {
@@ -445,6 +493,7 @@ const getAllData = async (req, res) => {
       }
     }));
 
+    console.log('Completed processing all employees');
     res.json({
       totalEmployees,
       employees: employeeData
