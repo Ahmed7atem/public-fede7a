@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../models');
+const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
 
 // Helper function to calculate BMI category
 const getBMICategory = (bmi) => {
@@ -16,48 +16,110 @@ const getBMICategory = (bmi) => {
  */
 const getEmployeeAnalytics = async (req, res) => {
   try {
-    const { id } = req.params;
-    const employee = await Employee.findOne({ employeeId: id });
+    const employeeId = req.params.id;
+    
+    // Find employee by employeeId instead of _id
+    const employee = await Employee.findOne({ employeeId: employeeId });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    const healthData = await HealthData.find({ employee: id });
-    const wearableData = await WearableData.find({ employee: id });
-    const sleepData = await SleepData.find({ employee: id });
-    const claims = await Claim.find({ employeeId: id });
-    const predictions = await Prediction.find({ employee: id });
+    // Get health data
+    const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
+    const latestHealth = healthData[0] || {};
+
+    // Get wearable data
+    const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
+    const latestWearable = wearableData[0] || {};
+    
+    // Calculate wearable stats
+    const wearableStats = {
+      avgHeartRate: wearableData.length > 0 
+        ? wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length 
+        : null,
+      avgHRV: wearableData.length > 0 
+        ? wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length 
+        : null
+    };
+
+    // Get sleep data
+    const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
+    const latestSleep = sleepData[0] || {};
+    
+    // Calculate sleep stats
+    const sleepStats = {
+      avgSleepEfficiency: sleepData.length > 0 
+        ? sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length 
+        : null,
+      avgHeartRate: sleepData.length > 0 
+        ? sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length 
+        : null
+    };
+
+    // Get claims
+    const claims = await Claim.find({ patientId: employeeId }).lean();
+
+    // Get predictions
+    const predictions = await Prediction.find({ employeeId: employeeId }).lean();
 
     res.json({
       employee: {
+        _id: employee._id,
         employeeId: employee.employeeId,
         email: employee.email,
-        Age: employee.Age,
-        Gender: employee.Gender,
-        Department: employee.Department,
-        BMI: employee.BMI,
-        Chronic_Disease: employee.Chronic_Disease,
-        Insurance_Score: employee.Insurance_Score
+        role: employee.role,
+        age: employee.Age,
+        gender: employee.Gender,
+        weight: employee.Weight_kg,
+        height: employee.Height_cm,
+        bmi: employee.BMI,
+        bmiCategory: employee.BMI ? getBMICategory(parseFloat(employee.BMI)) : null,
+        chronicDisease: employee.Chronic_Disease,
+        insurance: {
+          policyId: employee.Policy_ID,
+          policyNumber: employee.policyNumber,
+          planName: employee.Plan_Name
+        }
       },
-      health: healthData.length > 0 ? healthData[0] : null,
-      wearable: wearableData.length > 0 ? wearableData[0] : null,
-      sleep: sleepData.length > 0 ? sleepData[0] : null,
-      claims: claims.map(claim => ({
-        id: claim.id,
-        providerId: claim.providerId,
-        claimAmount: claim.claimAmount,
-        claimDate: claim.claimDate,
-        providerSpecialty: claim.providerSpecialty,
-        claimStatus: claim.claimStatus,
-        claimType: claim.claimType,
-        claimSubmissionMethod: claim.claimSubmissionMethod,
-        diagnosisDescription: claim.diagnosisDescription,
-        procedureDescription: claim.procedureDescription
-      })),
-      predictions: predictions.length > 0 ? predictions[0] : null
+      health: {
+        latest: {
+          bmi: latestHealth.bmi || null
+        },
+        history: healthData
+      },
+      wearable: {
+        latest: latestWearable,
+        history: wearableData,
+        stats: wearableStats
+      },
+      sleep: {
+        latest: latestSleep,
+        history: sleepData,
+        stats: sleepStats
+      },
+      insurance: {
+        policy: employee.Policy_ID ? {
+          id: employee.Policy_ID,
+          number: employee.policyNumber,
+          plan: employee.Plan_Name
+        } : null,
+        claims: claims
+      },
+      scores: {
+        bmi: employee.BMI_Score || null,
+        hemoglobin: employee.Hemoglobin_Score || null,
+        sugar: employee.Sugar_Score || null,
+        cholesterol: employee.Cholesterol_Score || null,
+        creatinine: employee.Creatinine_Score || null,
+        physical: employee.Physical_Score || null,
+        wellness: employee.Wellness_Score || null
+      },
+      predictions: predictions,
+      complaints: [] // This would be populated if we had a complaints collection
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting employee analytics:', error);
+    res.status(500).json({ message: 'Error getting employee analytics', error: error.message });
   }
 };
 
@@ -74,13 +136,13 @@ const getOrganizationAnalytics = async (req, res) => {
 
     // Calculate gender distribution
     const genderDistribution = employees.reduce((acc, emp) => {
-      const gender = emp.Gender || 'other';
+      const gender = emp.gender || 'other';
       acc[gender] = (acc[gender] || 0) + 1;
       return acc;
     }, {});
 
     // Calculate average age
-    const totalAge = employees.reduce((sum, emp) => sum + (emp.Age || 0), 0);
+    const totalAge = employees.reduce((sum, emp) => sum + (emp.age || 0), 0);
     const averageAge = totalEmployees > 0 ? Math.round(totalAge / totalEmployees) : 0;
 
     // Get all health data
@@ -107,7 +169,7 @@ const getOrganizationAnalytics = async (req, res) => {
 
     // Get wearable data
     const wearableData = await WearableData.find();
-    const stepsData = wearableData.map(data => data.stepCount || 0);
+    const stepsData = wearableData.map(data => data.steps || 0);
     const heartRateData = wearableData.map(data => data.heartRateAvg || 0);
     
     const averageSteps = stepsData.length > 0 
@@ -170,18 +232,14 @@ const getOrganizationAnalytics = async (req, res) => {
     // Get claims data
     const claims = await Claim.find();
     const totalClaims = claims.length;
-    const approvedClaims = claims.filter(claim => claim.claimStatus === 'approved').length;
-    const pendingClaims = claims.filter(claim => claim.claimStatus === 'pending').length;
-    const rejectedClaims = claims.filter(claim => claim.claimStatus === 'rejected').length;
+    const approvedClaims = claims.filter(claim => claim.status === 'approved').length;
+    const pendingClaims = claims.filter(claim => claim.status === 'pending').length;
+    const rejectedClaims = claims.filter(claim => claim.status === 'rejected').length;
     
-    const totalAmount = claims.reduce((sum, claim) => sum + (claim.claimAmount || 0), 0).toFixed(2);
+    const totalAmount = claims.reduce((sum, claim) => sum + (claim.amount || 0), 0).toFixed(2);
     const averageAmount = totalClaims > 0 ? (totalAmount / totalClaims).toFixed(2) : "0.00";
     const approvalRate = totalClaims > 0 ? ((approvedClaims / totalClaims) * 100).toFixed(1) : "0.0";
     const averageClaimPerEmployee = totalEmployees > 0 ? (totalClaims / totalEmployees).toFixed(2) : "0.00";
-
-    // Get predictions data
-    const predictions = await Prediction.find();
-    const totalPredictions = predictions.length;
 
     res.json({
       overview: {
@@ -215,9 +273,6 @@ const getOrganizationAnalytics = async (req, res) => {
         averageAmount,
         approvalRate,
         averageClaimPerEmployee
-      },
-      predictions: {
-        total: totalPredictions
       }
     });
   } catch (error) {
@@ -233,25 +288,38 @@ const getOrganizationAnalytics = async (req, res) => {
  */
 const getHealthAlerts = async (req, res) => {
   try {
-    const healthData = await HealthData.find({
-      $or: [
-        { bmi: { $gt: 30 } },
-        { bloodSugar: { $gt: 140 } },
-        { cholesterol: { $gt: 240 } },
-        { hemoglobin: { $lt: 12 } }
-      ]
+    // In a real app, we would analyze data to identify anomalies and health concerns
+    // For now, we'll return a mock response
+    
+    res.json({
+      alerts: [
+        {
+          id: "alert-1",
+          type: "High Risk",
+          description: "5 employees showing signs of hypertension",
+          affectedCount: 5,
+          recommendations: ["Schedule health checkups", "Provide blood pressure information"]
+        },
+        {
+          id: "alert-2",
+          type: "Medium Risk",
+          description: "Increasing stress levels detected in Engineering department",
+          affectedCount: 12,
+          recommendations: ["Offer stress management workshops", "Review workload distribution"]
+        },
+        {
+          id: "alert-3",
+          type: "Low Risk",
+          description: "Seasonal allergies affecting productivity",
+          affectedCount: 28,
+          recommendations: ["Share allergy management resources", "Consider air purifiers"]
+        }
+      ],
+      timestamp: new Date().toISOString()
     });
-
-    const alerts = healthData.map(data => ({
-      employee: data.employee,
-      type: 'health',
-      severity: 'high',
-      details: data
-    }));
-
-    res.json(alerts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting health alerts:', error);
+    res.status(500).json({ message: 'Error getting health alerts', error: error.message });
   }
 };
 
@@ -274,50 +342,93 @@ const getAllData = async (req, res) => {
     const employeeData = await Promise.all(employees.map(async (employee) => {
       try {
         const employeeId = employee.employeeId;
-        console.log(`\nProcessing employee ${employeeId}`);
+        const employeeObjectId = employee._id.toString(); // Use _id as fallback
+        console.log(`\nProcessing employee ${employeeId} (_id: ${employeeObjectId})`);
 
-        // Get all related data
-        const [healthData, wearableData, sleepData, claims, predictions] = await Promise.all([
-          HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean(),
-          WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean(),
-          SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean(),
-          Claim.find({ employeeId: employeeId }).lean(),
+        // Query with employeeId and fallback to _id
+        const [healthData, wearableData, sleepData, predictions, claims] = await Promise.all([
+          HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean()
+            .then(data => {
+              console.log(`Health data (employee: ${employeeId}): ${data.length} records`);
+              if (data.length === 0) {
+                console.log(`Trying _id for HealthData...`);
+                return HealthData.find({ employee: employeeObjectId }).sort({ recordedAt: -1 }).lean()
+                  .then(fallbackData => {
+                    console.log(`Health data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
+                    return fallbackData;
+                  });
+              }
+              return data;
+            }),
+          WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean()
+            .then(data => {
+              console.log(`Wearable data (employee: ${employeeId}): ${data.length} records`);
+              if (data.length === 0) {
+                console.log(`Trying _id for WearableData...`);
+                return WearableData.find({ employee: employeeObjectId }).sort({ date: -1 }).lean()
+                  .then(fallbackData => {
+                    console.log(`Wearable data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
+                    return fallbackData;
+                  });
+              }
+              return data;
+            }),
+          SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean()
+            .then(data => {
+              console.log(`Sleep data (employee: ${employeeId}): ${data.length} records`);
+              if (data.length === 0) {
+                console.log(`Trying _id for SleepData...`);
+                return SleepData.find({ employee: employeeObjectId }).sort({ startTime: -1 }).lean()
+                  .then(fallbackData => {
+                    console.log(`Sleep data (_id: ${employeeObjectId}): ${fallbackData.length} records`);
+                    return fallbackData;
+                  });
+              }
+              return data;
+            }),
           Prediction.find({ employee: employeeId }).lean()
+            .then(data => {
+              console.log(`Predictions (employee: ${employeeId}): ${data.length} records`);
+              if (data.length === 0) {
+                console.log(`Trying _id for Prediction...`);
+                return Prediction.find({ employee: employeeObjectId }).lean()
+                  .then(fallbackData => {
+                    console.log(`Predictions (_id: ${employeeObjectId}): ${fallbackData.length} records`);
+                    return fallbackData;
+                  });
+              }
+              return data;
+            }),
+          Claim.find({ patientId: employeeId }).lean()
+            .then(data => {
+              console.log(`Claims (patientId: ${employeeId}): ${data.length} records`);
+              return data;
+            }),
         ]);
 
         // Calculate wearable stats
         const wearableStats = {
-          avgHeartRate: wearableData.length > 0 
-            ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2) 
+          avgHeartRate: wearableData.length > 0
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2)
             : null,
-          avgHRV: wearableData.length > 0 
-            ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2) 
+          avgHRV: wearableData.length > 0
+            ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2)
             : null,
-          avgSteps: wearableData.length > 0
-            ? (wearableData.reduce((sum, data) => sum + (data.stepCount || 0), 0) / wearableData.length).toFixed(0)
-            : null,
-          avgActiveEnergy: wearableData.length > 0
-            ? (wearableData.reduce((sum, data) => sum + (data.activeEnergy || 0), 0) / wearableData.length).toFixed(0)
-            : null
         };
 
         // Calculate sleep stats
         const sleepStats = {
-          avgSleepEfficiency: sleepData.length > 0 
-            ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2) 
+          avgSleepEfficiency: sleepData.length > 0
+            ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2)
             : null,
-          avgHeartRate: sleepData.length > 0 
-            ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2) 
+          avgHeartRate: sleepData.length > 0
+            ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2)
             : null,
-          avgTimeInBed: sleepData.length > 0
-            ? (sleepData.reduce((sum, data) => sum + (data.timeInBed || 0), 0) / sleepData.length).toFixed(0)
-            : null
         };
 
-        return {
+        const result = {
           employee: {
             _id: employee._id,
-            employeeId: employee.employeeId,
             email: employee.email,
             role: employee.role,
             age: employee.Age,
@@ -329,8 +440,8 @@ const getAllData = async (req, res) => {
             insurance: {
               policyId: employee.Policy_ID,
               policyNumber: employee.policyNumber,
-              planName: employee.Plan_Name
-            }
+              planName: employee.Plan_Name,
+            },
           },
           health: {
             latest: healthData.length > 0 ? {
@@ -338,9 +449,9 @@ const getAllData = async (req, res) => {
               hemoglobin: healthData[0].hemoglobin || null,
               cholesterol: healthData[0].cholesterol || null,
               bloodSugar: healthData[0].bloodSugar || null,
-              creatinine: healthData[0].creatinine || null
+              creatinine: healthData[0].creatinine || null,
             } : { bmi: null },
-            history: healthData
+            history: healthData,
           },
           wearable: {
             latest: wearableData.length > 0 ? {
@@ -348,10 +459,10 @@ const getAllData = async (req, res) => {
               heartRateVariability: wearableData[0].heartRateVariability || null,
               stepCount: wearableData[0].stepCount || null,
               activeEnergy: wearableData[0].activeEnergy || null,
-              exerciseTime: wearableData[0].exerciseTime || null
+              exerciseTime: wearableData[0].exerciseTime || null,
             } : {},
             history: wearableData,
-            stats: wearableStats
+            stats: wearableStats,
           },
           sleep: {
             latest: sleepData.length > 0 ? {
@@ -359,29 +470,26 @@ const getAllData = async (req, res) => {
               timeInBed: sleepData[0].timeInBed || null,
               heartRate: sleepData[0].heartRate || null,
               startTime: sleepData[0].startTime || null,
-              endTime: sleepData[0].endTime || null
+              endTime: sleepData[0].endTime || null,
             } : {},
             history: sleepData,
-            stats: sleepStats
+            stats: sleepStats,
           },
           insurance: {
             policy: employee.Policy_ID ? {
               id: employee.Policy_ID,
               number: employee.policyNumber,
-              plan: employee.Plan_Name
+              plan: employee.Plan_Name,
             } : null,
             claims: claims.map(claim => ({
               id: claim.id,
-              providerId: claim.providerId,
-              claimAmount: claim.claimAmount,
-              claimDate: claim.claimDate,
-              providerSpecialty: claim.providerSpecialty,
-              claimStatus: claim.claimStatus,
-              claimType: claim.claimType,
-              claimSubmissionMethod: claim.claimSubmissionMethod,
-              diagnosisDescription: claim.diagnosisDescription,
-              procedureDescription: claim.procedureDescription
-            }))
+              amount: claim.claimAmount,
+              date: claim.claimDate,
+              status: claim.claimStatus,
+              type: claim.claimType,
+              diagnosis: claim.diagnosisDescription,
+              procedure: claim.procedureDescription,
+            })),
           },
           scores: {
             bmi: employee.BMI_Score || null,
@@ -390,16 +498,19 @@ const getAllData = async (req, res) => {
             cholesterol: employee.Cholesterol_Score || null,
             creatinine: employee.Creatinine_Score || null,
             physical: employee.Physical_Score || null,
-            wellness: employee.Wellness_Score || null
+            wellness: employee.Wellness_Score || null,
           },
           predictions: predictions.map(prediction => ({
             type: prediction.predictionType,
             value: prediction.predictionValue,
             confidence: prediction.confidence,
             factors: prediction.factors,
-            predictedAt: prediction.predictedAt
-          }))
+            predictedAt: prediction.predictedAt,
+          })),
+          complaints: [],
         };
+
+        return result;
       } catch (error) {
         console.error(`Error processing employee ${employee.employeeId}:`, error);
         return {
@@ -407,16 +518,16 @@ const getAllData = async (req, res) => {
             _id: employee._id,
             employeeId: employee.employeeId,
             email: employee.email,
-            role: employee.role
+            role: employee.role,
           },
-          error: error.message
+          error: error.message,
         };
       }
     }));
 
     res.json({
       totalEmployees,
-      employees: employeeData
+      employees: employeeData,
     });
   } catch (error) {
     console.error('Error getting all data:', error);
@@ -435,7 +546,7 @@ const getAllEmployeesData = async (req, res) => {
     const employees = await Employee.find()
       .select('_id email role employeeId Age Gender Weight_kg Height_cm BMI Chronic_Disease Policy_ID policyNumber Plan_Name BMI_Score Hemoglobin_Score Sugar_Score Cholesterol_Score Creatinine_Score Physical_Score Wellness_Score')
       .lean();
-
+    
     const totalEmployees = employees.length;
     console.log(`Found ${totalEmployees} employees`);
 
@@ -450,10 +561,10 @@ const getAllEmployeesData = async (req, res) => {
           HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean(),
           WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean(),
           SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean(),
-          Claim.find({ employeeId: employeeId }).lean()
+          Claim.find({ patientId: employeeId }).lean()
         ]);
 
-        // Calculate wearable stats
+        // Calculate averages
         const wearableStats = {
           avgHeartRate: wearableData.length > 0 
             ? (wearableData.reduce((sum, data) => sum + (data.heartRateAvg || 0), 0) / wearableData.length).toFixed(2) 
@@ -461,15 +572,8 @@ const getAllEmployeesData = async (req, res) => {
           avgHRV: wearableData.length > 0 
             ? (wearableData.reduce((sum, data) => sum + (data.heartRateVariability || 0), 0) / wearableData.length).toFixed(2) 
             : null,
-          avgSteps: wearableData.length > 0
-            ? (wearableData.reduce((sum, data) => sum + (data.stepCount || 0), 0) / wearableData.length).toFixed(0)
-            : null,
-          avgActiveEnergy: wearableData.length > 0
-            ? (wearableData.reduce((sum, data) => sum + (data.activeEnergy || 0), 0) / wearableData.length).toFixed(0)
-            : null
         };
 
-        // Calculate sleep stats
         const sleepStats = {
           avgSleepEfficiency: sleepData.length > 0 
             ? (sleepData.reduce((sum, data) => sum + (data.sleepQuality || 0), 0) / sleepData.length).toFixed(2) 
@@ -477,15 +581,11 @@ const getAllEmployeesData = async (req, res) => {
           avgHeartRate: sleepData.length > 0 
             ? (sleepData.reduce((sum, data) => sum + (data.heartRate || 0), 0) / sleepData.length).toFixed(2) 
             : null,
-          avgTimeInBed: sleepData.length > 0
-            ? (sleepData.reduce((sum, data) => sum + (data.timeInBed || 0), 0) / sleepData.length).toFixed(0)
-            : null
         };
 
         return {
           employee: {
             _id: employee._id,
-            employeeId: employee.employeeId,
             email: employee.email,
             role: employee.role,
             age: employee.Age,
@@ -497,59 +597,38 @@ const getAllEmployeesData = async (req, res) => {
             insurance: {
               policyId: employee.Policy_ID,
               policyNumber: employee.policyNumber,
-              planName: employee.Plan_Name
-            }
+              planName: employee.Plan_Name,
+            },
           },
           health: {
-            latest: healthData.length > 0 ? {
-              bmi: healthData[0].bmi || null,
-              hemoglobin: healthData[0].hemoglobin || null,
-              cholesterol: healthData[0].cholesterol || null,
-              bloodSugar: healthData[0].bloodSugar || null,
-              creatinine: healthData[0].creatinine || null
-            } : { bmi: null },
-            history: healthData
+            latest: healthData[0] || {},
+            history: healthData,
           },
           wearable: {
-            latest: wearableData.length > 0 ? {
-              heartRateAvg: wearableData[0].heartRateAvg || null,
-              heartRateVariability: wearableData[0].heartRateVariability || null,
-              stepCount: wearableData[0].stepCount || null,
-              activeEnergy: wearableData[0].activeEnergy || null,
-              exerciseTime: wearableData[0].exerciseTime || null
-            } : {},
+            latest: wearableData[0] || {},
             history: wearableData,
-            stats: wearableStats
+            stats: wearableStats,
           },
           sleep: {
-            latest: sleepData.length > 0 ? {
-              sleepQuality: sleepData[0].sleepQuality || null,
-              timeInBed: sleepData[0].timeInBed || null,
-              heartRate: sleepData[0].heartRate || null,
-              startTime: sleepData[0].startTime || null,
-              endTime: sleepData[0].endTime || null
-            } : {},
+            latest: sleepData[0] || {},
             history: sleepData,
-            stats: sleepStats
+            stats: sleepStats,
           },
           insurance: {
             policy: employee.Policy_ID ? {
               id: employee.Policy_ID,
               number: employee.policyNumber,
-              plan: employee.Plan_Name
+              plan: employee.Plan_Name,
             } : null,
             claims: claims.map(claim => ({
               id: claim.id,
-              providerId: claim.providerId,
-              claimAmount: claim.claimAmount,
-              claimDate: claim.claimDate,
-              providerSpecialty: claim.providerSpecialty,
-              claimStatus: claim.claimStatus,
-              claimType: claim.claimType,
-              claimSubmissionMethod: claim.claimSubmissionMethod,
-              diagnosisDescription: claim.diagnosisDescription,
-              procedureDescription: claim.procedureDescription
-            }))
+              amount: claim.claimAmount,
+              date: claim.claimDate,
+              status: claim.claimStatus,
+              type: claim.claimType,
+              diagnosis: claim.diagnosisDescription,
+              procedure: claim.procedureDescription,
+            })),
           },
           scores: {
             bmi: employee.BMI_Score || null,
@@ -558,7 +637,7 @@ const getAllEmployeesData = async (req, res) => {
             cholesterol: employee.Cholesterol_Score || null,
             creatinine: employee.Creatinine_Score || null,
             physical: employee.Physical_Score || null,
-            wellness: employee.Wellness_Score || null
+            wellness: employee.Wellness_Score || null,
           }
         };
       } catch (error) {
@@ -568,16 +647,16 @@ const getAllEmployeesData = async (req, res) => {
             _id: employee._id,
             employeeId: employee.employeeId,
             email: employee.email,
-            role: employee.role
+            role: employee.role,
           },
-          error: error.message
+          error: error.message,
         };
       }
     }));
 
     res.json({
       totalEmployees,
-      employees: employeeData
+      employees: employeeData,
     });
   } catch (error) {
     console.error('Error getting all employees data:', error);

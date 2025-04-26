@@ -23,13 +23,7 @@ require('dotenv').config();
 const app = express();
 
 // Connect to MongoDB
-connectDB().catch(err => {
-  console.error('Failed to connect to MongoDB:', err);
-  // Don't exit the process in production
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
-});
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -129,5 +123,10 @@ app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-// Export the app for Vercel
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 module.exports = app; 
