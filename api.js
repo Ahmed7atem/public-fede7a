@@ -2,6 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const { Employee } = require('./models/schemas');
 
 // Create the app
 const app = express();
@@ -16,39 +18,6 @@ app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
   console.log('Request headers:', JSON.stringify(req.headers));
   next();
-});
-
-// Import controllers and routes
-const mainApp = require('./api/index.js');
-const authController = require('./controllers/authController');
-const employeeRoutes = require('./routes/employeeRoutes');
-const healthDataController = require('./controllers/healthDataController');
-const wearableController = require('./controllers/wearableController');
-const sleepDataController = require('./controllers/sleepDataController');
-const policyController = require('./controllers/policyController');
-const claimController = require('./controllers/claimController');
-const providerController = require('./controllers/providerController');
-const analyticsController = require('./controllers/analyticsController');
-const complaintController = require('./controllers/complaintController');
-
-// Special direct debug endpoint
-app.get('/api/debug/:id', (req, res) => {
-  res.json({
-    message: 'Debug endpoint working directly from api.js',
-    id: req.params.id,
-    path: req.path,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Direct test routes for employees
-app.get('/api/employees/direct-test/:id', (req, res) => {
-  res.json({
-    message: 'Direct employee test route working from api.js',
-    id: req.params.id,
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Root route
@@ -75,6 +44,73 @@ app.get('/api', (req, res) => {
     ]
   });
 });
+
+// Query-based employee endpoint
+app.get('/api/employees-query', async (req, res) => {
+  try {
+    const id = req.query.id;
+    if (!id) {
+      return res.status(400).json({ message: 'Employee ID is required as a query parameter' });
+    }
+    
+    console.log('Looking up employee with ID:', id);
+    
+    // First try direct match on employeeId
+    let employee = await Employee.findOne({ employeeId: id }).select('-password').lean();
+    
+    if (!employee) {
+      console.log('No employee found with employeeId:', id);
+      // Try matching against Policy_ID
+      employee = await Employee.findOne({ Policy_ID: id }).select('-password').lean();
+      
+      if (!employee) {
+        console.log('No employee found with Policy_ID:', id);
+        // Try converting to ObjectId if valid
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          console.log('Trying ObjectId match for:', id);
+          employee = await Employee.findOne({ _id: new mongoose.Types.ObjectId(id) }).select('-password').lean();
+        }
+      }
+    }
+    
+    if (!employee) {
+      console.log('Employee not found with any ID type');
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    console.log('Found employee:', employee.employeeId);
+    res.json({
+      employee: {
+        _id: employee._id,
+        employeeId: employee.employeeId,
+        email: employee.email,
+        policy: employee.Policy_ID
+      },
+      message: 'Employee found via query parameter'
+    });
+  } catch (error) {
+    console.error('Error fetching employee:', error);
+    res.status(500).json({ 
+      message: 'Error fetching employee',
+      error: error.message
+    });
+  }
+});
+
+// Special direct debug endpoint with query parameter
+app.get('/api/debug', (req, res) => {
+  res.json({
+    message: 'Debug endpoint working directly from api.js',
+    id: req.query.id || 'No ID provided',
+    path: req.path,
+    query: req.query,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Import the original app
+const mainApp = require('./api/index.js');
 
 // Use the original app for all other routes
 app.use('/', mainApp);
