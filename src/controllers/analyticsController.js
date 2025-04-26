@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const { Employee, HealthData, WearableData, SleepData, Claim, Prediction } = require('../../models');
 
+// Helper function to calculate BMI category
+const getBMICategory = (bmi) => {
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi >= 18.5 && bmi < 25) return 'Normal';
+  if (bmi >= 25 && bmi < 30) return 'Overweight';
+  return 'Obese';
+};
+
 /**
  * @desc    Get employee analytics
  * @route   GET /api/analytics/employee/:id
@@ -65,6 +73,7 @@ const getEmployeeAnalytics = async (req, res) => {
         weight: employee.Weight_kg,
         height: employee.Height_cm,
         bmi: employee.BMI,
+        bmiCategory: employee.BMI ? getBMICategory(parseFloat(employee.BMI)) : null,
         chronicDisease: employee.Chronic_Disease,
         insurance: {
           policyId: employee.Policy_ID,
@@ -335,55 +344,55 @@ const getAllData = async (req, res) => {
         const employeeId = employee.employeeId;
         console.log(`\nProcessing employee ${employeeId}`);
 
-        // Query with both 'employee' and 'employeeId' to debug field usage
+        // Try 'employeeId' first, fall back to 'employee'
         const [healthData, wearableData, sleepData, predictions, claims] = await Promise.all([
-          HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean()
+          HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean()
             .then(data => {
-              console.log(`Health data (employee: ${employeeId}): ${data.length} records`);
+              console.log(`Health data (employeeId: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employeeId field for HealthData...`);
-                return HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean()
+                console.log(`Trying employee field for HealthData...`);
+                return HealthData.find({ employee: employeeId }).sort({ recordedAt: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Health data (employeeId: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Health data (employee: ${employeeId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean()
+          WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean()
             .then(data => {
-              console.log(`Wearable data (employee: ${employeeId}): ${data.length} records`);
+              console.log(`Wearable data (employeeId: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employeeId field for WearableData...`);
-                return WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean()
+                console.log(`Trying employee field for WearableData...`);
+                return WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Wearable data (employeeId: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Wearable data (employee: ${employeeId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean()
+          SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean()
             .then(data => {
-              console.log(`Sleep data (employee: ${employeeId}): ${data.length} records`);
+              console.log(`Sleep data (employeeId: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employeeId field for SleepData...`);
-                return SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean()
+                console.log(`Trying employee field for SleepData...`);
+                return SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean()
                   .then(fallbackData => {
-                    console.log(`Sleep data (employeeId: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Sleep data (employee: ${employeeId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
               return data;
             }),
-          Prediction.find({ employee: employeeId }).lean()
+          Prediction.find({ employeeId: employeeId }).lean()
             .then(data => {
-              console.log(`Predictions (employee: ${employeeId}): ${data.length} records`);
+              console.log(`Predictions (employeeId: ${employeeId}): ${data.length} records`);
               if (data.length === 0) {
-                console.log(`Trying employeeId field for Prediction...`);
-                return Prediction.find({ employeeId: employeeId }).lean()
+                console.log(`Trying employee field for Prediction...`);
+                return Prediction.find({ employee: employeeId }).lean()
                   .then(fallbackData => {
-                    console.log(`Predictions (employeeId: ${employeeId}): ${fallbackData.length} records`);
+                    console.log(`Predictions (employee: ${employeeId}): ${fallbackData.length} records`);
                     return fallbackData;
                   });
               }
