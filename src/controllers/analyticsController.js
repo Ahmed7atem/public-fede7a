@@ -333,15 +333,23 @@ const getAllData = async (req, res) => {
     const employeeData = await Promise.all(employees.map(async (employee) => {
       try {
         const employeeId = employee.employeeId;
-        console.log(`Processing employee ${employeeId}`);
+        console.log(`\nProcessing employee ${employeeId}`);
 
-        // Get health data - using findOne like healthController
-        const healthData = await HealthData.findOne({ employee: employeeId }).lean();
-        console.log(`Found health data for employee ${employeeId}:`, healthData);
+        // Get health data
+        const healthData = await HealthData.find({ employeeId: employeeId }).sort({ recordedAt: -1 }).lean();
+        console.log(`Health data query: { employeeId: "${employeeId}" }`);
+        console.log(`Found ${healthData.length} health records`);
+        if (healthData.length > 0) {
+          console.log('Sample health data:', JSON.stringify(healthData[0], null, 2));
+        }
 
-        // Get wearable data - using find like wearableController
-        const wearableData = await WearableData.find({ employee: employeeId }).lean();
-        console.log(`Found ${wearableData.length} wearable records for employee ${employeeId}`);
+        // Get wearable data
+        const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
+        console.log(`Wearable data query: { employeeId: "${employeeId}" }`);
+        console.log(`Found ${wearableData.length} wearable records`);
+        if (wearableData.length > 0) {
+          console.log('Sample wearable data:', JSON.stringify(wearableData[0], null, 2));
+        }
         
         // Calculate wearable stats
         const wearableStats = {
@@ -353,9 +361,13 @@ const getAllData = async (req, res) => {
             : null
         };
 
-        // Get sleep data - using find like sleepController
-        const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
-        console.log(`Found ${sleepData.length} sleep records for employee ${employeeId}`);
+        // Get sleep data
+        const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
+        console.log(`Sleep data query: { employeeId: "${employeeId}" }`);
+        console.log(`Found ${sleepData.length} sleep records`);
+        if (sleepData.length > 0) {
+          console.log('Sample sleep data:', JSON.stringify(sleepData[0], null, 2));
+        }
         
         // Calculate sleep stats
         const sleepStats = {
@@ -369,13 +381,21 @@ const getAllData = async (req, res) => {
 
         // Get claims
         const claims = await Claim.find({ patientId: employeeId }).lean();
-        console.log(`Found ${claims.length} claims for employee ${employeeId}`);
+        console.log(`Claims query: { patientId: "${employeeId}" }`);
+        console.log(`Found ${claims.length} claims`);
+        if (claims.length > 0) {
+          console.log('Sample claim:', JSON.stringify(claims[0], null, 2));
+        }
 
         // Get predictions
-        const predictions = await Prediction.find({ employee: employeeId }).lean();
-        console.log(`Found ${predictions.length} predictions for employee ${employeeId}`);
+        const predictions = await Prediction.find({ employeeId: employeeId }).lean();
+        console.log(`Predictions query: { employeeId: "${employeeId}" }`);
+        console.log(`Found ${predictions.length} predictions`);
+        if (predictions.length > 0) {
+          console.log('Sample prediction:', JSON.stringify(predictions[0], null, 2));
+        }
 
-        return {
+        const result = {
           employee: {
             _id: employee._id,
             email: employee.email,
@@ -389,21 +409,18 @@ const getAllData = async (req, res) => {
             insurance: {
               policyId: employee.Policy_ID,
               policyNumber: employee.policyNumber,
-              planName: employee.Plan_Name,
-              coverage: employee.Coverage_Details,
-              startDate: employee.Start_Date,
-              endDate: employee.End_Date
+              planName: employee.Plan_Name
             }
           },
           health: {
-            latest: healthData ? {
-              bmi: healthData.bmi || null,
-              hemoglobin: healthData.hemoglobin || null,
-              cholesterol: healthData.cholesterol || null,
-              bloodSugar: healthData.bloodSugar || null,
-              creatinine: healthData.creatinine || null
+            latest: healthData.length > 0 ? {
+              bmi: healthData[0].bmi || null,
+              hemoglobin: healthData[0].hemoglobin || null,
+              cholesterol: healthData[0].cholesterol || null,
+              bloodSugar: healthData[0].bloodSugar || null,
+              creatinine: healthData[0].creatinine || null
             } : null,
-            history: healthData ? [healthData] : []
+            history: healthData
           },
           wearable: {
             latest: wearableData.length > 0 ? {
@@ -431,10 +448,7 @@ const getAllData = async (req, res) => {
             policy: employee.Policy_ID ? {
               id: employee.Policy_ID,
               number: employee.policyNumber,
-              plan: employee.Plan_Name,
-              coverage: employee.Coverage_Details,
-              startDate: employee.Start_Date,
-              endDate: employee.End_Date
+              plan: employee.Plan_Name
             } : null,
             claims: claims.map(claim => ({
               id: claim.id,
@@ -453,11 +467,7 @@ const getAllData = async (req, res) => {
             cholesterol: employee.Cholesterol_Score || null,
             creatinine: employee.Creatinine_Score || null,
             physical: employee.Physical_Score || null,
-            wellness: employee.Wellness_Score || null,
-            insurance: employee.Insurance_Score || null,
-            smoker: employee.Smoker_Score || null,
-            family: employee.Family_Score || null,
-            lifestyle: employee.Lifestyle_Score || null
+            wellness: employee.Wellness_Score || null
           },
           predictions: predictions.map(prediction => ({
             type: prediction.predictionType,
@@ -468,6 +478,9 @@ const getAllData = async (req, res) => {
           })),
           complaints: []
         };
+
+        console.log(`Completed processing employee ${employeeId}`);
+        return result;
       } catch (error) {
         console.error(`Error processing employee ${employee.employeeId}:`, error);
         return {
@@ -482,7 +495,7 @@ const getAllData = async (req, res) => {
       }
     }));
 
-    console.log('Completed processing all employees');
+    console.log('\nCompleted processing all employees');
     res.json({
       totalEmployees,
       employees: employeeData
