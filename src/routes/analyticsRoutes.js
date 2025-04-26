@@ -22,12 +22,9 @@ router.get('/organization', getOrganizationAnalytics);
 // @access  Private/Admin
 router.get('/alerts', getHealthAlerts);
 
-// @route   GET /api/analytics/all-data
-// @desc    Get all data for analytics
+// @route   GET /api/analytics/all
+// @desc    Get comprehensive data for all employees
 // @access  Private/Admin
-router.get('/all-data', getAllData);
-
-// Get comprehensive data for all employees
 router.get('/all', getAllData);
 
 module.exports = router; 
