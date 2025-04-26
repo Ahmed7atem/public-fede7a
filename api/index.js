@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -46,17 +47,28 @@ mongoose.connect(process.env.MONGODB_URI, {
   process.exit(1);
 });
 
+// Determine the base directory
+const baseDir = path.join(__dirname, '..');
+console.log('Base directory:', baseDir);
+
+// Debug logging route paths
+const logRoutePath = (routePath, targetPath) => {
+  const resolvedPath = path.resolve(baseDir, targetPath);
+  console.log(`Route ${routePath} -> ${targetPath} (${resolvedPath})`);
+  return require(resolvedPath);
+};
+
 // Routes
-app.use('/api/auth', require('../controllers/authController'));
-app.use('/api/employees', require('../routes/employeeRoutes'));
-app.use('/api/health', require('../controllers/healthDataController'));
-app.use('/api/wearables', require('../controllers/wearableController'));
-app.use('/api/sleep', require('../controllers/sleepDataController'));
-app.use('/api/policies', require('../controllers/policyController'));
-app.use('/api/claims', require('../controllers/claimController'));
-app.use('/api/providers', require('../controllers/providerController'));
-app.use('/api/analytics', require('../controllers/analyticsController'));
-app.use('/api/complaints', require('../controllers/complaintController'));
+app.use('/api/auth', logRoutePath('/api/auth', './controllers/authController'));
+app.use('/api/employees', logRoutePath('/api/employees', './routes/employeeRoutes'));
+app.use('/api/health', logRoutePath('/api/health', './controllers/healthDataController'));
+app.use('/api/wearables', logRoutePath('/api/wearables', './controllers/wearableController'));
+app.use('/api/sleep', logRoutePath('/api/sleep', './controllers/sleepDataController'));
+app.use('/api/policies', logRoutePath('/api/policies', './controllers/policyController'));
+app.use('/api/claims', logRoutePath('/api/claims', './controllers/claimController'));
+app.use('/api/providers', logRoutePath('/api/providers', './controllers/providerController'));
+app.use('/api/analytics', logRoutePath('/api/analytics', './controllers/analyticsController'));
+app.use('/api/complaints', logRoutePath('/api/complaints', './controllers/complaintController'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
