@@ -151,19 +151,58 @@ const policySchema = new mongoose.Schema({
 const claimSchema = new mongoose.Schema({
   id: { type: String, required: true },
   patientId: { type: String, required: true },
-  providerId: { type: String, required: true },
-  claimAmount: { type: Number, required: true },
-  claimDate: { type: Date, required: true },
-  patientAge: { type: Number, required: true },
-  providerSpecialty: { type: String, required: true },
-  claimStatus: { type: String, required: true },
-  patientIncome: { type: Number, required: true },
-  patientMaritalStatus: { type: String, required: true },
-  patientEmploymentStatus: { type: String, required: true },
-  claimType: { type: String, required: true },
-  claimSubmissionMethod: { type: String, required: true },
-  diagnosisDescription: { type: String, required: true },
-  procedureDescription: { type: String, required: true }
+  providerType: { 
+    type: String, 
+    required: true,
+    enum: ['Hospital', 'Clinic', 'Labs', 'Other']
+  },
+  claimDescription: { type: String, required: true },
+  documents: [{
+    filename: String,
+    path: String,
+    mimetype: String,
+    size: Number,
+    uploadDate: { type: Date, default: Date.now }
+  }],
+  status: { 
+    type: String, 
+    required: true,
+    enum: ['Pending', 'Approved', 'Denied', 'Processing'],
+    default: 'Pending'
+  },
+  processedAt: Date,
+  processedBy: String,
+  notes: String
+}, { timestamps: true });
+
+// Pre-approval Claim Schema
+const preApprovalClaimSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  patientId: { type: String, required: true },
+  providerType: { 
+    type: String, 
+    required: true,
+    enum: ['Hospital', 'Clinic', 'Labs']
+  },
+  category: { type: String, required: true },
+  appointmentDateTime: { type: Date, required: true },
+  documents: [{
+    filename: String,
+    path: String,
+    mimetype: String,
+    size: Number,
+    uploadDate: { type: Date, default: Date.now }
+  }],
+  additionalDetails: String,
+  status: { 
+    type: String, 
+    required: true,
+    enum: ['Pending', 'Approved', 'Denied'],
+    default: 'Pending'
+  },
+  processedAt: Date,
+  processedBy: String,
+  notes: String
 }, { timestamps: true });
 
 // Doctor Schema - Based on actual MongoDB structure
@@ -213,6 +252,7 @@ const WearableData = mongoose.model('WearableData', wearableDataSchema);
 const SleepData = mongoose.model('SleepData', sleepDataSchema);
 const Policy = mongoose.model('Policy', policySchema);
 const Claim = mongoose.model('Claim', claimSchema);
+const PreApprovalClaim = mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
 const Doctor = mongoose.model('Doctor', doctorSchema);
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 const Attachment = mongoose.model('Attachment', attachmentSchema);
@@ -226,6 +266,7 @@ module.exports = {
   SleepData,
   Policy,
   Claim,
+  PreApprovalClaim,
   Doctor,
   Feedback,
   Attachment,

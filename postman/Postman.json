@@ -1,0 +1,223 @@
+{
+  "info": {
+    "name": "MedBond Claims and Complaints API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Get All Claims",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "ADMIN-TOKEN"
+              }
+            ],
+            "url": "https://public-fede7a.vercel.app/api/claims"
+          }
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "EMPLOYEE-TOKEN"
+              }
+            ],
+            "url": "https://public-fede7a.vercel.app/api/claims/:id"
+          }
+        },
+        {
+          "name": "Get Claims by Patient ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "EMPLOYEE-TOKEN"
+              }
+            ],
+            "url": "https://public-fede7a.vercel.app/api/claims/patient/:patientId"
+          }
+        },
+        {
+          "name": "Create New Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "EMPLOYEE-TOKEN"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "providerType",
+                  "value": "Hospital",
+                  "type": "text"
+                },
+                {
+                  "key": "claimDescription",
+                  "value": "Emergency room visit for chest pain",
+                  "type": "text"
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": "/path/to/your/document.png"
+                }
+              ]
+            },
+            "url": "https://public-fede7a.vercel.app/api/claims"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pre-approvals",
+      "item": [
+        {
+          "name": "Get All Pre-approvals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "ADMIN-TOKEN"
+              }
+            ],
+            "url": "https://public-fede7a.vercel.app/api/pre-approvals"
+          }
+        },
+        {
+          "name": "Create Pre-approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "EMPLOYEE-TOKEN"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "providerType",
+                  "value": "Hospital",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "Surgery",
+                  "type": "text"
+                },
+                {
+                  "key": "appointmentDateTime",
+                  "value": "2024-03-20T10:00:00Z",
+                  "type": "text"
+                },
+                {
+                  "key": "additionalDetails",
+                  "value": "Scheduled for knee replacement surgery",
+                  "type": "text"
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": "/path/to/your/document.png"
+                }
+              ]
+            },
+            "url": "https://public-fede7a.vercel.app/api/pre-approvals"
+          }
+        },
+        {
+          "name": "Update Pre-approval Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "ADMIN-TOKEN"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Approved\",\n  \"notes\": \"Pre-approval granted based on medical necessity\"\n}"
+            },
+            "url": "https://public-fede7a.vercel.app/api/pre-approvals/:id/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Complaints",
+      "item": [
+        {
+          "name": "Get All Complaints",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "ADMIN-TOKEN"
+              }
+            ],
+            "url": "https://public-fede7a.vercel.app/api/complaints"
+          }
+        },
+        {
+          "name": "Create Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "EMPLOYEE-TOKEN"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "subject",
+                  "value": "Billing Issue",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Incorrect charges on my last claim",
+                  "type": "text"
+                },
+                {
+                  "key": "priority",
+                  "value": "High",
+                  "type": "text"
+                },
+                {
+                  "key": "documents",
+                  "type": "file",
+                  "src": "/path/to/your/document.png"
+                }
+              ]
+            },
+            "url": "https://public-fede7a.vercel.app/api/complaints"
+          }
+        }
+      ]
+    }
+  ]
+}

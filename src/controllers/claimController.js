@@ -58,7 +58,17 @@ const getClaimsByEmployeeId = async (req, res) => {
  */
 const createClaim = async (req, res) => {
   try {
-    const claim = new Claim(req.body);
+    const claimData = {
+      ...req.body,
+      attachment: req.file ? {
+        filename: req.file.filename,
+        path: req.file.path,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
+    };
+    
+    const claim = new Claim(claimData);
     const savedClaim = await claim.save();
     res.status(201).json(savedClaim);
   } catch (error) {

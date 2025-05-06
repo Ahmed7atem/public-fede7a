@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const upload = require('../middlewares/fileUpload');
 const {
   getAllClaims,
   getClaimById,
@@ -25,9 +26,9 @@ router.get('/:id', getClaimById);
 router.get('/employee/:employeeId', getClaimsByEmployeeId);
 
 // @route   POST /api/claims
-// @desc    Create a new claim
+// @desc    Create a new claim with attachment
 // @access  Private
-router.post('/', createClaim);
+router.post('/', upload.single('attachment'), createClaim);
 
 // @route   PUT /api/claims/:id
 // @desc    Update a claim
