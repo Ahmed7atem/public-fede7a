@@ -6,7 +6,10 @@ const {
   getProvidersBySpecialty,
   createProvider,
   addReview,
-  getProviderReviews
+  getProviderReviews,
+  getProviders,
+  getCategories,
+  getSpecializations
 } = require('../controllers/providerController');
 
 // @route   GET /api/providers
@@ -38,5 +41,15 @@ router.post('/:id/reviews', addReview);
 // @desc    Get provider reviews
 // @access  Public
 router.get('/:id/reviews', getProviderReviews);
+
+// @route   GET /api/providers/categories
+// @desc    Get all categories
+// @access  Public
+router.get('/categories', getCategories);
+
+// @route   GET /api/providers/specializations
+// @desc    Get all specializations
+// @access  Public
+router.get('/specializations', getSpecializations);
 
 module.exports = router; 
