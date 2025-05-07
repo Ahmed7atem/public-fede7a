@@ -207,11 +207,62 @@ const getProviderReviews = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get all categories
+ * @route   GET /api/providers/categories
+ * @access  Public
+ */
+const getCategories = async (req, res) => {
+  try {
+    // Mock categories data
+    const categories = [
+      'Primary Care',
+      'Specialist',
+      'Hospital',
+      'Clinic',
+      'Laboratory',
+      'Pharmacy'
+    ];
+    
+    res.json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Error fetching categories', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get all specializations
+ * @route   GET /api/providers/specializations
+ * @access  Public
+ */
+const getSpecializations = async (req, res) => {
+  try {
+    // Mock specializations data
+    const specializations = [
+      'Cardiology',
+      'Dermatology',
+      'Neurology',
+      'Orthopedics',
+      'Pediatrics',
+      'Psychiatry',
+      'Urology'
+    ];
+    
+    res.json(specializations);
+  } catch (error) {
+    console.error('Error fetching specializations:', error);
+    res.status(500).json({ message: 'Error fetching specializations', error: error.message });
+  }
+};
+
 module.exports = {
   getAllProviders,
   getProviderById,
   getProvidersBySpecialty,
   createProvider,
   addReview,
-  getProviderReviews
+  getProviderReviews,
+  getCategories,
+  getSpecializations
 }; 

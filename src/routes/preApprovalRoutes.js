@@ -9,7 +9,7 @@ const {
   createPreApproval,
   updatePreApprovalStatus
 } = require('../controllers/preApprovalController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/auth');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -34,11 +34,29 @@ const upload = multer({
   }
 });
 
-// Routes
+// @route   GET /api/pre-approvals
+// @desc    Get all pre-approval requests
+// @access  Private/Admin
 router.get('/', protect, admin, getAllPreApprovals);
+
+// @route   GET /api/pre-approvals/:id
+// @desc    Get pre-approval request by ID
+// @access  Private
 router.get('/:id', protect, getPreApprovalById);
+
+// @route   GET /api/pre-approvals/patient/:patientId
+// @desc    Get pre-approval requests by patient ID
+// @access  Private
 router.get('/patient/:patientId', protect, getPreApprovalsByPatientId);
+
+// @route   POST /api/pre-approvals
+// @desc    Create a new pre-approval request with documents
+// @access  Private
 router.post('/', protect, upload.array('documents', 5), createPreApproval);
+
+// @route   PUT /api/pre-approvals/:id/status
+// @desc    Update pre-approval request status
+// @access  Private/Admin
 router.put('/:id/status', protect, admin, updatePreApprovalStatus);
 
 module.exports = router; 
