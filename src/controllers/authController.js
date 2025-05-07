@@ -1,5 +1,22 @@
-const { Employee } = require('../../models');
+const { Employee, Admin } = require('../../models');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+
+// Define admin schema
+const adminSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, required: true },
+  role: {
+    type: String,
+    enum: ['admin'],
+    default: 'admin'
+  },
+  createdAt: { type: Date, default: Date.now },
+  lastLogin: { type: Date }
+});
+
+const Admin = mongoose.model('Admin', adminSchema);
 
 /**
  * @desc    Login user
@@ -10,32 +27,51 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Find user by email
-    const user = await Employee.findOne({ email });
+    // First check if user is an admin
+    const admin = await Admin.findOne({ email });
+    if (admin) {
+      // Check admin password
+      const isMatch = admin.password === password; // In production, use bcrypt.compare
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Update last login
+      admin.lastLogin = new Date();
+      await admin.save();
+
+      return res.json({
+        message: 'Login successful',
+        token: 'ADMIN_TOKEN',
+        user: {
+          id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: 'admin'
+        }
+      });
+    }
     
-    if (!user) {
+    // If not admin, check employees
+    const employee = await Employee.findOne({ email });
+    if (!employee) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Check password - in a real app we'd use bcrypt.compare
-    // For now we'll just do a simple check since the passwords might not be hashed
-    const isMatch = user.password === password;
-    
+    // Check employee password
+    const isMatch = employee.password === password;
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Create mock token (in a real app this would be a JWT)
-    const token = user.role === 'admin' ? 'ADMIN_TOKEN' : 'EMPLOYEE_TOKEN';
-    
     res.json({
       message: 'Login successful',
-      token,
+      token: 'EMPLOYEE_TOKEN',
       user: {
-        id: user._id,
-        employeeId: user.employeeId,
-        email: user.email,
-        role: user.role
+        id: employee._id,
+        employeeId: employee.employeeId,
+        email: employee.email,
+        role: 'employee'
       }
     });
   } catch (error) {
@@ -51,26 +87,38 @@ const login = async (req, res) => {
  */
 const getProfile = async (req, res) => {
   try {
-    // In a real app, we'd get the user ID from the authenticated token
-    // For this mock, we'll just check if the token is admin or employee
-    const isAdmin = req.headers.authorization === 'ADMIN_TOKEN';
+    const token = req.headers.authorization;
+    const isAdmin = token === 'ADMIN_TOKEN';
     
-    // Mock response
     if (isAdmin) {
+      // Get admin profile
+      const admin = await Admin.findOne({ email: 'admin@medbond.com' });
+      if (!admin) {
+        return res.status(404).json({ message: 'Admin not found' });
+      }
+      
       res.json({
         message: 'Profile retrieved',
         user: {
-          name: 'Admin User',
-          email: 'admin@medbond.com',
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
           role: 'admin'
         }
       });
     } else {
+      // Get employee profile from token
+      const employee = await Employee.findById(req.user.id);
+      if (!employee) {
+        return res.status(404).json({ message: 'Employee not found' });
+      }
+      
       res.json({
         message: 'Profile retrieved',
         user: {
-          name: 'Employee User',
-          email: 'employee@example.com',
+          id: employee._id,
+          employeeId: employee.employeeId,
+          email: employee.email,
           role: 'employee'
         }
       });
@@ -88,17 +136,52 @@ const getProfile = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
   try {
-    // In a real app, we'd get the user ID from the authenticated token
-    // and update their profile in the database
+    const token = req.headers.authorization;
+    const isAdmin = token === 'ADMIN_TOKEN';
     
-    // Mock response
-    res.json({
-      message: 'Profile updated successfully',
-      user: {
-        ...req.body,
-        role: req.headers.authorization === 'ADMIN_TOKEN' ? 'admin' : 'employee'
+    if (isAdmin) {
+      // Update admin profile
+      const admin = await Admin.findOneAndUpdate(
+        { email: 'admin@medbond.com' },
+        { $set: req.body },
+        { new: true }
+      );
+      
+      if (!admin) {
+        return res.status(404).json({ message: 'Admin not found' });
       }
-    });
+      
+      res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: 'admin'
+        }
+      });
+    } else {
+      // Update employee profile
+      const employee = await Employee.findByIdAndUpdate(
+        req.user.id,
+        { $set: req.body },
+        { new: true }
+      );
+      
+      if (!employee) {
+        return res.status(404).json({ message: 'Employee not found' });
+      }
+      
+      res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: employee._id,
+          employeeId: employee.employeeId,
+          email: employee.email,
+          role: 'employee'
+        }
+      });
+    }
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
