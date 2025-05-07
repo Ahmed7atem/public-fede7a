@@ -7,7 +7,6 @@ const {
   createProvider,
   addReview,
   getProviderReviews,
-  getProviders,
   getCategories,
   getSpecializations
 } = require('../controllers/providerController');
