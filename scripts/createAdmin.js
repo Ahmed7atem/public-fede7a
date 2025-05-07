@@ -1,36 +1,40 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
+require('dotenv').config();
+
 const { Admin } = require('../models');
 
-async function createAdmin() {
+const createAdmin = async () => {
   try {
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI);
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log('Connected to MongoDB');
 
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email: 'admin@medbond.com' });
+    
     if (existingAdmin) {
-      console.log('Admin user already exists');
-      return;
+      console.log('Admin user already exists:', existingAdmin);
+    } else {
+      // Create new admin user
+      const admin = await Admin.create({
+        email: 'admin@medbond.com',
+        password: 'admin123',
+        name: 'System Administrator',
+        role: 'admin'
+      });
+      console.log('Admin user created:', admin);
     }
 
-    // Create new admin user
-    const admin = new Admin({
-      email: 'admin@medbond.com',
-      password: 'admin123', // In production, use bcrypt to hash this
-      name: 'System Administrator',
-      role: 'admin'
-    });
-
-    await admin.save();
-    console.log('Admin user created successfully');
-  } catch (error) {
-    console.error('Error creating admin:', error);
-  } finally {
+    // Disconnect from MongoDB
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
+  } catch (error) {
+    console.error('Error:', error);
+    process.exit(1);
   }
-}
+};
 
 createAdmin(); 
