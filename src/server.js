@@ -24,9 +24,6 @@ require('dotenv').config();
 // Create Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -78,19 +75,19 @@ app.use('/api/pre-approvals', preApprovalRoutes);
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
-  const mongoose = require('mongoose');
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  
-  let collections = [];
-  let collectionStats = {};
-  
-  if (dbStatus === 'connected') {
-    try {
+  try {
+    const mongoose = require('mongoose');
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    
+    let collections = [];
+    let collectionStats = {};
+    
+    if (dbStatus === 'connected') {
       collections = (await mongoose.connection.db.collections())
         .map(c => c.collectionName);
       
       // Get count of documents in main collections
-      const { Employee, SleepData, HealthData, WearableData } = require('../models');
+      const { Employee, SleepData, HealthData, WearableData, Admin } = require('../models');
       
       if (collections.includes('employees')) {
         collectionStats.employees = await Employee.countDocuments();
@@ -107,17 +104,26 @@ app.get('/health', async (req, res) => {
       if (collections.includes('wearabledatas')) {
         collectionStats.wearables = await WearableData.countDocuments();
       }
-    } catch (error) {
-      console.error('Error fetching DB info:', error);
+
+      if (collections.includes('admins')) {
+        collectionStats.admins = await Admin.countDocuments();
+      }
     }
+    
+    res.json({
+      status: 'ok',
+      mongodb: dbStatus,
+      collections: collections,
+      documentCounts: collectionStats
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error.message
+    });
   }
-  
-  res.json({
-    status: 'ok',
-    mongodb: dbStatus,
-    collections: collections,
-    documentCounts: collectionStats
-  });
 });
 
 // Error handling middleware
@@ -130,8 +136,20 @@ app.use((req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+// Connect to MongoDB and start server
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app; 

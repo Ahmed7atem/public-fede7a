@@ -7,7 +7,7 @@ const { HealthData } = require('../../models');
  */
 const getAllHealthData = async (req, res) => {
   try {
-    const healthData = await HealthData.find().limit(10).lean();
+    const healthData = await HealthData.find().lean();
     res.json(healthData);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching health data', error: error.message });

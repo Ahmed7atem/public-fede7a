@@ -8,7 +8,7 @@ const { Employee } = require('../../models');
  */
 const getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().limit(10).lean();
+    const employees = await Employee.find().lean();
     res.json(employees);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching employees', error: error.message });

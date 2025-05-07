@@ -13,16 +13,23 @@ const {
   Feedback,
   Attachment,
   PolicyDocument,
-  Prediction
+  Prediction,
+  Admin
 } = require('../../models');
 
 const connectDB = async () => {
   try {
-    console.log('Connecting to MongoDB with URI:', process.env.MONGODB_URI);
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined in environment variables');
+    }
+
+    console.log('Connecting to MongoDB...');
     
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
     });
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -34,9 +41,14 @@ const connectDB = async () => {
       
       // Log the number of documents in the employees collection if it exists
       if (collections.some(c => c.collectionName === 'employees')) {
-        const Employee = mongoose.model('Employee');
         const employeeCount = await Employee.countDocuments();
         console.log('Total employees:', employeeCount);
+      }
+
+      // Log the number of documents in the admins collection if it exists
+      if (collections.some(c => c.collectionName === 'admins')) {
+        const adminCount = await Admin.countDocuments();
+        console.log('Total admins:', adminCount);
       }
     } catch (error) {
       console.error('Error checking collections:', error);
@@ -44,8 +56,9 @@ const connectDB = async () => {
     
     return conn;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error('MongoDB connection error:', error);
+    // Don't exit the process, let the application handle the error
+    throw error;
   }
 };
 
