@@ -289,6 +289,20 @@ const policyDocumentSchema = new mongoose.Schema({
   uploadDate: { type: Date, default: Date.now }
 });
 
+// Admin Schema
+const adminSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, required: true },
+  role: {
+    type: String,
+    enum: ['admin'],
+    default: 'admin'
+  },
+  createdAt: { type: Date, default: Date.now },
+  lastLogin: { type: Date }
+});
+
 // Register models
 const Employee = mongoose.model('Employee', employeeSchema);
 const HealthData = mongoose.model('HealthData', healthDataSchema);
@@ -302,6 +316,7 @@ const Feedback = mongoose.model('Feedback', feedbackSchema);
 const Attachment = mongoose.model('Attachment', attachmentSchema);
 const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
+const Admin = mongoose.model('Admin', adminSchema);
 
 module.exports = {
   Employee,
@@ -315,5 +330,6 @@ module.exports = {
   Feedback,
   Attachment,
   PolicyDocument,
-  Prediction
+  Prediction,
+  Admin
 }; 

@@ -10,7 +10,8 @@ const {
   Feedback,
   Attachment,
   PolicyDocument,
-  Prediction
+  Prediction,
+  Admin
 } = require('./schemas');
 
 // Employee Schema
@@ -61,22 +62,6 @@ const employeeSchema = new mongoose.Schema({
   Physical_Score: { type: String, default: '0' },
   Wellness_Score: { type: String, default: '0' }
 });
-
-// Admin Schema
-const adminSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  name: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ['admin'],
-    default: 'admin'
-  },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date }
-});
-
-const Admin = mongoose.model('Admin', adminSchema);
 
 module.exports = {
   Employee,
