@@ -5,6 +5,7 @@ const {
   getProfile,
   updateProfile
 } = require('../controllers/authController');
+const { authenticateToken } = require('../middleware/auth');
 
 // @route   POST /api/auth/login
 // @desc    Login user
@@ -14,11 +15,11 @@ router.post('/login', login);
 // @route   GET /api/auth/profile
 // @desc    Get user profile
 // @access  Private
-router.get('/profile', getProfile);
+router.get('/profile', authenticateToken, getProfile);
 
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', updateProfile);
+router.put('/profile', authenticateToken, updateProfile);
 
 module.exports = router; 
