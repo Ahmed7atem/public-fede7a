@@ -17,8 +17,8 @@ const login = async (req, res) => {
     // First check if user is an admin
     const admin = await Admin.findOne({ email });
     if (admin) {
-      // Check admin password
-      const isMatch = admin.password === password; // In production, use bcrypt.compare
+      // Check admin password - direct comparison
+      const isMatch = admin.password === password;
       if (!isMatch) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
@@ -45,7 +45,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Check employee password
+    // Check employee password - direct comparison
     const isMatch = employee.password === password;
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
