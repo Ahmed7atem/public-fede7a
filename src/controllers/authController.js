@@ -1,22 +1,9 @@
-const { Employee, Admin } = require('../../models');
-const mongoose = require('mongoose');
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-
-// Define admin schema
-const adminSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  name: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ['admin'],
-    default: 'admin'
-  },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date }
-});
-
-const Admin = mongoose.model('Admin', adminSchema);
+const { Employee, Admin } = require('../../models');
+const { authenticateToken } = require('../middleware/auth');
 
 /**
  * @desc    Login user
