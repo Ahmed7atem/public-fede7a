@@ -127,7 +127,7 @@ const sleepDataSchema = new mongoose.Schema({
 
 // Prediction Schema - Based on actual MongoDB structure
 const predictionSchema = new mongoose.Schema({
-  employee: { type: String, required: true }, // Reference to employee UUID
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   predictedAt: { type: Date, default: Date.now },
   predictionType: { type: String, required: true },
   predictionValue: { type: String, required: true },
@@ -151,30 +151,113 @@ const policySchema = new mongoose.Schema({
 const claimSchema = new mongoose.Schema({
   id: { type: String, required: true },
   patientId: { type: String, required: true },
-  providerId: { type: String, required: true },
-  claimAmount: { type: Number, required: true },
-  claimDate: { type: Date, required: true },
-  patientAge: { type: Number, required: true },
-  providerSpecialty: { type: String, required: true },
-  claimStatus: { type: String, required: true },
-  patientIncome: { type: Number, required: true },
-  patientMaritalStatus: { type: String, required: true },
-  patientEmploymentStatus: { type: String, required: true },
-  claimType: { type: String, required: true },
-  claimSubmissionMethod: { type: String, required: true },
-  diagnosisDescription: { type: String, required: true },
-  procedureDescription: { type: String, required: true }
+  providerType: { 
+    type: String, 
+    required: true,
+    enum: ['Hospital', 'Clinic', 'Labs', 'Other']
+  },
+  claimDescription: { type: String, required: true },
+  documents: [{
+    filename: String,
+    path: String,
+    mimetype: String,
+    size: Number,
+    uploadDate: { type: Date, default: Date.now }
+  }],
+  status: { 
+    type: String, 
+    required: true,
+    enum: ['Pending', 'Approved', 'Denied', 'Processing'],
+    default: 'Pending'
+  },
+  processedAt: Date,
+  processedBy: String,
+  notes: String
 }, { timestamps: true });
 
-// Doctor Schema - Based on actual MongoDB structure
+// Pre-approval Claim Schema
+const preApprovalClaimSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  patientId: { type: String, required: true },
+  providerType: { 
+    type: String, 
+    required: true,
+    enum: ['Hospital', 'Clinic', 'Labs']
+  },
+  category: { type: String, required: true },
+  appointmentDateTime: { type: Date, required: true },
+  documents: [{
+    filename: String,
+    path: String,
+    mimetype: String,
+    size: Number,
+    uploadDate: { type: Date, default: Date.now }
+  }],
+  additionalDetails: String,
+  status: { 
+    type: String, 
+    required: true,
+    enum: ['Pending', 'Approved', 'Denied'],
+    default: 'Pending'
+  },
+  processedAt: Date,
+  processedBy: String,
+  notes: String
+}, { timestamps: true });
+
+// Doctor Schema - Updated with all required fields
 const doctorSchema = new mongoose.Schema({
+  name: { type: String, required: true },
   specialization: { type: String, required: true },
-  fees: { type: String, required: true },
-  avg_rate: { type: Number, required: true },
-  waiting_time: { type: String, required: true },
-  clinic_location: { type: String, required: true },
-  rate_count: { type: Number, required: true }
+  providerType: { 
+    type: String, 
+    required: true,
+    enum: ['Hospital', 'Clinic', 'Labs']
+  },
+  category: { type: String, required: true },
+  city: { type: String, required: true },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true
+    },
+    address: { type: String, required: true }
+  },
+  availability: [{
+    day: { 
+      type: String, 
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      required: true 
+    },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true }
+  }],
+  experienceYears: { type: Number, required: true },
+  fees: { type: Number, required: true },
+  avgRating: { type: Number, default: 0 },
+  ratingCount: { type: Number, default: 0 },
+  isInNetwork: { type: Boolean, default: true },
+  contactInfo: {
+    phone: String,
+    email: String,
+    website: String
+  },
+  services: [String],
+  languages: [String],
+  insuranceAccepted: [String],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, {
+  timestamps: true
 });
+
+// Create a 2dsphere index for location-based queries
+doctorSchema.index({ location: '2dsphere' });
 
 // Feedback Schema - Based on actual MongoDB structure
 const feedbackSchema = new mongoose.Schema({
@@ -213,6 +296,7 @@ const WearableData = mongoose.model('WearableData', wearableDataSchema);
 const SleepData = mongoose.model('SleepData', sleepDataSchema);
 const Policy = mongoose.model('Policy', policySchema);
 const Claim = mongoose.model('Claim', claimSchema);
+const PreApprovalClaim = mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
 const Doctor = mongoose.model('Doctor', doctorSchema);
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 const Attachment = mongoose.model('Attachment', attachmentSchema);
@@ -226,6 +310,7 @@ module.exports = {
   SleepData,
   Policy,
   Claim,
+  PreApprovalClaim,
   Doctor,
   Feedback,
   Attachment,

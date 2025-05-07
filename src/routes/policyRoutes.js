@@ -3,34 +3,23 @@ const router = express.Router();
 const {
   getAllPolicies,
   getPolicyById,
-  createPolicy,
-  updatePolicy,
-  deletePolicy
+  getPolicyByEmployeeId
 } = require('../controllers/policyController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   GET /api/policies
 // @desc    Get all policies
 // @access  Private/Admin
-router.get('/', getAllPolicies);
+router.get('/', protect, admin, getAllPolicies);
 
 // @route   GET /api/policies/:id
 // @desc    Get policy by ID
 // @access  Private
-router.get('/:id', getPolicyById);
+router.get('/:id', protect, getPolicyById);
 
-// @route   POST /api/policies
-// @desc    Create a new policy
-// @access  Private/Admin
-router.post('/', createPolicy);
-
-// @route   PUT /api/policies/:id
-// @desc    Update a policy
-// @access  Private/Admin
-router.put('/:id', updatePolicy);
-
-// @route   DELETE /api/policies/:id
-// @desc    Delete a policy
-// @access  Private/Admin
-router.delete('/:id', deletePolicy);
+// @route   GET /api/policies/employee/:employeeId
+// @desc    Get policy by employee ID
+// @access  Private
+router.get('/employee/:employeeId', protect, getPolicyByEmployeeId);
 
 module.exports = router; 
