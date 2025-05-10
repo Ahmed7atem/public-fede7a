@@ -59,7 +59,7 @@ const employeeSchema = new mongoose.Schema({
 
 // Health Data Schema - Based on actual MongoDB structure
 const healthDataSchema = new mongoose.Schema({
-  employee: { type: String, required: true }, // Reference to employee UUID
+  employeeId: { type: String, required: true }, // Reference to employee UUID
   recordedAt: { type: Date, default: Date.now },
   weight: Number,
   height: Number,
