@@ -13,7 +13,8 @@
     "test-connection": "node scripts/checkConnection.js",
     "vercel-build": "echo 'Build step completed'",
     "update-employees": "node scripts/updateEmployees.js",
-    "upload-health-data": "node scripts/uploadHealthData.js"
+    "upload-health-data": "node scripts/uploadHealthData.js",
+    "update-references": "node scripts/updateReferences.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

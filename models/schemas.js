@@ -59,7 +59,7 @@ const employeeSchema = new mongoose.Schema({
 
 // Health Data Schema - Based on actual MongoDB structure
 const healthDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true }, // Reference to employee UUID
+  employeeId: { type: String, required: true, index: true }, // Reference to employee UUID
   recordedAt: { type: Date, default: Date.now },
   weight: Number,
   height: Number,
@@ -86,6 +86,9 @@ const healthDataSchema = new mongoose.Schema({
   version: String,
   policy: Object
 }, { timestamps: true });
+
+// Add index for faster lookups
+healthDataSchema.index({ employeeId: 1 });
 
 // Wearable Data Schema - Based on actual MongoDB structure
 const wearableDataSchema = new mongoose.Schema({

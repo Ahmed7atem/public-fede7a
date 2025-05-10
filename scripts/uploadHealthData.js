@@ -58,6 +58,52 @@ const uploadHealthData = async () => {
     });
     console.log('Connected to MongoDB');
 
+    // First, let's validate that all files have consistent Patient_IDs
+    const patientIds = new Set();
+    const filePatientIds = {};
+
+    // Read all Patient_IDs from all files first
+    for (let year = 2020; year <= 2024; year++) {
+      const filePath = `data/FinalDataSet_${year}.csv`;
+      if (!fs.existsSync(filePath)) {
+        console.log(`File not found: ${filePath}`);
+        continue;
+      }
+
+      const results = [];
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on('data', (data) => results.push(data))
+          .on('end', resolve)
+          .on('error', reject);
+      });
+
+      filePatientIds[year] = new Set(results.map(r => r.Patient_ID).filter(Boolean));
+      results.forEach(r => patientIds.add(r.Patient_ID));
+    }
+
+    // Validate consistency across files
+    console.log('\nValidating Patient_ID consistency across files:');
+    for (let year = 2020; year <= 2024; year++) {
+      if (filePatientIds[year]) {
+        const missingIds = [...patientIds].filter(id => !filePatientIds[year].has(id));
+        const extraIds = [...filePatientIds[year]].filter(id => !patientIds.has(id));
+        
+        console.log(`\nYear ${year}:`);
+        console.log(`Total records: ${filePatientIds[year].size}`);
+        if (missingIds.length > 0) {
+          console.log(`Missing ${missingIds.length} IDs that exist in other files`);
+        }
+        if (extraIds.length > 0) {
+          console.log(`Has ${extraIds.length} IDs that don't exist in other files`);
+        }
+      }
+    }
+
+    // Now proceed with upload
+    console.log('\nProceeding with upload...');
+    
     // Process each year's data
     for (let year = 2020; year <= 2024; year++) {
       const collectionName = `healthdata_${year}`;
@@ -65,18 +111,15 @@ const uploadHealthData = async () => {
       
       // Clear existing data for this year
       await HealthDataModel.deleteMany({});
-      console.log(`Cleared existing health data for ${year}`);
+      console.log(`\nCleared existing health data for ${year}`);
 
-      const results = [];
       const filePath = `data/FinalDataSet_${year}.csv`;
-
-      // Check if file exists
       if (!fs.existsSync(filePath)) {
         console.log(`File not found: ${filePath}`);
         continue;
       }
 
-      // Read and process CSV file
+      const results = [];
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
           .pipe(csv())
@@ -90,8 +133,7 @@ const uploadHealthData = async () => {
       // Process each record
       let successCount = 0;
       for (const record of results) {
-        // Map Patient_ID to employeeId
-        const employeeId = record.Patient_ID || record['Patient_ID'];
+        const employeeId = record.Patient_ID;
         if (!employeeId) {
           console.log('Skipping record - missing Patient_ID:', record);
           continue;
@@ -99,7 +141,7 @@ const uploadHealthData = async () => {
 
         try {
           const healthData = new HealthDataModel({
-            employeeId: employeeId,
+            employeeId: employeeId.trim(), // Ensure no whitespace
             recordedAt: new Date(`${year}-01-01`),
             weight: processValue(record.Weight_kg, 'weight'),
             height: processValue(record.Height_cm, 'height'),
@@ -133,18 +175,28 @@ const uploadHealthData = async () => {
             }
           });
 
-          await healthData.save();
+          const saved = await healthData.save();
+          if (saved.employeeId !== employeeId.trim()) {
+            console.error(`ID mismatch for record: Expected ${employeeId.trim()}, got ${saved.employeeId}`);
+          }
           successCount++;
         } catch (error) {
-          console.error('Error saving record:', error);
+          console.error(`Error saving record with ID ${employeeId}:`, error);
           console.log('Problematic record:', record);
         }
       }
 
-      console.log(`Completed uploading health data for ${year}. Successfully uploaded ${successCount} records.`);
+      console.log(`Completed uploading health data for ${year}. Successfully uploaded ${successCount}/${results.length} records.`);
+      
+      // Verify the uploaded data
+      const uploadedCount = await HealthDataModel.countDocuments();
+      const distinctIds = await HealthDataModel.distinct('employeeId');
+      console.log(`Verification - Collection ${collectionName}:`);
+      console.log(`Total documents: ${uploadedCount}`);
+      console.log(`Distinct employeeIds: ${distinctIds.length}`);
     }
 
-    console.log('All health data uploads completed');
+    console.log('\nAll health data uploads completed');
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
   } catch (error) {

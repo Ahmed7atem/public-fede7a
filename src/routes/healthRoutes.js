@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getAllHealthData,
+  getHealthDataByYear,
   getHealthDataByEmployeeId,
   createHealthData,
   updateHealthData,
@@ -12,6 +13,11 @@ const {
 // @desc    Get all health data
 // @access  Private/Admin
 router.get('/', getAllHealthData);
+
+// @route   GET /api/health/year/:year
+// @desc    Get health data for a specific year
+// @access  Private/Admin
+router.get('/year/:year', getHealthDataByYear);
 
 // @route   GET /api/health/employee/:employeeId
 // @desc    Get health data by employee ID

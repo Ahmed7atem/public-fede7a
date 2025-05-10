@@ -1,4 +1,5 @@
 const { HealthData } = require('../../models');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Get all health data
@@ -8,6 +9,26 @@ const { HealthData } = require('../../models');
 const getAllHealthData = async (req, res) => {
   try {
     const healthData = await HealthData.find().lean();
+    res.json(healthData);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get health data for a specific year
+ * @route   GET /api/health/year/:year
+ * @access  Private/Admin
+ */
+const getHealthDataByYear = async (req, res) => {
+  try {
+    const year = req.params.year;
+    const collectionName = `healthdata_${year}`;
+    
+    // Get the model for the specific year
+    const HealthDataModel = mongoose.model(collectionName, HealthData.schema);
+    
+    const healthData = await HealthDataModel.find().lean();
     res.json(healthData);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching health data', error: error.message });
@@ -83,6 +104,7 @@ const deleteHealthData = async (req, res) => {
 
 module.exports = {
   getAllHealthData,
+  getHealthDataByYear,
   getHealthDataByEmployeeId,
   createHealthData,
   updateHealthData,
