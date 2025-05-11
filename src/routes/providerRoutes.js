@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getAllProviders,
   getProviderById,
+  getProvidersByType,
   getProvidersBySpecialty,
   createProvider,
   addReview,
@@ -12,9 +13,14 @@ const {
 } = require('../controllers/providerController');
 
 // @route   GET /api/providers
-// @desc    Get all providers
+// @desc    Get all providers with optional filtering
 // @access  Public
 router.get('/', getAllProviders);
+
+// @route   GET /api/providers/type/:type
+// @desc    Get providers by type (Hospital, Doctor, Lab)
+// @access  Public
+router.get('/type/:type', getProvidersByType);
 
 // @route   GET /api/providers/:id
 // @desc    Get provider by ID

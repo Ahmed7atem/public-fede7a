@@ -1,39 +1,127 @@
 const mongoose = require('mongoose');
+const Provider = require('../../models/Provider');
+
+// Helper function to transform provider data
+const transformProviderData = (provider) => {
+  const transformed = provider.toObject();
+  
+  // Transform coordinates
+  if (transformed.coordinates?.coordinates) {
+    transformed.latitude = transformed.coordinates.coordinates[1];
+    transformed.longitude = transformed.coordinates.coordinates[0];
+    delete transformed.coordinates;
+  }
+
+  // Convert arrays to comma-separated strings
+  const arrayFields = [
+    'phone',
+    'specialties',
+    'departments',
+    'diagnosticServices',
+    'acceptedPlans',
+    'paymentMethods',
+    'languages',
+    'amenities'
+  ];
+
+  arrayFields.forEach(field => {
+    if (Array.isArray(transformed[field])) {
+      // Format phone numbers specially
+      if (field === 'phone') {
+        transformed[field] = transformed[field].map(phone => {
+          const digits = phone.replace(/\D/g, '');
+          if (digits.length === 12) {
+            return `+${digits.slice(0,2)} ${digits.slice(2,4)} ${digits.slice(4,7)} ${digits.slice(7)}`;
+          }
+          return phone;
+        }).join(', ');
+      } else {
+        transformed[field] = transformed[field].join(', ');
+      }
+    }
+  });
+
+  // Format boolean fields
+  const booleanFields = [
+    'emergencyAvailable',
+    'icu',
+    'parking',
+    'internationalServices',
+    'medicalTourism',
+    'translationServices',
+    'isInNetwork'
+  ];
+  
+  booleanFields.forEach(field => {
+    if (field in transformed) {
+      transformed[field] = transformed[field] ? 'Yes' : 'No';
+    }
+  });
+
+  // Format currency values
+  if (transformed.averageClaimAmount) {
+    transformed.averageClaimAmount = `EGP ${transformed.averageClaimAmount.toLocaleString()}`;
+  }
+
+  // Format rating display
+  if (transformed.rating && transformed.ratingCount) {
+    transformed.ratingDisplay = `${transformed.rating.toFixed(1)} (${transformed.ratingCount} reviews)`;
+  }
+
+  // Clean up MongoDB specific fields
+  delete transformed.__v;
+  delete transformed.createdAt;
+  delete transformed.updatedAt;
+  delete transformed._id;
+
+  return transformed;
+};
 
 /**
- * @desc    Get all providers
+ * @desc    Get all providers with optional filtering
  * @route   GET /api/providers
  * @access  Public
  */
 const getAllProviders = async (req, res) => {
   try {
-    // This is a mock response since we don't have a provider model yet
-    const providers = [
-      {
-        id: '1',
-        name: 'Dr. John Smith',
-        specialty: 'Cardiologist',
-        location: {
-          city: 'New York',
-          address: '123 Medical Center Dr'
-        },
-        rating: 4.8
-      },
-      {
-        id: '2',
-        name: 'Dr. Sarah Johnson',
-        specialty: 'Dermatologist',
-        location: {
-          city: 'Los Angeles',
-          address: '456 Healthcare Ave'
-        },
-        rating: 4.5
-      }
-    ];
-    
-    res.json(providers);
+    const { type, specialty, city, rating } = req.query;
+    const query = {};
+
+    if (type) query.type = type;
+    if (specialty) query.specialties = specialty;
+    if (city) query.city = city;
+    if (rating) query.rating = { $gte: parseFloat(rating) };
+
+    const providers = await Provider.find(query);
+    const transformedProviders = providers.map(transformProviderData);
+    res.json(transformedProviders);
   } catch (error) {
     console.error('Error fetching providers:', error);
+    res.status(500).json({ message: 'Error fetching providers', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get providers by type (Hospital, Doctor, Lab)
+ * @route   GET /api/providers/type/:type
+ * @access  Public
+ */
+const getProvidersByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { specialty, city, rating } = req.query;
+    const query = { type };
+
+    // Add additional filters if provided
+    if (specialty) query.specialties = specialty;
+    if (city) query.city = city;
+    if (rating) query.rating = { $gte: parseFloat(rating) };
+
+    const providers = await Provider.find(query);
+    const transformedProviders = providers.map(transformProviderData);
+    res.json(transformedProviders);
+  } catch (error) {
+    console.error('Error fetching providers by type:', error);
     res.status(500).json({ message: 'Error fetching providers', error: error.message });
   }
 };
@@ -45,39 +133,12 @@ const getAllProviders = async (req, res) => {
  */
 const getProviderById = async (req, res) => {
   try {
-    const id = req.params.id;
-    
-    // Mock provider data
-    const provider = {
-      id,
-      name: 'Dr. John Smith',
-      specialty: 'Cardiologist',
-      location: {
-        city: 'New York',
-        address: '123 Medical Center Dr',
-        coordinates: {
-          lat: 40.7128,
-          lng: -74.0060
-        }
-      },
-      contactInfo: {
-        phone: '(555) 123-4567',
-        email: 'dr.smith@example.com',
-        website: 'www.drsmith.com'
-      },
-      rating: 4.8,
-      reviews: [
-        {
-          id: '101',
-          patientId: 'patient-123',
-          rating: 5,
-          comment: 'Excellent service and very professional',
-          visitDate: '2024-03-20'
-        }
-      ]
-    };
-    
-    res.json(provider);
+    const provider = await Provider.findOne({ id: req.params.id });
+    if (!provider) {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+    const transformedProvider = transformProviderData(provider);
+    res.json(transformedProvider);
   } catch (error) {
     console.error('Error fetching provider:', error);
     res.status(500).json({ message: 'Error fetching provider', error: error.message });
@@ -91,33 +152,18 @@ const getProviderById = async (req, res) => {
  */
 const getProvidersBySpecialty = async (req, res) => {
   try {
-    const specialty = req.params.specialty;
-    
-    // Mock providers data
-    const providers = [
-      {
-        id: '1',
-        name: 'Dr. John Smith',
-        specialty,
-        location: {
-          city: 'New York',
-          address: '123 Medical Center Dr'
-        },
-        rating: 4.8
-      },
-      {
-        id: '3',
-        name: 'Dr. Michael Brown',
-        specialty,
-        location: {
-          city: 'Chicago',
-          address: '789 Health Street'
-        },
-        rating: 4.7
-      }
-    ];
-    
-    res.json(providers);
+    const { specialty } = req.params;
+    const { type, city, rating } = req.query;
+    const query = { specialties: specialty };
+
+    // Add additional filters if provided
+    if (type) query.type = type;
+    if (city) query.city = city;
+    if (rating) query.rating = { $gte: parseFloat(rating) };
+
+    const providers = await Provider.find(query);
+    const transformedProviders = providers.map(transformProviderData);
+    res.json(transformedProviders);
   } catch (error) {
     console.error('Error fetching providers by specialty:', error);
     res.status(500).json({ message: 'Error fetching providers', error: error.message });
@@ -259,6 +305,7 @@ const getSpecializations = async (req, res) => {
 module.exports = {
   getAllProviders,
   getProviderById,
+  getProvidersByType,
   getProvidersBySpecialty,
   createProvider,
   addReview,

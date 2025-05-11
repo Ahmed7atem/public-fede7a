@@ -1,0 +1,66 @@
+Lab_Institution,Lab_Specialty,Average_Test_Fee,Avg_Rate,Result_Processing_Time,Branch_Location,Rate_Count
+Al Mokhtabar Labs,Clinical Pathology,350 EGP,4.8,Results in 24 Hours,Nasr City,From 120 Reviews
+Al Mokhtabar Labs,Radiology,500 EGP,4.5,Results in 48 Hours,6th of October,From 80 Reviews
+Al Mokhtabar Labs,Molecular Diagnostics,450 EGP,4.7,Results in 72 Hours,Heliopolis,From 100 Reviews
+Al Mokhtabar Labs,Clinical Pathology,400 EGP,4.9,Results in 24 Hours,Alexandria,From 140 Reviews
+Al Mokhtabar Labs,Radiology,550 EGP,,null,Maadi,null
+Al Mokhtabar Labs,Clinical Pathology,320 EGP,4.6,Results in 24 Hours,Giza,From 90 Reviews
+Al Mokhtabar Labs,Molecular Diagnostics,480 EGP,4.8,Results in 72 Hours,Mansoura,From 70 Reviews
+Al Mokhtabar Labs,Clinical Pathology,370 EGP,4.5,Results in 24 Hours,Tanta,From 60 Reviews
+Al Mokhtabar Labs,Radiology,510 EGP,4.7,Results in 48 Hours,El-Dokki,From 110 Reviews
+Al Mokhtabar Labs,Clinical Pathology,340 EGP,4.9,Results in 24 Hours,Asyut,From 50 Reviews
+Al Mokhtabar Labs,Molecular Diagnostics,470 EGP,,null,Suez,null
+Al Mokhtabar Labs,Clinical Pathology,360 EGP,4.6,Results in 24 Hours,Ismailia,From 80 Reviews
+Al Mokhtabar Labs,Radiology,520 EGP,4.8,Results in 48 Hours,Zagazig,From 100 Reviews
+Al Mokhtabar Labs,Clinical Pathology,380 EGP,4.7,Results in 24 Hours,Nasr City,From 130 Reviews
+Al Mokhtabar Labs,Clinical Pathology,390 EGP,4.5,Results in 24 Hours,Heliopolis,From 90 Reviews
+Al Borg Laboratories,Clinical Pathology,300 EGP,4.8,Results in 24 Hours,Nasr City,From 110 Reviews
+Al Borg Laboratories,Genetic Testing,400 EGP,4.6,Results in 72 Hours,Alexandria,From 120 Reviews
+Al Borg Laboratories,Microbiology,250 EGP,4.9,Results in 24 Hours,6th of October,From 80 Reviews
+Al Borg Laboratories,Clinical Pathology,320 EGP,,null,Maadi,null
+Al Borg Laboratories,Genetic Testing,450 EGP,4.7,Results in 72 Hours,Giza,From 90 Reviews
+Al Borg Laboratories,Microbiology,280 EGP,4.5,Results in 24 Hours,Mansoura,From 60 Reviews
+Al Borg Laboratories,Clinical Pathology,340 EGP,4.8,Results in 24 Hours,Tanta,From 70 Reviews
+Al Borg Laboratories,Genetic Testing,420 EGP,4.6,Results in 72 Hours,El-Dokki,From 100 Reviews
+Al Borg Laboratories,Microbiology,270 EGP,4.9,Results in 24 Hours,Asyut,From 50 Reviews
+Al Borg Laboratories,Clinical Pathology,310 EGP,4.7,Results in 24 Hours,Suez,From 80 Reviews
+Al Borg Laboratories,Genetic Testing,430 EGP,,null,Ismailia,null
+Al Borg Laboratories,Clinical Pathology,330 EGP,4.5,Results in 24 Hours,Zagazig,From 90 Reviews
+Al Borg Laboratories,Microbiology,290 EGP,4.8,Results in 24 Hours,Nasr City,From 110 Reviews
+Al Borg Laboratories,Clinical Pathology,350 EGP,4.6,Results in 24 Hours,Heliopolis,From 100 Reviews
+Al Borg Laboratories,Clinical Pathology,340 EGP,4.7,Results in 24 Hours,Alexandria,From 120 Reviews
+Hassab Labs,Clinical Pathology,200 EGP,4.8,Results in 24 Hours,Nasr City,From 100 Reviews
+Hassab Labs,Biochemistry,150 EGP,4.5,Results in 24 Hours,Heliopolis,From 80 Reviews
+Hassab Labs,Hematology,180 EGP,4.7,Results in 24 Hours,Alexandria,From 90 Reviews
+Hassab Labs,Clinical Pathology,220 EGP,,null,6th of October,null
+Hassab Labs,Biochemistry,170 EGP,4.6,Results in 24 Hours,Maadi,From 60 Reviews
+Hassab Labs,Hematology,190 EGP,4.9,Results in 24 Hours,Giza,From 70 Reviews
+Hassab Labs,Clinical Pathology,210 EGP,4.5,Results in 24 Hours,Mansoura,From 50 Reviews
+Hassab Labs,Biochemistry,160 EGP,4.8,Results in 24 Hours,Tanta,From 80 Reviews
+Hassab Labs,Hematology,200 EGP,4.7,Results in 24 Hours,El-Dokki,From 90 Reviews
+Hassab Labs,Clinical Pathology,230 EGP,,null,Asyut,null
+Hassab Labs,Biochemistry,180 EGP,4.6,Results in 24 Hours,Suez,From 60 Reviews
+Hassab Labs,Hematology,170 EGP,4.8,Results in 24 Hours,Zagazig,From 70 Reviews
+Nawah Scientific,Analytical Testing,450 EGP,4.9,Results in 48 Hours,Nasr City,From 50 Reviews
+Nawah Scientific,Genetic Analysis,500 EGP,4.7,Results in 72 Hours,Heliopolis,From 40 Reviews
+Nawah Scientific,Analytical Testing,470 EGP,,null,Alexandria,null
+Nawah Scientific,Genetic Analysis,520 EGP,4.8,Results in 72 Hours,6th of October,From 60 Reviews
+Nawah Scientific,Analytical Testing,460 EGP,4.6,Results in 48 Hours,Maadi,From 50 Reviews
+Nawah Scientific,Genetic Analysis,510 EGP,4.9,Results in 72 Hours,Giza,From 70 Reviews
+Nawah Scientific,Analytical Testing,480 EGP,4.5,Results in 48 Hours,Mansoura,From 40 Reviews
+Nawah Scientific,Genetic Analysis,530 EGP,4.7,Results in 72 Hours,Tanta,From 60 Reviews
+Nawah Scientific,Analytical Testing,450 EGP,4.8,Results in 48 Hours,El-Dokki,From 50 Reviews
+Nawah Scientific,Genetic Analysis,500 EGP,,null,Asyut,null
+NSA Diagnostic Laboratories,Clinical Pathology,300 EGP,4.6,Results in 24 Hours,Nasr City,From 90 Reviews
+NSA Diagnostic Laboratories,Diagnostic Imaging,400 EGP,4.8,Results in 24 Hours,Heliopolis,From 100 Reviews
+NSA Diagnostic Laboratories,Specialized Testing,450 EGP,4.5,Results in 48 Hours,Alexandria,From 110 Reviews
+NSA Diagnostic Laboratories,Clinical Pathology,320 EGP,,null,6th of October,null
+NSA Diagnostic Laboratories,Diagnostic Imaging,420 EGP,4.7,Results in 24 Hours,Maadi,From 80 Reviews
+NSA Diagnostic Laboratories,Specialized Testing,470 EGP,4.9,Results in 48 Hours,Giza,From 90 Reviews
+NSA Diagnostic Laboratories,Clinical Pathology,310 EGP,4.6,Results in 24 Hours,Mansoura,From 70 Reviews
+NSA Diagnostic Laboratories,Diagnostic Imaging,410 EGP,4.8,Results in 24 Hours,Tanta,From 100 Reviews
+NSA Diagnostic Laboratories,Specialized Testing,460 EGP,4.5,Results in 48 Hours,El-Dokki,From 80 Reviews
+NSA Diagnostic Laboratories,Clinical Pathology,330 EGP,4.7,Results in 24 Hours,Asyut,From 60 Reviews
+NSA Diagnostic Laboratories,Diagnostic Imaging,430 EGP,,null,Suez,null
+NSA Diagnostic Laboratories,Specialized Testing,450 EGP,4.6,Results in 48 Hours,Zagazig,From 90 Reviews
+NSA Diagnostic Laboratories,Clinical Pathology,340 EGP,4.8,Results in 24 Hours,Nasr City,From 110 Reviews

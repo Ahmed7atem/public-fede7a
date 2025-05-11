@@ -150,7 +150,7 @@ const policySchema = new mongoose.Schema({
   employeeId: { type: String, required: true }
 }, { timestamps: true });
 
-// Claim Schema - Based on actual MongoDB structure
+// Claim Schema - Based on actual MongoDB structure (updated so "claimFor" is flat (i.e. two separate fields "claimFor" (a String enum) and "claimForId" (a String) instead of a nested object)
 const claimSchema = new mongoose.Schema({
   id: { type: String, required: true },
   patientId: { type: String, required: true },
@@ -175,7 +175,9 @@ const claimSchema = new mongoose.Schema({
   },
   processedAt: Date,
   processedBy: String,
-  notes: String
+  notes: String,
+  claimFor: { type: String, enum: ['employee', 'dependent'] },
+  claimForId: String
 }, { timestamps: true });
 
 // Pre-approval Claim Schema
@@ -301,6 +303,26 @@ const adminSchema = new mongoose.Schema({
   lastLogin: { type: Date }
 }, { timestamps: true });
 
+// Dependent Schema
+const dependentSchema = new mongoose.Schema({
+  dependentId: { type: String, required: true, unique: true },
+  employeeId: { type: String, required: true, index: true }, // Reference to employee
+  relation: { type: String, required: true },
+  gender: { type: String, required: true },
+  dateOfBirth: { type: Date, required: true },
+  ageGroup: { type: String, required: true },
+  smoker: { type: Boolean, default: false },
+  chronicConditions: { type: String },
+  hasDisability: { type: Boolean, default: false },
+  dependentCoverage: { type: String },
+  coveredUnderPolicy: { type: Boolean, default: true },
+  policyStartDate: { type: Date },
+  policyEndDate: { type: Date }
+}, { timestamps: true });
+
+// Add index for faster lookups
+dependentSchema.index({ employeeId: 1 });
+
 // Register models
 const Employee = mongoose.model('Employee', employeeSchema);
 const HealthData = mongoose.model('HealthData', healthDataSchema);
@@ -315,6 +337,62 @@ const Attachment = mongoose.model('Attachment', attachmentSchema);
 const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
 const Admin = mongoose.model('Admin', adminSchema);
+const Dependent = mongoose.model('Dependent', dependentSchema);
+
+// New schemas for claims2023 and claims2024 (for claims history)
+const claim2023Schema = new mongoose.Schema({
+  id: { type: String, required: true },
+  employeeId: { type: String, required: true },
+  providerType: { type: String, required: false }, // removed enum restriction
+  claimDescription: { type: String, required: false },
+  claimAmount: { type: Number },
+  claimDate: { type: Date },
+  patientAge: { type: Number },
+  providerSpecialty: { type: String },
+  claimStatus: { type: String },
+  patientIncome: { type: Number },
+  patientMaritalStatus: { type: String },
+  patientEmploymentStatus: { type: String },
+  claimType: { type: String },
+  claimSubmissionMethod: { type: String },
+  procedureDescription: { type: String },
+  documents: { type: Array, default: [] },
+  status: { type: String },
+  processedAt: { type: Date },
+  processedBy: { type: String },
+  notes: { type: String },
+  claimFor: { type: String },
+  claimForId: { type: String }
+}, { timestamps: true });
+
+const claim2024Schema = new mongoose.Schema({
+  id: { type: String, required: true },
+  employeeId: { type: String, required: true },
+  providerType: { type: String, required: false }, // removed enum restriction
+  claimDescription: { type: String, required: false },
+  claimAmount: { type: Number },
+  claimDate: { type: Date },
+  patientAge: { type: Number },
+  providerSpecialty: { type: String },
+  claimStatus: { type: String },
+  patientIncome: { type: Number },
+  patientMaritalStatus: { type: String },
+  patientEmploymentStatus: { type: String },
+  claimType: { type: String },
+  claimSubmissionMethod: { type: String },
+  procedureDescription: { type: String },
+  documents: { type: Array, default: [] },
+  status: { type: String },
+  processedAt: { type: Date },
+  processedBy: { type: String },
+  notes: { type: String },
+  claimFor: { type: String },
+  claimForId: { type: String }
+}, { timestamps: true });
+
+// Register new models (for claims2023 and claims2024 (renamed from claims_2023 and claims_2024) (so that the collection names are "claims2023" and "claims2024"))
+const Claim2023 = mongoose.model('claims2023', claim2023Schema);
+const Claim2024 = mongoose.model('claims2024', claim2024Schema);
 
 module.exports = {
   Employee,
@@ -329,5 +407,8 @@ module.exports = {
   Attachment,
   PolicyDocument,
   Prediction,
-  Admin
+  Admin,
+  Dependent,
+  Claim2023,
+  Claim2024
 }; 
