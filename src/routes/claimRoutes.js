@@ -1,7 +1,7 @@
 // routes/claimRoutes.js
 const express = require('express');
 const router = express.Router();
-const { singleUpload, multipleUpload } = require('../middlewares/fileUpload'); // Updated import
+const { singleUpload, multipleUpload } = require('../../src/middlewares/fileUpload'); // Updated import
 const { check } = require('express-validator');
 const {
   getAllClaims,
@@ -15,8 +15,8 @@ const {
   getSpecialClaimsByEmployeeId,
   getClaimsByYear,
   getEmployeeClaimsByYear
-} = require('../controllers/claimController');
-const { protect, admin } = require('../middlewares/authMiddleware');
+} = require('../../src/controllers/claimController');
+const { protect, admin } = require('../../src/middlewares/authMiddleware');
 
 // @route   GET /api/claims
 // @desc    Get all claims
