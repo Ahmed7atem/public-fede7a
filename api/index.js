@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const multer = require('multer');
 require('dotenv').config();
 
 // Import controllers
@@ -22,7 +23,10 @@ const {
   getSpecialClaims,
   getSpecialClaimsByEmployeeId,
   getClaimsByYear,
-  getEmployeeClaimsByYear
+  getEmployeeClaimsByYear,
+  createSpecialClaim,
+  getAllDependents,
+  getDependentsByEmployeeId
 } = require('../src/controllers/claimController');
 
 const {
@@ -67,6 +71,21 @@ const {
 } = require('../src/controllers/authController');
 
 const app = express();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // Basic middleware
 app.use(cors());
@@ -119,21 +138,32 @@ app.get('/api/providers', getAllProviders);
 // Policy routes
 app.get('/api/policies', getAllPolicies);
 
+// Special Claims routes - moved higher in the routing order
+app.get('/api/claims/special', getSpecialClaims);
+app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
+app.post('/api/claims/special-claims', upload.array('attachments', 5), createSpecialClaim);
+
 // Claims routes
 app.get('/api/claims', getAllClaims);
 app.get('/api/claims/:id', getClaimById);
 app.get('/api/claims/employee/:employeeId', getClaimsByEmployeeId);
-app.post('/api/claims', createClaim);
+app.post('/api/claims', upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
-
-// Special Claims routes
-app.get('/api/claims/special', getSpecialClaims);
-app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
 
 // Historical Claims routes
 app.get('/api/claims/year/:year', getClaimsByYear);
 app.get('/api/claims/year/:year/employee/:employeeId', getEmployeeClaimsByYear);
+
+// Specific year claims routes for convenience
+app.get('/api/claims/2023', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2023' } }), res));
+app.get('/api/claims/2024', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2024' } }), res));
+app.get('/api/claims/2023/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2023', employeeId: req.params.employeeId } }), res));
+app.get('/api/claims/2024/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2024', employeeId: req.params.employeeId } }), res));
+
+// Dependents routes
+app.get('/api/dependents', getAllDependents);
+app.get('/api/dependents/employee/:employeeId', getDependentsByEmployeeId);
 
 // Prediction routes
 app.get('/api/predictions', getAllPredictions);

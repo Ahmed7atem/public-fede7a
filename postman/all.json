@@ -1,0 +1,874 @@
+{
+    "info": {
+      "_postman_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+      "name": "MedBond API",
+      "description": "Complete API collection for MedBond platform",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Authentication",
+        "item": [
+          {
+            "name": "Login",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "auth", "login"]
+              },
+              "description": "Login user (employee or admin)"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Profile",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/auth/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "auth", "profile"]
+              },
+              "description": "Get user profile"
+            },
+            "response": []
+          },
+          {
+            "name": "Update Profile",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/auth/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "auth", "profile"]
+              },
+              "description": "Update user profile"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Employees",
+        "item": [
+          {
+            "name": "Get All Employees",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/employees",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "employees"]
+              },
+              "description": "Get all employees"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Employee by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/employees/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "employees", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get employee by ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Create Employee",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"employeeId\": \"EMP123\",\n  \"email\": \"employee@example.com\",\n  \"name\": \"John Doe\",\n  \"age\": 30,\n  \"gender\": \"Male\",\n  \"weight\": 75,\n  \"height\": 180\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/employees",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "employees"]
+              },
+              "description": "Create a new employee"
+            },
+            "response": []
+          },
+          {
+            "name": "Update Employee",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"updated@example.com\",\n  \"name\": \"Updated Name\",\n  \"age\": 31,\n  \"weight\": 76\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/employees/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "employees", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Update an employee"
+            },
+            "response": []
+          },
+          {
+            "name": "Delete Employee",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/employees/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "employees", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Delete an employee"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Health Data",
+        "item": [
+          {
+            "name": "Get All Health Data",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/health",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "health"]
+              },
+              "description": "Get all health data"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Health Data by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/health/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "health", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get health data by employee ID"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Sleep Data",
+        "item": [
+          {
+            "name": "Get All Sleep Data",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/sleep",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "sleep"]
+              },
+              "description": "Get all sleep data"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Sleep Data by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/sleep/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "sleep", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get sleep data by employee ID"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Wearable Data",
+        "item": [
+          {
+            "name": "Get All Wearable Data",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/wearables",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "wearables"]
+              },
+              "description": "Get all wearable data"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Wearable Data by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/wearables/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "wearables", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get wearable data by employee ID"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Providers",
+        "item": [
+          {
+            "name": "Get All Providers",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/providers",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "providers"]
+              },
+              "description": "Get all healthcare providers"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Policies",
+        "item": [
+          {
+            "name": "Get All Policies",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/policies",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "policies"]
+              },
+              "description": "Get all insurance policies"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Claims",
+        "item": [
+          {
+            "name": "Get All Claims",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims"]
+              },
+              "description": "Get all claims"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Claim by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "CLM123",
+                    "description": "Claim ID"
+                  }
+                ]
+              },
+              "description": "Get claim by ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Claims by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get claims by employee ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Create Claim",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"patientId\": \"EMP123\",\n  \"providerId\": \"PRV456\",\n  \"serviceDate\": \"2023-05-15\",\n  \"amount\": 500,\n  \"description\": \"Annual checkup\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/claims",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims"]
+              },
+              "description": "Create a new claim"
+            },
+            "response": []
+          },
+          {
+            "name": "Update Claim",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"approved\",\n  \"amount\": 550,\n  \"description\": \"Updated description\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "CLM123",
+                    "description": "Claim ID"
+                  }
+                ]
+              },
+              "description": "Update a claim"
+            },
+            "response": []
+          },
+          {
+            "name": "Delete Claim",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "CLM123",
+                    "description": "Claim ID"
+                  }
+                ]
+              },
+              "description": "Delete a claim"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Special Claims",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/special",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "special"]
+              },
+              "description": "Get special claims"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Special Claims by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/special/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "special", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get special claims by employee ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Claims by Year",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/year/:year",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "year", ":year"],
+                "variable": [
+                  {
+                    "key": "year",
+                    "value": "2023",
+                    "description": "Year"
+                  }
+                ]
+              },
+              "description": "Get claims by year"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Employee Claims by Year",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/year/:year/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "year", ":year", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "year",
+                    "value": "2023",
+                    "description": "Year"
+                  },
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get employee claims by year"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Predictions",
+        "item": [
+          {
+            "name": "Get All Predictions",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/predictions",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "predictions"]
+              },
+              "description": "Get all predictions"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Predictions by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/predictions/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "predictions", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get predictions by employee ID"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Predictions by Type",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/predictions/type/:type",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "predictions", "type", ":type"],
+                "variable": [
+                  {
+                    "key": "type",
+                    "value": "health_risk",
+                    "description": "Prediction Type"
+                  }
+                ]
+              },
+              "description": "Get predictions by type"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Analytics",
+        "item": [
+          {
+            "name": "Get Employee Analytics",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/analytics/employee/:id",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "analytics", "employee", ":id"],
+                "variable": [
+                  {
+                    "key": "id",
+                    "value": "EMP123",
+                    "description": "Employee ID"
+                  }
+                ]
+              },
+              "description": "Get analytics for a specific employee"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Organization Analytics",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/analytics/organization",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "analytics", "organization"]
+              },
+              "description": "Get organization-wide analytics"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Health Alerts",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/analytics/health-alerts",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "analytics", "health-alerts"]
+              },
+              "description": "Get health alerts"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "System",
+        "item": [
+          {
+            "name": "Root",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/",
+                "host": ["{{baseUrl}}"],
+                "path": [""]
+              },
+              "description": "Root route for testing"
+            },
+            "response": []
+          },
+          {
+            "name": "Health Check",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/health",
+                "host": ["{{baseUrl}}"],
+                "path": ["health"]
+              },
+              "description": "Health check endpoint"
+            },
+            "response": []
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "your_token_here",
+        "type": "string"
+      }
+    ]
+  }

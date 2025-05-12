@@ -104,7 +104,7 @@ const getClaimById = async (req, res) => {
 const getClaimsByEmployeeId = async (req, res) => {
   try {
     const employeeId = req.params.employeeId;
-    const claims = await Claim.find({ patientId: employeeId }).lean();
+    const claims = await Claim.find({ employeeId }).lean();
     res.json(claims);
   } catch (error) {
     console.error('Error fetching employee claims:', error);
@@ -313,10 +313,17 @@ const getEmployeeClaimsByYear = async (req, res) => {
     // Get the collection for the specified year
     const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
     
-    const claims = await ClaimModel.find({ patientId: employeeId })
+    // Search by both patientId and employeeId fields
+    const claims = await ClaimModel.find({ 
+      $or: [
+        { patientId: employeeId },
+        { employeeId: employeeId }
+      ]
+    })
       .sort({ createdAt: -1 })
       .lean();
 
+    console.log(`Found ${claims.length} claims for employee ${employeeId} in year ${year}`);
     res.json({ claims });
   } catch (error) {
     console.error(`Error fetching employee claims for year ${req.params.year}:`, error);
