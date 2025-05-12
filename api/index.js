@@ -141,19 +141,29 @@ app.get('/api/policies', getAllPolicies);
 // Special Claims routes - moved higher in the routing order
 app.get('/api/claims/special', getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special-claims', (req, res) => {
-  // For Vercel deployment, handle without file upload temporarily
+app.post('/api/claims/special-claims', upload.array('attachments', 5), (req, res) => {
+  // For Vercel deployment, handle form data
   try {
     console.log('Special claim request received:', req.body);
     
     // Use the SpecialClaim model directly
     const SpecialClaim = require('../models/SpecialClaim');
     
-    // Create a new special claim
+    // Create a new special claim with form data
     const specialClaim = new SpecialClaim({
       ...req.body,
-      // Add default attachments array since we're not handling file uploads
-      attachments: []
+      // Format date properly
+      dateOfTreatment: new Date(req.body.dateOfTreatment),
+      // Convert claim amount to number
+      claimAmount: parseFloat(req.body.claimAmount),
+      // Add attachments from uploaded files
+      attachments: req.files ? req.files.map(file => ({
+        fileName: file.originalname,
+        filePath: file.path,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        uploadDate: new Date()
+      })) : []
     });
     
     // Save to database
