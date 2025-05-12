@@ -135,7 +135,8 @@ const predictionSchema = new mongoose.Schema({
   predictionType: { type: String, required: true },
   predictionValue: { type: String, required: true },
   confidence: { type: Number, required: true },
-  factors: { type: Array, default: [] }
+  factors: { type: Array, default: [] },
+  customData: { type: Object, default: {} }
 }, { timestamps: true });
 
 // Policy Schema - Based on expected structure (though collection is empty)

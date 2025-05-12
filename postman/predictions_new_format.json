@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "Prediction APIs - New Format",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create New Format Prediction",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/predictions",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Patient_ID\": \"041a0974-dd03-462c-83a5-3334c70b95ac\",\n  \"Health_Status\": \"Critical\",\n  \"Insurance_Consumption\": \"High\",\n  \"Needs_Insurance_Update\": \"Yes\",\n  \"Suggested_Plan\": \"Platinum\",\n  \"Recommendations\": [\n    \"Quit smoking or seek cessation support.\",\n    \"Monitor blood sugar and reduce sugar intake.\"\n  ],\n  \"Message\": \"Employee 041a0974-dd03-462c-83a5-3334c70b95ac is categorized as 'Critical'. Insurance package update is recommended. Suggested plan: Platinum. Key advice: Quit smoking or seek cessation support.; Monitor blood sugar and reduce sugar intake.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get All Predictions",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/predictions",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Get Predictions by Employee ID",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/predictions/employee/041a0974-dd03-462c-83a5-3334c70b95ac",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://public-fede7a.vercel.app/api"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here"
+    }
+  ]
+} 

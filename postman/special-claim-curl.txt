@@ -1,0 +1,23 @@
+curl -X POST \
+  https://public-fede7a.vercel.app/api/claims/special-claims \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "policyNumber": "POL123456",
+  "policyHolderName": "John Doe",
+  "employeeId": "8f7b7927-6c04-401a-ab0b-61000132f970",
+  "email": "john.doe@example.com",
+  "number": "+1234567890",
+  "claimFor": "employee",
+  "claimForId": "8f7b7927-6c04-401a-ab0b-61000132f970",
+  "country": "USA",
+  "claimAmount": 1500.75,
+  "currency": "USD",
+  "dateOfTreatment": "2023-05-01",
+  "paymentMethod": "Bank Transfer",
+  "bankName": "Bank of America",
+  "branchName": "Main Branch",
+  "accountNumber": "123456789012",
+  "swiftCode": "BOFAUS3N",
+  "iban": "US12345678901234567890",
+  "description": "Medical treatment for surgery"
+}' 

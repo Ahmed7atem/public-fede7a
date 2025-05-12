@@ -1,0 +1,15 @@
+curl -X POST \
+  https://public-fede7a.vercel.app/api/predictions \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "Patient_ID": "041a0974-dd03-462c-83a5-3334c70b95ac",
+  "Health_Status": "Critical",
+  "Insurance_Consumption": "High",
+  "Needs_Insurance_Update": "Yes",
+  "Suggested_Plan": "Platinum",
+  "Recommendations": [
+    "Quit smoking or seek cessation support.",
+    "Monitor blood sugar and reduce sugar intake."
+  ],
+  "Message": "Employee 041a0974-dd03-462c-83a5-3334c70b95ac is categorized as 'Critical'. Insurance package update is recommended. Suggested plan: Platinum. Key advice: Quit smoking or seek cessation support.; Monitor blood sugar and reduce sugar intake."
+}' 

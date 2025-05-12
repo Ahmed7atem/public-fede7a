@@ -259,6 +259,64 @@ app.get('/api/predictions', getAllPredictions);
 app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
+// New POST endpoint for predictions with the new format
+app.post('/api/predictions', async (req, res) => {
+  try {
+    const { 
+      Patient_ID, 
+      Health_Status, 
+      Insurance_Consumption, 
+      Needs_Insurance_Update, 
+      Suggested_Plan, 
+      Recommendations, 
+      Message 
+    } = req.body;
+
+    // Validate required fields
+    if (!Patient_ID || !Health_Status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: Patient_ID and Health_Status are required'
+      });
+    }
+
+    // Use the Prediction model
+    const { Prediction } = require('../models');
+
+    // Create new prediction using the provided format
+    const newPrediction = new Prediction({
+      employeeId: Patient_ID,
+      predictionType: 'health_status',
+      predictionValue: Health_Status,
+      confidence: 0.9, // Default confidence
+      factors: Recommendations || [],
+      // Store the entire original payload in a custom property
+      customData: {
+        Insurance_Consumption,
+        Needs_Insurance_Update,
+        Suggested_Plan,
+        Message
+      }
+    });
+
+    // Save the prediction
+    const savedPrediction = await newPrediction.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Prediction added successfully',
+      data: savedPrediction
+    });
+  } catch (error) {
+    console.error('Error adding prediction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding prediction',
+      error: error.message
+    });
+  }
+});
+
 // Analytics routes
 app.get('/api/analytics/employee/:id', getEmployeeAnalytics);
 app.get('/api/analytics/organization', getOrganizationAnalytics);
