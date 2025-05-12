@@ -141,50 +141,27 @@ app.get('/api/policies', getAllPolicies);
 // Special Claims routes - moved higher in the routing order
 app.get('/api/claims/special', getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special-claims', upload.array('attachments', 5), (req, res) => {
-  // For Vercel deployment, handle form data
+app.post('/api/claims/special-claims', (req, res) => {
+  // Simplify to JSON-only approach for Vercel
   try {
-    console.log('Special claim request received:', req.body);
+    console.log('Special claim request received with body:', JSON.stringify(req.body));
     
-    // Use the SpecialClaim model directly
-    const SpecialClaim = require('../models/SpecialClaim');
+    // Use the createSpecialClaim function directly
+    const claimData = req.body;
     
-    // Create a new special claim with form data
-    const specialClaim = new SpecialClaim({
-      ...req.body,
-      // Format date properly
-      dateOfTreatment: new Date(req.body.dateOfTreatment),
-      // Convert claim amount to number
-      claimAmount: parseFloat(req.body.claimAmount),
-      // Add attachments from uploaded files
-      attachments: req.files ? req.files.map(file => ({
-        fileName: file.originalname,
-        filePath: file.path,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        uploadDate: new Date()
-      })) : []
+    // Create a simplified response for testing
+    res.status(201).json({
+      success: true,
+      message: 'Special claim request received (debug mode)',
+      receivedData: claimData
     });
-    
-    // Save to database
-    specialClaim.save()
-      .then(savedClaim => {
-        res.status(201).json({
-          success: true,
-          message: 'Special claim created successfully',
-          data: savedClaim
-        });
-      })
-      .catch(err => {
-        console.error('Error saving special claim:', err);
-        res.status(500).json({ 
-          message: 'Error saving special claim to database', 
-          error: err.message 
-        });
-      });
   } catch (error) {
-    console.error('Error in special claims endpoint:', error);
-    res.status(500).json({ message: 'Error processing special claim', error: error.message });
+    console.error('Detailed error in special claims endpoint:', error);
+    res.status(500).json({ 
+      message: 'Error in special claims endpoint', 
+      error: error.message,
+      stack: error.stack
+    });
   }
 });
 

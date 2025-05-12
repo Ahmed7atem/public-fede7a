@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "Special Claims APIs (JSON Version)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Special Claims",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/claims/special",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Get Special Claims by Employee ID",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/claims/special/employee/{{employeeId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Create Special Claim (JSON)",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/claims/special-claims",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"policyNumber\": \"POL123456\",\n  \"policyHolderName\": \"John Doe\",\n  \"employeeId\": \"EMP789\",\n  \"email\": \"john.doe@example.com\",\n  \"number\": \"+1234567890\",\n  \"claimFor\": \"employee\",\n  \"claimForId\": \"CLM456\",\n  \"country\": \"USA\",\n  \"claimAmount\": 1500.75,\n  \"currency\": \"USD\",\n  \"dateOfTreatment\": \"2023-05-01\",\n  \"paymentMethod\": \"Bank Transfer\",\n  \"bankName\": \"Bank of America\",\n  \"branchName\": \"Main Branch\",\n  \"accountNumber\": \"123456789012\",\n  \"swiftCode\": \"BOFAUS3N\",\n  \"iban\": \"US12345678901234567890\",\n  \"description\": \"Medical treatment for surgery\"\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://public-fede7a.vercel.app"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here"
+    },
+    {
+      "key": "employeeId",
+      "value": "8f7b7927-6c04-401a-ab0b-61000132f970"
+    }
+  ]
+} 
