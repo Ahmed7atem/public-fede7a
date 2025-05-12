@@ -11,10 +11,5 @@
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "buildCommand": "cp -r src/* api/ && npm install",
-  "outputDirectory": "api"
+  ]
 } 

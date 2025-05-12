@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const connectDB = require('../src/config/database');
 const requestLogger = require('../src/middlewares/requestLogger');
 const errorHandler = require('../src/middlewares/errorHandler');
@@ -31,6 +33,30 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(requestLogger);
+
+// Simple auth middleware
+const auth = async (req, res, next) => {
+  try {
+    if (!req.headers.authorization?.startsWith('Bearer')) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+// Admin check middleware
+const admin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(401).json({ message: 'Not authorized as admin' });
+  }
+};
 
 // Root route for testing
 app.get('/', (req, res) => {
@@ -79,56 +105,84 @@ app.use('/api/predictions', predictionRoutes);
 app.use('/api/pre-approvals', preApprovalRoutes);
 app.use('/api/dependents', dependentRoutes);
 
+// Claims routes
+app.get('/api/claims', auth, admin, async (req, res) => {
+  try {
+    const claims = await mongoose.model('Claim').find().limit(10).lean();
+    res.json(claims);
+  } catch (error) {
+    console.error('Error fetching claims:', error);
+    res.status(500).json({ message: 'Error fetching claims', error: error.message });
+  }
+});
+
+app.get('/api/claims/:id', auth, async (req, res) => {
+  try {
+    const claim = await mongoose.model('Claim').findOne({ patientId: req.params.id }).lean();
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    res.json(claim);
+  } catch (error) {
+    console.error('Error fetching claim:', error);
+    res.status(500).json({ message: 'Error fetching claim', error: error.message });
+  }
+});
+
+app.get('/api/claims/employee/:employeeId', auth, async (req, res) => {
+  try {
+    const claims = await mongoose.model('Claim').find({ patientId: req.params.employeeId }).lean();
+    res.json(claims);
+  } catch (error) {
+    console.error('Error fetching employee claims:', error);
+    res.status(500).json({ message: 'Error fetching employee claims', error: error.message });
+  }
+});
+
+app.post('/api/claims', auth, async (req, res) => {
+  try {
+    const claim = new mongoose.model('Claim')(req.body);
+    const savedClaim = await claim.save();
+    res.status(201).json(savedClaim);
+  } catch (error) {
+    console.error('Error creating claim:', error);
+    res.status(500).json({ message: 'Error creating claim', error: error.message });
+  }
+});
+
+app.put('/api/claims/:id', auth, admin, async (req, res) => {
+  try {
+    const claim = await mongoose.model('Claim').findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    res.json(claim);
+  } catch (error) {
+    console.error('Error updating claim:', error);
+    res.status(500).json({ message: 'Error updating claim', error: error.message });
+  }
+});
+
+app.delete('/api/claims/:id', auth, admin, async (req, res) => {
+  try {
+    const claim = await mongoose.model('Claim').findByIdAndDelete(req.params.id);
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+    res.json({ message: 'Claim deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting claim:', error);
+    res.status(500).json({ message: 'Error deleting claim', error: error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
-    const mongoose = require('mongoose');
     const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-    
-    let collections = [];
-    let collectionStats = {};
-    
-    if (dbStatus === 'connected') {
-      collections = (await mongoose.connection.db.collections())
-        .map(c => c.collectionName);
-      
-      // Get count of documents in main collections
-      const { Employee, SleepData, HealthData, WearableData, Admin } = require('../models');
-      
-      if (collections.includes('employees')) {
-        collectionStats.employees = await Employee.countDocuments();
-      }
-      
-      if (collections.includes('sleepdatas')) {
-        collectionStats.sleep = await SleepData.countDocuments();
-      }
-      
-      if (collections.includes('healthdatas')) {
-        collectionStats.health = await HealthData.countDocuments();
-      }
-      
-      if (collections.includes('wearabledatas')) {
-        collectionStats.wearables = await WearableData.countDocuments();
-      }
-
-      if (collections.includes('admins')) {
-        collectionStats.admins = await Admin.countDocuments();
-      }
-    }
-    
-    res.json({
-      status: 'ok',
-      mongodb: dbStatus,
-      collections: collections,
-      documentCounts: collectionStats
-    });
+    res.json({ status: 'ok', mongodb: dbStatus });
   } catch (error) {
-    console.error('Health check error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Health check failed',
-      error: error.message
-    });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 });
 
