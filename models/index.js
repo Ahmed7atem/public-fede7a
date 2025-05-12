@@ -13,6 +13,9 @@ const {
   Prediction,
   Admin
 } = require('./schemas');
+const PreApprovalClaim = require('./schemas').PreApprovalClaim;
+const Provider = require('./Provider');
+const SpecialClaim = require('./SpecialClaim');
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
@@ -68,12 +71,12 @@ module.exports = {
   HealthData,
   WearableData,
   SleepData,
+  Prediction,
   Policy,
   Claim,
+  PreApprovalClaim,
   Doctor,
-  Feedback,
-  Attachment,
-  PolicyDocument,
-  Prediction,
-  Admin
+  Provider,
+  Admin,
+  SpecialClaim
 }; 
