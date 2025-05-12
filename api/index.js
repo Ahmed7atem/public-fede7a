@@ -49,8 +49,9 @@ const {
 } = require('../src/controllers/policyController');
 
 const {
-  getHealthAnalytics,
-  getSleepAnalytics
+  getEmployeeAnalytics,
+  getOrganizationAnalytics,
+  getHealthAlerts
 } = require('../src/controllers/analyticsController');
 
 const {
@@ -140,8 +141,9 @@ app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
 // Analytics routes
-app.get('/api/analytics/health', getHealthAnalytics);
-app.get('/api/analytics/sleep', getSleepAnalytics);
+app.get('/api/analytics/employee/:id', getEmployeeAnalytics);
+app.get('/api/analytics/organization', getOrganizationAnalytics);
+app.get('/api/analytics/health-alerts', getHealthAlerts);
 
 // Health check
 app.get('/health', async (req, res) => {
