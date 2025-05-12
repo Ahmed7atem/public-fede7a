@@ -1,0 +1,244 @@
+{
+    "info": {
+      "name": "MedBond API - Key Endpoints",
+      "description": "Focused collection for key MedBond API endpoints",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Dependents",
+        "item": [
+          {
+            "name": "Get All Dependents",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/dependents",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "dependents"]
+              }
+            }
+          },
+          {
+            "name": "Get Dependents by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/dependents/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "dependents", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "123456"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Historical Claims",
+        "item": [
+          {
+            "name": "Get 2023 Claims by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/2023/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "2023", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "123456"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "Get 2024 Claims by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/2024/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "2024", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "123456"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Special Claims",
+        "item": [
+          {
+            "name": "Create Special Claim",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "multipart/form-data"
+                }
+              ],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "policyNumber",
+                    "value": "POL12345",
+                    "type": "text"
+                  },
+                  {
+                    "key": "policyHolderName",
+                    "value": "John Doe",
+                    "type": "text"
+                  },
+                  {
+                    "key": "employeeId",
+                    "value": "123456",
+                    "type": "text"
+                  },
+                  {
+                    "key": "email",
+                    "value": "john.doe@example.com",
+                    "type": "text"
+                  },
+                  {
+                    "key": "number",
+                    "value": "1234567890",
+                    "type": "text"
+                  },
+                  {
+                    "key": "claimFor",
+                    "value": "employee",
+                    "type": "text"
+                  },
+                  {
+                    "key": "claimForId",
+                    "value": "123456",
+                    "type": "text"
+                  },
+                  {
+                    "key": "country",
+                    "value": "USA",
+                    "type": "text"
+                  },
+                  {
+                    "key": "claimAmount",
+                    "value": "1000",
+                    "type": "text"
+                  },
+                  {
+                    "key": "currency",
+                    "value": "USD",
+                    "type": "text"
+                  },
+                  {
+                    "key": "dateOfTreatment",
+                    "value": "2023-05-15",
+                    "type": "text"
+                  },
+                  {
+                    "key": "paymentMethod",
+                    "value": "Bank Transfer",
+                    "type": "text"
+                  },
+                  {
+                    "key": "bankName",
+                    "value": "Example Bank",
+                    "type": "text"
+                  },
+                  {
+                    "key": "branchName",
+                    "value": "Main Branch",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accountNumber",
+                    "value": "1234567890",
+                    "type": "text"
+                  },
+                  {
+                    "key": "swiftCode",
+                    "value": "EXAMPLECODE",
+                    "type": "text"
+                  },
+                  {
+                    "key": "iban",
+                    "value": "US1234567890",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Special treatment claim",
+                    "type": "text"
+                  },
+                  {
+                    "key": "attachments",
+                    "type": "file",
+                    "src": "/path/to/file1.pdf"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/special-claims",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "special-claims"]
+              }
+            }
+          },
+          {
+            "name": "Get All Special Claims",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/special",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "special"]
+              }
+            }
+          },
+          {
+            "name": "Get Special Claims by Employee ID",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/claims/special/employee/:employeeId",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "claims", "special", "employee", ":employeeId"],
+                "variable": [
+                  {
+                    "key": "employeeId",
+                    "value": "123456"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000",
+        "type": "string"
+      }
+    ]
+  }

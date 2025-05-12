@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "Special Claim Test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Special Claim (JSON)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"policyNumber\": \"POL12345\",\n  \"policyHolderName\": \"John Doe\",\n  \"employeeId\": \"123456\",\n  \"email\": \"john.doe@example.com\",\n  \"number\": \"1234567890\",\n  \"claimFor\": \"employee\",\n  \"claimForId\": \"123456\",\n  \"country\": \"USA\",\n  \"claimAmount\": 1000,\n  \"currency\": \"USD\",\n  \"dateOfTreatment\": \"2023-05-15\",\n  \"paymentMethod\": \"Bank Transfer\",\n  \"bankName\": \"Example Bank\",\n  \"branchName\": \"Main Branch\",\n  \"accountNumber\": \"1234567890\",\n  \"swiftCode\": \"EXAMPLECODE\",\n  \"iban\": \"US1234567890\",\n  \"description\": \"Special treatment claim\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/claims/special-claims",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "claims", "special-claims"]
+        }
+      }
+    },
+    {
+      "name": "Get All Special Claims",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/claims/special",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "claims", "special"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://public-fede7a.vercel.app",
+      "type": "string"
+    }
+  ]
+} 
