@@ -1,5 +1,8 @@
+// controllers/claimController.js
 const mongoose = require('mongoose');
-const { Claim } = require('../../models');
+const { Claim } = require('../models');
+const SpecialClaim = require('../models/SpecialClaim'); // Import the new model
+const { validationResult } = require('express-validator');
 
 /**
  * @desc    Get all claims
@@ -78,6 +81,41 @@ const createClaim = async (req, res) => {
 };
 
 /**
+ * @desc    Create a new special claim
+ * @route   POST /api/special-claims
+ * @access  Private
+ */
+const createSpecialClaim = async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Prepare claim data
+    const claimData = {
+      ...req.body,
+      attachments: req.files ? req.files.map(file => ({
+        filename: file.filename,
+        path: file.path,
+        mimetype: file.mimetype,
+        size: file.size,
+      })) : [],
+    };
+
+    // Create and save special claim
+    const specialClaim = new SpecialClaim(claimData);
+    const savedSpecialClaim = await specialClaim.save();
+
+    res.status(201).json(savedSpecialClaim);
+  } catch (error) {
+    console.error('Error creating special claim:', error);
+    res.status(500).json({ message: 'Error creating special claim', error: error.message });
+  }
+};
+
+/**
  * @desc    Update a claim
  * @route   PUT /api/claims/:id
  * @access  Private/Admin
@@ -118,6 +156,7 @@ module.exports = {
   getClaimById,
   getClaimsByEmployeeId,
   createClaim,
+  createSpecialClaim, // Added new function
   updateClaim,
   deleteClaim
-}; 
+};

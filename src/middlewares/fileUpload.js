@@ -1,3 +1,4 @@
+// middlewares/fileUpload.js
 const multer = require('multer');
 const path = require('path');
 
@@ -30,4 +31,7 @@ const upload = multer({
   }
 });
 
-module.exports = upload; 
+module.exports = {
+  singleUpload: upload.single('attachment'), // For Claim routes
+  multipleUpload: upload.array('attachments', 5) // For SpecialClaim routes, max 5 files
+};

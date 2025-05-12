@@ -1,11 +1,14 @@
+// routes/claimRoutes.js
 const express = require('express');
 const router = express.Router();
-const upload = require('../middlewares/fileUpload');
+const { singleUpload, multipleUpload } = require('../middlewares/fileUpload'); // Updated import
+const { check } = require('express-validator');
 const {
   getAllClaims,
   getClaimById,
   getClaimsByEmployeeId,
   createClaim,
+  createSpecialClaim,
   updateClaim,
   deleteClaim
 } = require('../controllers/claimController');
@@ -28,7 +31,35 @@ router.get('/employee/:employeeId', getClaimsByEmployeeId);
 // @route   POST /api/claims
 // @desc    Create a new claim with attachment
 // @access  Private
-router.post('/', upload.single('attachment'), createClaim);
+router.post('/', singleUpload, createClaim);
+
+// @route   POST /api/special-claims
+// @desc    Create a new special claim with multiple attachments
+// @access  Private
+router.post(
+  '/special-claims',
+  multipleUpload,
+  [
+    check('policyNumber').notEmpty().withMessage('Policy number is required'),
+    check('policyHolderName').notEmpty().withMessage('Policy holder name is required'),
+    check('employeeId').notEmpty().withMessage('Employee ID is required'),
+    check('email').isEmail().withMessage('Valid email is required'),
+    check('number').notEmpty().withMessage('Contact number is required'),
+    check('claimFor').notEmpty().withMessage('Claim for is required'),
+    check('claimForId').notEmpty().withMessage('Claim for ID is required'),
+    check('country').notEmpty().withMessage('Country is required'),
+    check('claimAmount').isFloat({ min: 0 }).withMessage('Valid claim amount is required'),
+    check('currency').notEmpty().withMessage('Currency is required'),
+    check('dateOfTreatment').isISO8601().toDate().withMessage('Valid date of treatment is required'),
+    check('paymentMethod').notEmpty().withMessage('Payment method is required'),
+    check('bankName').notEmpty().withMessage('Bank name is required'),
+    check('branchName').notEmpty().withMessage('Branch name is required'),
+    check('accountNumber').notEmpty().withMessage('Account number is required'),
+    check('swiftCode').notEmpty().withMessage('SWIFT code is required'),
+    check('iban').notEmpty().withMessage('IBAN is required'),
+  ],
+  createSpecialClaim
+);
 
 // @route   PUT /api/claims/:id
 // @desc    Update a claim
@@ -40,4 +71,4 @@ router.put('/:id', updateClaim);
 // @access  Private/Admin
 router.delete('/:id', deleteClaim);
 
-module.exports = router; 
+module.exports = router;
