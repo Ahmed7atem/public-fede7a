@@ -146,17 +146,32 @@ app.post('/api/claims/special-claims', (req, res) => {
   try {
     console.log('Special claim request received:', req.body);
     
-    // Create a mock successful response
-    res.status(201).json({
-      success: true,
-      message: 'Special claim request received successfully',
-      data: {
-        id: 'SC' + Date.now(),
-        ...req.body,
-        createdAt: new Date(),
-        status: 'pending'
-      }
+    // Use the SpecialClaim model directly
+    const SpecialClaim = require('../models/SpecialClaim');
+    
+    // Create a new special claim
+    const specialClaim = new SpecialClaim({
+      ...req.body,
+      // Add default attachments array since we're not handling file uploads
+      attachments: []
     });
+    
+    // Save to database
+    specialClaim.save()
+      .then(savedClaim => {
+        res.status(201).json({
+          success: true,
+          message: 'Special claim created successfully',
+          data: savedClaim
+        });
+      })
+      .catch(err => {
+        console.error('Error saving special claim:', err);
+        res.status(500).json({ 
+          message: 'Error saving special claim to database', 
+          error: err.message 
+        });
+      });
   } catch (error) {
     console.error('Error in special claims endpoint:', error);
     res.status(500).json({ message: 'Error processing special claim', error: error.message });

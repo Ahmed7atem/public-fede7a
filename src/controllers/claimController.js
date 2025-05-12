@@ -284,7 +284,10 @@ const getSpecialClaimsByEmployeeId = async (req, res) => {
 const getClaimsByYear = async (req, res) => {
   try {
     const { year } = req.params;
-    const collectionName = year === 'current' ? 'claims' : `claims_${year}`;
+    // Use the correct collection name format (claims2023 instead of claims_2023)
+    const collectionName = year === 'current' ? 'claims' : `claims${year}`;
+    
+    console.log(`Looking for claims in collection: ${collectionName}`);
     
     // Get the collection for the specified year
     const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
@@ -293,6 +296,7 @@ const getClaimsByYear = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    console.log(`Found ${claims.length} claims in year ${year}`);
     res.json({ claims });
   } catch (error) {
     console.error(`Error fetching claims for year ${req.params.year}:`, error);
@@ -308,7 +312,10 @@ const getClaimsByYear = async (req, res) => {
 const getEmployeeClaimsByYear = async (req, res) => {
   try {
     const { year, employeeId } = req.params;
-    const collectionName = year === 'current' ? 'claims' : `claims_${year}`;
+    // Use the correct collection name format (claims2023 instead of claims_2023)
+    const collectionName = year === 'current' ? 'claims' : `claims${year}`;
+    
+    console.log(`Looking for claims in collection: ${collectionName} for employee: ${employeeId}`);
     
     // Get the collection for the specified year
     const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
@@ -338,7 +345,7 @@ const getEmployeeClaimsByYear = async (req, res) => {
  */
 const getAllDependents = async (req, res) => {
   try {
-    const dependents = await mongoose.model('dependents').find({})
+    const dependents = await mongoose.model('Dependent').find({})
       .sort({ createdAt: -1 })
       .lean();
 
@@ -357,10 +364,11 @@ const getAllDependents = async (req, res) => {
 const getDependentsByEmployeeId = async (req, res) => {
   try {
     const { employeeId } = req.params;
-    const dependents = await mongoose.model('dependents').find({ employeeId })
+    const dependents = await mongoose.model('Dependent').find({ employeeId })
       .sort({ createdAt: -1 })
       .lean();
 
+    console.log(`Found ${dependents.length} dependents for employee ${employeeId}`);
     res.json({ dependents });
   } catch (error) {
     console.error('Error fetching employee dependents:', error);

@@ -40,8 +40,8 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Check employee password - direct comparison
-    const isMatch = await employee.matchPassword(password);
+    // Check employee password - direct comparison instead of using matchPassword
+    const isMatch = employee.password === password;
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
