@@ -31,16 +31,13 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
-      retryWrites: true,
-      retryReads: true,
-      maxPoolSize: 10,
-      minPoolSize: 5,
-      maxIdleTimeMS: 60000,
-      waitQueueTimeoutMS: 30000,
-      authSource: 'admin' // Explicitly set auth source
+      connectTimeoutMS: 10000,
+      maxPoolSize: 1,
+      minPoolSize: 0,
+      maxIdleTimeMS: 10000,
+      waitQueueTimeoutMS: 10000
     });
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);

@@ -10,13 +10,19 @@ const {
   createClaim,
   createSpecialClaim,
   updateClaim,
-  deleteClaim
+  deleteClaim,
+  getSpecialClaims
 } = require('../controllers/claimController');
 
 // @route   GET /api/claims
 // @desc    Get all claims
 // @access  Private/Admin
 router.get('/', getAllClaims);
+
+// @route   GET /api/claims/special
+// @desc    Get special claims with filtering options
+// @access  Private/Admin
+router.get('/special', getSpecialClaims);
 
 // @route   GET /api/claims/:id
 // @desc    Get claim by ID

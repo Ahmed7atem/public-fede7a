@@ -1,0 +1,436 @@
+{
+  "info": {
+    "name": "Health Insurance Claims API",
+    "description": "Collection of APIs for managing regular and special claims",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Regular Claims",
+      "item": [
+        {
+          "name": "Get All Claims",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims"]
+            },
+            "description": "Retrieves all claims (limited to 10)"
+          }
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Claim ID"
+                }
+              ]
+            },
+            "description": "Retrieves a specific claim by its ID"
+          }
+        },
+        {
+          "name": "Get Claims by Employee ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/employee/:employeeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "employee", ":employeeId"],
+              "variable": [
+                {
+                  "key": "employeeId",
+                  "value": "",
+                  "description": "Employee ID"
+                }
+              ]
+            },
+            "description": "Retrieves all claims for a specific employee"
+          }
+        },
+        {
+          "name": "Create New Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "patientId",
+                  "value": "",
+                  "type": "text",
+                  "description": "Patient ID"
+                },
+                {
+                  "key": "providerId",
+                  "value": "",
+                  "type": "text",
+                  "description": "Provider ID"
+                },
+                {
+                  "key": "serviceDate",
+                  "value": "",
+                  "type": "text",
+                  "description": "Service Date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "amount",
+                  "value": "",
+                  "type": "text",
+                  "description": "Claim Amount"
+                },
+                {
+                  "key": "description",
+                  "value": "",
+                  "type": "text",
+                  "description": "Claim Description"
+                },
+                {
+                  "key": "attachment",
+                  "type": "file",
+                  "src": "",
+                  "description": "Claim Attachment"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims"]
+            },
+            "description": "Creates a new claim with optional attachment"
+          }
+        },
+        {
+          "name": "Update Claim",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"approved\",\n    \"amount\": 1000,\n    \"description\": \"Updated description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Claim ID"
+                }
+              ]
+            },
+            "description": "Updates an existing claim"
+          }
+        },
+        {
+          "name": "Delete Claim",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Claim ID"
+                }
+              ]
+            },
+            "description": "Deletes a claim"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Special Claims",
+      "item": [
+        {
+          "name": "Get Special Claims",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/claims/special?status=pending&startDate=2024-01-01&endDate=2024-12-31&minAmount=1000&maxAmount=5000&currency=USD&employeeId=123&policyNumber=POL123&sortBy=createdAt&sortOrder=desc&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "claims", "special"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Filter by start date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31",
+                  "description": "Filter by end date"
+                },
+                {
+                  "key": "minAmount",
+                  "value": "1000",
+                  "description": "Minimum claim amount"
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "5000",
+                  "description": "Maximum claim amount"
+                },
+                {
+                  "key": "currency",
+                  "value": "USD",
+                  "description": "Filter by currency"
+                },
+                {
+                  "key": "employeeId",
+                  "value": "123",
+                  "description": "Filter by employee ID"
+                },
+                {
+                  "key": "policyNumber",
+                  "value": "POL123",
+                  "description": "Filter by policy number"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Field to sort by"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order (asc/desc)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves special claims with filtering and pagination"
+          }
+        },
+        {
+          "name": "Create Special Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "policyNumber",
+                  "value": "",
+                  "type": "text",
+                  "description": "Policy number"
+                },
+                {
+                  "key": "policyHolderName",
+                  "value": "",
+                  "type": "text",
+                  "description": "Name of policy holder"
+                },
+                {
+                  "key": "employeeId",
+                  "value": "",
+                  "type": "text",
+                  "description": "Employee ID"
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "type": "text",
+                  "description": "Valid email address"
+                },
+                {
+                  "key": "number",
+                  "value": "",
+                  "type": "text",
+                  "description": "Contact number"
+                },
+                {
+                  "key": "claimFor",
+                  "value": "",
+                  "type": "text",
+                  "description": "Claim purpose"
+                },
+                {
+                  "key": "claimForId",
+                  "value": "",
+                  "type": "text",
+                  "description": "Claim purpose ID"
+                },
+                {
+                  "key": "country",
+                  "value": "",
+                  "type": "text",
+                  "description": "Country"
+                },
+                {
+                  "key": "claimAmount",
+                  "value": "",
+                  "type": "text",
+                  "description": "Amount (must be positive)"
+                },
+                {
+                  "key": "currency",
+                  "value": "",
+                  "type": "text",
+                  "description": "Currency"
+                },
+                {
+                  "key": "dateOfTreatment",
+                  "value": "",
+                  "type": "text",
+                  "description": "Date in ISO8601 format"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "",
+                  "type": "text",
+                  "description": "Payment method"
+                },
+                {
+                  "key": "bankName",
+                  "value": "",
+                  "type": "text",
+                  "description": "Bank name"
+                },
+                {
+                  "key": "branchName",
+                  "value": "",
+                  "type": "text",
+                  "description": "Branch name"
+                },
+                {
+                  "key": "accountNumber",
+                  "value": "",
+                  "type": "text",
+                  "description": "Account number"
+                },
+                {
+                  "key": "swiftCode",
+                  "value": "",
+                  "type": "text",
+                  "description": "SWIFT code"
+                },
+                {
+                  "key": "iban",
+                  "value": "",
+                  "type": "text",
+                  "description": "IBAN"
+                },
+                {
+                  "key": "attachments",
+                  "type": "file",
+                  "src": "",
+                  "description": "Multiple attachments allowed"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/special-claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "special-claims"]
+            },
+            "description": "Creates a new special claim with multiple attachments"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ]
+} 

@@ -4,7 +4,7 @@ const connectDB = require('./config/database');
 const requestLogger = require('./middlewares/requestLogger');
 const errorHandler = require('./middlewares/errorHandler');
 
-// Route importss
+// Route imports
 const employeeRoutes = require('./routes/employeeRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const sleepRoutes = require('./routes/sleepRoutes');
@@ -28,7 +28,8 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(requestLogger);
 
 // Root route for testing
@@ -145,16 +146,25 @@ const PORT = process.env.PORT || 3000;
 // Connect to MongoDB and start server
 const startServer = async () => {
   try {
+    // Connect to MongoDB
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    
+    // Only start the server if not in a serverless environment
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    }
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 };
 
+// Initialize the server
 startServer();
 
+// Export the app for serverless environments
 module.exports = app; 

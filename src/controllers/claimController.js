@@ -209,12 +209,96 @@ const deleteClaim = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get special claims with filtering options
+ * @route   GET /api/claims/special
+ * @access  Private/Admin
+ */
+const getSpecialClaims = async (req, res) => {
+  try {
+    const {
+      status,
+      startDate,
+      endDate,
+      minAmount,
+      maxAmount,
+      currency,
+      employeeId,
+      policyNumber,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    // Build filter object
+    const filter = {};
+    
+    if (status) filter.status = status;
+    if (employeeId) filter.employeeId = employeeId;
+    if (policyNumber) filter.policyNumber = policyNumber;
+    if (currency) filter.currency = currency;
+    
+    // Date range filter
+    if (startDate || endDate) {
+      filter.dateOfTreatment = {};
+      if (startDate) filter.dateOfTreatment.$gte = new Date(startDate);
+      if (endDate) filter.dateOfTreatment.$lte = new Date(endDate);
+    }
+    
+    // Amount range filter
+    if (minAmount || maxAmount) {
+      filter.claimAmount = {};
+      if (minAmount) filter.claimAmount.$gte = Number(minAmount);
+      if (maxAmount) filter.claimAmount.$lte = Number(maxAmount);
+    }
+
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Execute query with pagination
+    const [claims, total] = await Promise.all([
+      SpecialClaim.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      SpecialClaim.countDocuments(filter)
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.json({
+      claims,
+      pagination: {
+        total,
+        totalPages,
+        currentPage: Number(page),
+        limit: Number(limit),
+        hasNextPage,
+        hasPrevPage
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching special claims:', error);
+    res.status(500).json({ message: 'Error fetching special claims', error: error.message });
+  }
+};
+
 module.exports = {
   getAllClaims,
   getClaimById,
   getClaimsByEmployeeId,
   createClaim,
-  createSpecialClaim, // Added new function
+  createSpecialClaim,
   updateClaim,
-  deleteClaim
+  deleteClaim,
+  getSpecialClaims
 };
