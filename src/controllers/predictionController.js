@@ -1,0 +1,85 @@
+const mongoose = require('mongoose');
+const { Prediction } = require('../../models');
+
+/**
+ * @desc    Get all predictions
+ * @route   GET /api/predictions
+ * @access  Private/Admin
+ */
+const getAllPredictions = async (req, res) => {
+  try {
+    const predictions = await Prediction.find({})
+      .sort({ predictedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: predictions
+    });
+  } catch (error) {
+    console.error('Error fetching predictions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching predictions',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get predictions by employee ID
+ * @route   GET /api/predictions/employee/:employeeId
+ * @access  Private
+ */
+const getPredictionsByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const predictions = await Prediction.find({ employeeId })
+      .sort({ predictedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: predictions
+    });
+  } catch (error) {
+    console.error('Error fetching employee predictions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employee predictions',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get predictions by type
+ * @route   GET /api/predictions/type/:type
+ * @access  Private/Admin
+ */
+const getPredictionsByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const predictions = await Prediction.find({ predictionType: type })
+      .sort({ predictedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: predictions
+    });
+  } catch (error) {
+    console.error('Error fetching predictions by type:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching predictions by type',
+      error: error.message
+    });
+  }
+};
+
+module.exports = {
+  getAllPredictions,
+  getPredictionsByEmployeeId,
+  getPredictionsByType
+}; 

@@ -1,9 +1,32 @@
 const express = require('express');
 const router = express.Router();
+const { protect, admin } = require('../middlewares/authMiddleware');
+const {
+  getAllPredictions,
+  getPredictionsByEmployeeId,
+  getPredictionsByType
+} = require('../controllers/predictionController');
 const { Prediction } = require('../../models');
 
-// Update prediction by employeeId
-router.put('/:employeeId', async (req, res) => {
+// @route   GET /api/predictions
+// @desc    Get all predictions
+// @access  Private/Admin
+router.get('/', protect, admin, getAllPredictions);
+
+// @route   GET /api/predictions/employee/:employeeId
+// @desc    Get predictions by employee ID
+// @access  Private
+router.get('/employee/:employeeId', protect, getPredictionsByEmployeeId);
+
+// @route   GET /api/predictions/type/:type
+// @desc    Get predictions by type
+// @access  Private/Admin
+router.get('/type/:type', protect, admin, getPredictionsByType);
+
+// @route   PUT /api/predictions/:employeeId
+// @desc    Update prediction by employeeId
+// @access  Private/Admin
+router.put('/:employeeId', protect, admin, async (req, res) => {
   try {
     const { employeeId } = req.params;
     const { predictionType, predictionValue, confidence, factors } = req.body;
@@ -39,28 +62,6 @@ router.put('/:employeeId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding prediction',
-      error: error.message
-    });
-  }
-});
-
-// Get predictions by employeeId
-router.get('/:employeeId', async (req, res) => {
-  try {
-    const { employeeId } = req.params;
-    
-    const predictions = await Prediction.find({ employeeId: employeeId })
-      .sort({ predictedAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      data: predictions
-    });
-  } catch (error) {
-    console.error('Error fetching predictions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching predictions',
       error: error.message
     });
   }

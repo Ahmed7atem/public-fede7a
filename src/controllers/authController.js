@@ -36,30 +36,40 @@ const login = async (req, res) => {
     }
     
     // If not admin, check employees
-    const employee = await Employee.findOne({ email });
+    const employee = await Employee.findOne({ email }).select('+password');
     if (!employee) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
     // Check employee password - direct comparison
-    const isMatch = employee.password === password;
+    const isMatch = await employee.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
+    // Generate JWT token
+    const token = generateToken(employee._id);
+
+    // Get all employee data
+    const employeeData = await Employee.findOne({ email }).lean();
+
+    // Remove sensitive data
+    const { password: _, ...employeeInfo } = employeeData;
+
     res.json({
-      message: 'Login successful',
-      token: 'EMPLOYEE_TOKEN',
-      user: {
-        id: employee._id,
-        employeeId: employee.employeeId,
-        email: employee.email,
-        role: 'employee'
+      token,
+      employee: {
+        ...employeeInfo,
+        // Format dates
+        Start_Date: new Date(employeeInfo.Start_Date),
+        End_Date: new Date(employeeInfo.End_Date),
+        createdAt: new Date(employeeInfo.createdAt),
+        updatedAt: new Date(employeeInfo.updatedAt)
       }
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Error during login', error: error.message });
   }
 };
 

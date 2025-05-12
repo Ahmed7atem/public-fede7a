@@ -54,6 +54,24 @@ const getHealthDataByEmployeeId = async (req, res) => {
 };
 
 /**
+ * @desc    Get health data by ID
+ * @route   GET /api/health/:id
+ * @access  Private
+ */
+const getHealthDataById = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+    const healthData = await HealthData.findOne({ employeeId }).lean();
+    if (!healthData) {
+      return res.status(404).json({ message: 'Health data not found' });
+    }
+    res.json(healthData);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+  }
+};
+
+/**
  * @desc    Create health data for an employee
  * @route   POST /api/health
  * @access  Private/Admin
@@ -106,6 +124,7 @@ module.exports = {
   getAllHealthData,
   getHealthDataByYear,
   getHealthDataByEmployeeId,
+  getHealthDataById,
   createHealthData,
   updateHealthData,
   deleteHealthData

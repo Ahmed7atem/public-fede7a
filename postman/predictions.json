@@ -1,0 +1,86 @@
+{
+    "info": {
+      "name": "Prediction APIs",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get All Predictions",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/predictions",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Predictions by Employee ID",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/predictions/employee/{{employeeId}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Predictions by Type",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/predictions/type/{{predictionType}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Create/Update Prediction",
+        "request": {
+          "method": "PUT",
+          "url": "{{base_url}}/api/predictions/{{employeeId}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"predictionType\": \"health_risk\",\n  \"predictionValue\": \"high\",\n  \"confidence\": 0.85,\n  \"factors\": [\n    \"high_bmi\",\n    \"elevated_blood_pressure\",\n    \"irregular_sleep_patterns\"\n  ]\n}"
+          }
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:3000"
+      },
+      {
+        "key": "token",
+        "value": "your_jwt_token_here"
+      },
+      {
+        "key": "employeeId",
+        "value": "EMP789"
+      },
+      {
+        "key": "predictionType",
+        "value": "health_risk"
+      }
+    ]
+  }

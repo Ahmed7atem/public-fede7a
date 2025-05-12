@@ -47,8 +47,8 @@ const getAllPolicies = async (req, res) => {
  */
 const getPolicyById = async (req, res) => {
   try {
-    const policyId = req.params.id;
-    const employee = await Employee.findOne({ Policy_ID: policyId }, {
+    const employeeId = req.params.id;
+    const employee = await Employee.findOne({ employeeId }, {
       Policy_ID: 1,
       policyNumber: 1,
       Plan_Name: 1,
@@ -58,11 +58,20 @@ const getPolicyById = async (req, res) => {
       employeeId: 1,
       email: 1,
       Claimed_Amount: 1,
-      Insurance_Score: 1
+      Insurance_Score: 1,
+      Premium_Amount: 1,
+      Payment_Frequency: 1,
+      Deductible: 1,
+      Co_Payment: 1,
+      Maximum_Coverage: 1,
+      Network_Providers: 1,
+      Exclusions: 1,
+      Renewal_Date: 1,
+      Status: 1
     }).lean();
 
     if (!employee) {
-      return res.status(404).json({ message: 'Policy not found' });
+      return res.status(404).json({ message: 'Policy not found for this employee' });
     }
 
     // Transform employee data into policy format
@@ -71,14 +80,25 @@ const getPolicyById = async (req, res) => {
       policyNumber: employee.policyNumber,
       type: employee.Plan_Name,
       coverage: {
-        details: employee.Coverage_Details
+        details: employee.Coverage_Details,
+        deductible: employee.Deductible,
+        coPayment: employee.Co_Payment,
+        maximumCoverage: employee.Maximum_Coverage,
+        networkProviders: employee.Network_Providers,
+        exclusions: employee.Exclusions
       },
       startDate: new Date(employee.Start_Date),
       endDate: new Date(employee.End_Date),
+      renewalDate: new Date(employee.Renewal_Date),
       employeeId: employee.employeeId,
       employeeEmail: employee.email,
       claimedAmount: employee.Claimed_Amount,
-      insuranceScore: employee.Insurance_Score
+      insuranceScore: employee.Insurance_Score,
+      premium: {
+        amount: employee.Premium_Amount,
+        frequency: employee.Payment_Frequency
+      },
+      status: employee.Status
     };
 
     res.json(policy);

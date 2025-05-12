@@ -84,8 +84,8 @@ const getAllClaims = async (req, res) => {
  */
 const getClaimById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const claim = await Claim.findOne({ id }).lean();
+    const employeeId = req.params.id;
+    const claim = await Claim.findOne({ patientId: employeeId }).lean();
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
@@ -210,85 +210,154 @@ const deleteClaim = async (req, res) => {
 };
 
 /**
- * @desc    Get special claims with filtering options
+ * @desc    Get all special claims
  * @route   GET /api/claims/special
  * @access  Private/Admin
  */
 const getSpecialClaims = async (req, res) => {
   try {
-    const {
-      status,
-      startDate,
-      endDate,
-      minAmount,
-      maxAmount,
-      currency,
-      employeeId,
-      policyNumber,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      page = 1,
-      limit = 10
-    } = req.query;
+    const specialClaims = await SpecialClaim.find({})
+      .sort({ createdAt: -1 });
 
-    // Build filter object
-    const filter = {};
-    
-    if (status) filter.status = status;
-    if (employeeId) filter.employeeId = employeeId;
-    if (policyNumber) filter.policyNumber = policyNumber;
-    if (currency) filter.currency = currency;
-    
-    // Date range filter
-    if (startDate || endDate) {
-      filter.dateOfTreatment = {};
-      if (startDate) filter.dateOfTreatment.$gte = new Date(startDate);
-      if (endDate) filter.dateOfTreatment.$lte = new Date(endDate);
-    }
-    
-    // Amount range filter
-    if (minAmount || maxAmount) {
-      filter.claimAmount = {};
-      if (minAmount) filter.claimAmount.$gte = Number(minAmount);
-      if (maxAmount) filter.claimAmount.$lte = Number(maxAmount);
-    }
+    // Add pending fields to each claim
+    const claimsWithPendingFields = specialClaims.map(claim => ({
+      ...claim.toObject(),
+      providerId: 'pending',
+      patientAge: 'pending',
+      providerSpecialty: 'pending',
+      claimStatus: 'pending',
+      patientIncome: 'pending',
+      patientMaritalStatus: 'pending',
+      patientEmploymentStatus: 'pending',
+      claimType: 'pending',
+      claimSubmissionMethod: 'pending',
+      diagnosisDescription: 'pending',
+      procedureDescription: 'pending'
+    }));
 
-    // Calculate skip value for pagination
-    const skip = (page - 1) * limit;
-
-    // Build sort object
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-    // Execute query with pagination
-    const [claims, total] = await Promise.all([
-      SpecialClaim.find(filter)
-        .sort(sort)
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      SpecialClaim.countDocuments(filter)
-    ]);
-
-    // Calculate pagination info
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
-
-    res.json({
-      claims,
-      pagination: {
-        total,
-        totalPages,
-        currentPage: Number(page),
-        limit: Number(limit),
-        hasNextPage,
-        hasPrevPage
-      }
-    });
+    res.json({ specialClaims: claimsWithPendingFields });
   } catch (error) {
     console.error('Error fetching special claims:', error);
     res.status(500).json({ message: 'Error fetching special claims', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get special claims by employee ID
+ * @route   GET /api/claims/special/employee/:employeeId
+ * @access  Private
+ */
+const getSpecialClaimsByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const specialClaims = await SpecialClaim.find({ employeeId })
+      .sort({ createdAt: -1 });
+
+    // Add pending fields to each claim
+    const claimsWithPendingFields = specialClaims.map(claim => ({
+      ...claim.toObject(),
+      providerId: 'pending',
+      patientAge: 'pending',
+      providerSpecialty: 'pending',
+      claimStatus: 'pending',
+      patientIncome: 'pending',
+      patientMaritalStatus: 'pending',
+      patientEmploymentStatus: 'pending',
+      claimType: 'pending',
+      claimSubmissionMethod: 'pending',
+      diagnosisDescription: 'pending',
+      procedureDescription: 'pending'
+    }));
+
+    res.json({ specialClaims: claimsWithPendingFields });
+  } catch (error) {
+    console.error('Error fetching special claims:', error);
+    res.status(500).json({ message: 'Error fetching special claims', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get all claims from a specific year
+ * @route   GET /api/claims/year/:year
+ * @access  Private/Admin
+ */
+const getClaimsByYear = async (req, res) => {
+  try {
+    const { year } = req.params;
+    const collectionName = year === 'current' ? 'claims' : `claims_${year}`;
+    
+    // Get the collection for the specified year
+    const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
+    
+    const claims = await ClaimModel.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ claims });
+  } catch (error) {
+    console.error(`Error fetching claims for year ${req.params.year}:`, error);
+    res.status(500).json({ message: `Error fetching claims for year ${req.params.year}`, error: error.message });
+  }
+};
+
+/**
+ * @desc    Get claims by employee ID from a specific year
+ * @route   GET /api/claims/year/:year/employee/:employeeId
+ * @access  Private
+ */
+const getEmployeeClaimsByYear = async (req, res) => {
+  try {
+    const { year, employeeId } = req.params;
+    const collectionName = year === 'current' ? 'claims' : `claims_${year}`;
+    
+    // Get the collection for the specified year
+    const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
+    
+    const claims = await ClaimModel.find({ patientId: employeeId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ claims });
+  } catch (error) {
+    console.error(`Error fetching employee claims for year ${req.params.year}:`, error);
+    res.status(500).json({ message: `Error fetching employee claims for year ${req.params.year}`, error: error.message });
+  }
+};
+
+/**
+ * @desc    Get all dependents
+ * @route   GET /api/dependents
+ * @access  Private/Admin
+ */
+const getAllDependents = async (req, res) => {
+  try {
+    const dependents = await mongoose.model('dependents').find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ dependents });
+  } catch (error) {
+    console.error('Error fetching dependents:', error);
+    res.status(500).json({ message: 'Error fetching dependents', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get dependents by employee ID
+ * @route   GET /api/dependents/employee/:employeeId
+ * @access  Private
+ */
+const getDependentsByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const dependents = await mongoose.model('dependents').find({ employeeId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ dependents });
+  } catch (error) {
+    console.error('Error fetching employee dependents:', error);
+    res.status(500).json({ message: 'Error fetching employee dependents', error: error.message });
   }
 };
 
@@ -300,5 +369,10 @@ module.exports = {
   createSpecialClaim,
   updateClaim,
   deleteClaim,
-  getSpecialClaims
+  getSpecialClaims,
+  getSpecialClaimsByEmployeeId,
+  getClaimsByYear,
+  getEmployeeClaimsByYear,
+  getAllDependents,
+  getDependentsByEmployeeId
 };

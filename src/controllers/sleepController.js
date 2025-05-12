@@ -39,6 +39,24 @@ const getSleepDataByEmployeeId = async (req, res) => {
 };
 
 /**
+ * @desc    Get sleep data by ID
+ * @route   GET /api/sleep/:id
+ * @access  Private
+ */
+const getSleepDataById = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+    const sleepData = await SleepData.findOne({ employee: employeeId }).lean();
+    if (!sleepData) {
+      return res.status(404).json({ message: 'Sleep data not found' });
+    }
+    res.json(sleepData);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching sleep data', error: error.message });
+  }
+};
+
+/**
  * @desc    Create sleep data for an employee
  * @route   POST /api/sleep
  * @access  Private
@@ -97,6 +115,7 @@ const deleteSleepData = async (req, res) => {
 module.exports = {
   getAllSleepData,
   getSleepDataByEmployeeId,
+  getSleepDataById,
   createSleepData,
   updateSleepData,
   deleteSleepData

@@ -1,0 +1,137 @@
+{
+    "info": {
+      "name": "Health Data APIs",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get All Health Data",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/health",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Health Data by Year",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/health/year/{{year}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Health Data by Employee ID",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/health/employee/{{employeeId}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Health Data by ID",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/health/{{id}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Create Health Data",
+        "request": {
+          "method": "POST",
+          "url": "{{base_url}}/api/health",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"employeeId\": \"string\",\n  \"weight\": 0,\n  \"height\": 0,\n  \"bmi\": 0,\n  \"hemoglobin\": 0,\n  \"cholesterol\": 0,\n  \"bloodSugar\": 0,\n  \"creatinine\": 0,\n  \"chronicDisease\": \"string\",\n  \"chronicDiseaseCount\": 0,\n  \"familyMedicalHistory\": \"string\",\n  \"claimedAmount\": 0,\n  \"insuranceScore\": 0,\n  \"smokerScore\": 0,\n  \"familyScore\": 0,\n  \"lifestyleScore\": 0,\n  \"bmiScore\": 0,\n  \"hemoglobinScore\": 0,\n  \"sugarScore\": 0,\n  \"cholesterolScore\": 0,\n  \"creatinineScore\": 0,\n  \"physicalScore\": 0,\n  \"wellnessScore\": 0\n}"
+          }
+        }
+      },
+      {
+        "name": "Update Health Data",
+        "request": {
+          "method": "PUT",
+          "url": "{{base_url}}/api/health/{{id}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"weight\": 0,\n  \"height\": 0,\n  \"bmi\": 0,\n  \"hemoglobin\": 0,\n  \"cholesterol\": 0,\n  \"bloodSugar\": 0,\n  \"creatinine\": 0,\n  \"chronicDisease\": \"string\",\n  \"chronicDiseaseCount\": 0,\n  \"familyMedicalHistory\": \"string\",\n  \"claimedAmount\": 0,\n  \"insuranceScore\": 0,\n  \"smokerScore\": 0,\n  \"familyScore\": 0,\n  \"lifestyleScore\": 0,\n  \"bmiScore\": 0,\n  \"hemoglobinScore\": 0,\n  \"sugarScore\": 0,\n  \"cholesterolScore\": 0,\n  \"creatinineScore\": 0,\n  \"physicalScore\": 0,\n  \"wellnessScore\": 0\n}"
+          }
+        }
+      },
+      {
+        "name": "Delete Health Data",
+        "request": {
+          "method": "DELETE",
+          "url": "{{base_url}}/api/health/{{id}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:3000"
+      },
+      {
+        "key": "token",
+        "value": "your_jwt_token_here"
+      },
+      {
+        "key": "year",
+        "value": "2024"
+      },
+      {
+        "key": "employeeId",
+        "value": "employee_uuid_here"
+      },
+      {
+        "key": "id",
+        "value": "health_data_id_here"
+      }
+    ]
+  }

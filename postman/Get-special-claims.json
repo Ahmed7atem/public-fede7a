@@ -1,0 +1,161 @@
+{
+    "info": {
+      "name": "Special Claims APIs",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get All Special Claims",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/claims/special",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Get Special Claims by Employee ID",
+        "request": {
+          "method": "GET",
+          "url": "{{base_url}}/api/claims/special/employee/{{employeeId}}",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Create Special Claim",
+        "request": {
+          "method": "POST",
+          "url": "{{base_url}}/api/claims/special-claims",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "body": {
+            "mode": "formdata",
+            "formdata": [
+              {
+                "key": "policyNumber",
+                "value": "POL123456",
+                "type": "text"
+              },
+              {
+                "key": "policyHolderName",
+                "value": "John Doe",
+                "type": "text"
+              },
+              {
+                "key": "employeeId",
+                "value": "EMP789",
+                "type": "text"
+              },
+              {
+                "key": "email",
+                "value": "john.doe@example.com",
+                "type": "text"
+              },
+              {
+                "key": "number",
+                "value": "+1234567890",
+                "type": "text"
+              },
+              {
+                "key": "claimFor",
+                "value": "Medical",
+                "type": "text"
+              },
+              {
+                "key": "claimForId",
+                "value": "CLM456",
+                "type": "text"
+              },
+              {
+                "key": "country",
+                "value": "USA",
+                "type": "text"
+              },
+              {
+                "key": "claimAmount",
+                "value": "1500.75",
+                "type": "text"
+              },
+              {
+                "key": "currency",
+                "value": "USD",
+                "type": "text"
+              },
+              {
+                "key": "dateOfTreatment",
+                "value": "2025-05-01",
+                "type": "text"
+              },
+              {
+                "key": "paymentMethod",
+                "value": "Bank Transfer",
+                "type": "text"
+              },
+              {
+                "key": "bankName",
+                "value": "Bank of America",
+                "type": "text"
+              },
+              {
+                "key": "branchName",
+                "value": "Main Branch",
+                "type": "text"
+              },
+              {
+                "key": "accountNumber",
+                "value": "123456789012",
+                "type": "text"
+              },
+              {
+                "key": "swiftCode",
+                "value": "BOFAUS3N",
+                "type": "text"
+              },
+              {
+                "key": "iban",
+                "value": "US12345678901234567890",
+                "type": "text"
+              },
+              {
+                "key": "description",
+                "value": "Medical treatment for surgery",
+                "type": "text"
+              },
+              {
+                "key": "attachments",
+                "type": "file",
+                "src": "/path/to/your/file"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:3000"
+      },
+      {
+        "key": "token",
+        "value": "your_jwt_token_here"
+      },
+      {
+        "key": "employeeId",
+        "value": "EMP789"
+      }
+    ]
+  }

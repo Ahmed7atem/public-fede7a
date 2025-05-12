@@ -78,10 +78,29 @@ const deleteWearableData = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get wearable data by ID
+ * @route   GET /api/wearables/:id
+ * @access  Private
+ */
+const getWearableDataById = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+    const wearableData = await WearableData.findOne({ employee: employeeId }).lean();
+    if (!wearableData) {
+      return res.status(404).json({ message: 'Wearable data not found' });
+    }
+    res.json(wearableData);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching wearable data', error: error.message });
+  }
+};
+
 module.exports = {
   getAllWearableData,
   getWearableDataByEmployeeId,
   createWearableData,
   updateWearableData,
-  deleteWearableData
+  deleteWearableData,
+  getWearableDataById
 }; 

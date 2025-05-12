@@ -11,8 +11,12 @@ const {
   createSpecialClaim,
   updateClaim,
   deleteClaim,
-  getSpecialClaims
+  getSpecialClaims,
+  getSpecialClaimsByEmployeeId,
+  getClaimsByYear,
+  getEmployeeClaimsByYear
 } = require('../controllers/claimController');
+const { protect, admin } = require('../middlewares/authMiddleware');
 
 // @route   GET /api/claims
 // @desc    Get all claims
@@ -22,7 +26,7 @@ router.get('/', getAllClaims);
 // @route   GET /api/claims/special
 // @desc    Get special claims with filtering options
 // @access  Private/Admin
-router.get('/special', getSpecialClaims);
+router.get('/special', protect, admin, getSpecialClaims);
 
 // @route   GET /api/claims/:id
 // @desc    Get claim by ID
@@ -33,6 +37,21 @@ router.get('/:id', getClaimById);
 // @desc    Get claims by employee ID
 // @access  Private
 router.get('/employee/:employeeId', getClaimsByEmployeeId);
+
+// @route   GET /api/claims/special/employee/:employeeId
+// @desc    Get special claims by employee ID
+// @access  Private
+router.get('/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
+
+// @route   GET /api/claims/year/:year
+// @desc    Get claims by year
+// @access  Private/Admin
+router.get('/year/:year', protect, admin, getClaimsByYear);
+
+// @route   GET /api/claims/year/:year/employee/:employeeId
+// @desc    Get employee claims by year
+// @access  Private
+router.get('/year/:year/employee/:employeeId', protect, getEmployeeClaimsByYear);
 
 // @route   POST /api/claims
 // @desc    Create a new claim with attachment
