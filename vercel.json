@@ -1,31 +1,19 @@
 {
   "version": 2,
   "name": "medbond-api",
-  "builds": [
-    {
-      "src": "src/server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/server.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-      }
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "functions": {
     "src/server.js": {
       "memory": 1024,
       "maxDuration": 10
     }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/server.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
   }
 } 
