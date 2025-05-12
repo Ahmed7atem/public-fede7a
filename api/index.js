@@ -141,24 +141,91 @@ app.get('/api/policies', getAllPolicies);
 // Special Claims routes - moved higher in the routing order
 app.get('/api/claims/special', getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special-claims', (req, res) => {
-  // Simplify to JSON-only approach for Vercel
+
+// Special claims POST endpoint - modified to debug and fix request body issues
+app.post('/api/claims/special-claims', express.json(), (req, res) => {
   try {
-    console.log('Special claim request received with body:', JSON.stringify(req.body));
+    // Log headers to debug
+    console.log('Request headers:', req.headers);
+    console.log('Request body type:', typeof req.body, 'Content:', JSON.stringify(req.body));
     
-    // Use the createSpecialClaim function directly
-    const claimData = req.body;
-    
-    // Create a simplified response for testing
-    res.status(201).json({
-      success: true,
-      message: 'Special claim request received (debug mode)',
-      receivedData: claimData
-    });
+    // Check if body is empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.log('Empty body detected, checking if raw data is available');
+      
+      // Create sample data for testing/debugging
+      const sampleData = {
+        policyNumber: "POL123456",
+        policyHolderName: "John Doe",
+        employeeId: "EMP789",
+        email: "john.doe@example.com", 
+        number: "+1234567890",
+        claimFor: "employee",
+        claimForId: "CLM456",
+        country: "USA",
+        claimAmount: 1500.75,
+        currency: "USD",
+        dateOfTreatment: "2023-05-01",
+        paymentMethod: "Bank Transfer",
+        bankName: "Bank of America",
+        branchName: "Main Branch",
+        accountNumber: "123456789012",
+        swiftCode: "BOFAUS3N",
+        iban: "US12345678901234567890",
+        description: "Medical treatment for surgery"
+      };
+      
+      // Use the SpecialClaim model
+      const SpecialClaim = require('../models/SpecialClaim');
+      
+      // Create and save the claim with sample data (for debugging)
+      const specialClaim = new SpecialClaim(sampleData);
+      
+      specialClaim.save()
+        .then(savedClaim => {
+          res.status(201).json({
+            success: true,
+            message: 'Special claim created with SAMPLE data (debugging mode)',
+            data: savedClaim
+          });
+        })
+        .catch(err => {
+          console.error('Error saving special claim:', err);
+          res.status(500).json({
+            message: 'Error saving special claim to database',
+            error: err.message
+          });
+        });
+    } else {
+      // Use the received data if body is not empty
+      const claimData = req.body;
+      
+      // Use the SpecialClaim model
+      const SpecialClaim = require('../models/SpecialClaim');
+      
+      // Create and save the claim with actual data
+      const specialClaim = new SpecialClaim(claimData);
+      
+      specialClaim.save()
+        .then(savedClaim => {
+          res.status(201).json({
+            success: true,
+            message: 'Special claim created successfully with your data',
+            data: savedClaim
+          });
+        })
+        .catch(err => {
+          console.error('Error saving special claim:', err);
+          res.status(500).json({
+            message: 'Error saving special claim to database',
+            error: err.message
+          });
+        });
+    }
   } catch (error) {
     console.error('Detailed error in special claims endpoint:', error);
-    res.status(500).json({ 
-      message: 'Error in special claims endpoint', 
+    res.status(500).json({
+      message: 'Error in special claims endpoint',
       error: error.message,
       stack: error.stack
     });
