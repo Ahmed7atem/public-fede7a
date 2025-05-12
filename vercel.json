@@ -2,7 +2,7 @@
   "version": 2,
   "name": "medbond-api",
   "functions": {
-    "src/server.js": {
+    "api/index.js": {
       "memory": 1024,
       "maxDuration": 10
     }
@@ -10,7 +10,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "src/server.js"
+      "dest": "api/index.js"
     }
   ],
   "env": {
