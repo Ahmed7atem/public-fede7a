@@ -1,8 +1,66 @@
 // controllers/claimController.js
 const mongoose = require('mongoose');
-const { Claim } = require('../models');
-const SpecialClaim = require('../models/SpecialClaim'); // Import the new model
 const { validationResult } = require('express-validator');
+const SpecialClaim = require('../../models/SpecialClaim');
+
+// Define Claim Schema
+const claimSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  patientId: {
+    type: String,
+    required: true,
+    ref: 'Employee'
+  },
+  providerId: {
+    type: String,
+    required: true,
+    ref: 'Provider'
+  },
+  serviceDate: {
+    type: Date,
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  attachment: {
+    filename: String,
+    path: String,
+    mimetype: String,
+    size: Number
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Update the updatedAt timestamp before saving
+claimSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Create Claim model
+const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
 
 /**
  * @desc    Get all claims
