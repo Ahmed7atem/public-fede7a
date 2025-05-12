@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
@@ -15,7 +15,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "buildCommand": "npm install",
-  "outputDirectory": ".",
-  "installCommand": "npm install"
+  "buildCommand": "cp -r src/* api/ && npm install",
+  "outputDirectory": "api"
 } 
