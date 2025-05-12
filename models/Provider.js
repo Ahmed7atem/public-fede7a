@@ -52,6 +52,5 @@ const providerSchema = new mongoose.Schema({
 // Create index for geospatial queries
 providerSchema.index({ location: '2dsphere' });
 
-const Provider = mongoose.model('Provider', providerSchema);
-
-module.exports = Provider; 
+// Check if the model exists before creating a new one
+module.exports = mongoose.models.Provider || mongoose.model('Provider', providerSchema); 

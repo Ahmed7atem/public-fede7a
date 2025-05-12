@@ -35,4 +35,5 @@ const specialClaimSchema = new mongoose.Schema({
   }],
 }, { timestamps: true });
 
-module.exports = mongoose.model('SpecialClaim', specialClaimSchema);
+// Check if the model exists before creating a new one
+module.exports = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);
