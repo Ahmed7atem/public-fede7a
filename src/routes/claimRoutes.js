@@ -16,51 +16,41 @@ const {
   getClaimsByYear,
   getEmployeeClaimsByYear
 } = require('../controllers/claimController');
-const { protect, admin } = require('../middlewares/authMiddleware');
 
 // @route   GET /api/claims
 // @desc    Get all claims
-// @access  Private/Admin
 router.get('/', getAllClaims);
 
 // @route   GET /api/claims/special
 // @desc    Get special claims with filtering options
-// @access  Private/Admin
-router.get('/special', protect, admin, getSpecialClaims);
+router.get('/special', getSpecialClaims);
 
 // @route   GET /api/claims/:id
 // @desc    Get claim by ID
-// @access  Private
 router.get('/:id', getClaimById);
 
 // @route   GET /api/claims/employee/:employeeId
 // @desc    Get claims by employee ID
-// @access  Private
 router.get('/employee/:employeeId', getClaimsByEmployeeId);
 
 // @route   GET /api/claims/special/employee/:employeeId
 // @desc    Get special claims by employee ID
-// @access  Private
-router.get('/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
+router.get('/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
 
 // @route   GET /api/claims/year/:year
 // @desc    Get claims by year
-// @access  Private/Admin
-router.get('/year/:year', protect, admin, getClaimsByYear);
+router.get('/year/:year', getClaimsByYear);
 
 // @route   GET /api/claims/year/:year/employee/:employeeId
 // @desc    Get employee claims by year
-// @access  Private
-router.get('/year/:year/employee/:employeeId', protect, getEmployeeClaimsByYear);
+router.get('/year/:year/employee/:employeeId', getEmployeeClaimsByYear);
 
 // @route   POST /api/claims
 // @desc    Create a new claim with attachment
-// @access  Private
 router.post('/', singleUpload, createClaim);
 
 // @route   POST /api/special-claims
 // @desc    Create a new special claim with multiple attachments
-// @access  Private
 router.post(
   '/special-claims',
   multipleUpload,
@@ -88,12 +78,10 @@ router.post(
 
 // @route   PUT /api/claims/:id
 // @desc    Update a claim
-// @access  Private/Admin
 router.put('/:id', updateClaim);
 
 // @route   DELETE /api/claims/:id
 // @desc    Delete a claim
-// @access  Private/Admin
 router.delete('/:id', deleteClaim);
 
 module.exports = router;

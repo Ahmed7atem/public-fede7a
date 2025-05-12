@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const { Employee, Admin } = require('../../models');
 
 /**
@@ -47,8 +46,8 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Generate JWT token
-    const token = generateToken(employee._id);
+    // Use static token for employee
+    const token = `EMPLOYEE_TOKEN_${employee._id}`;
 
     // Get all employee data
     const employeeData = await Employee.findOne({ email }).lean();
@@ -80,7 +79,12 @@ const login = async (req, res) => {
  */
 const getProfile = async (req, res) => {
   try {
-    const token = req.headers.authorization;
+    // Check if token exists
+    if (!req.headers.authorization) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
     const isAdmin = token === 'ADMIN_TOKEN';
     
     if (isAdmin) {
@@ -100,21 +104,27 @@ const getProfile = async (req, res) => {
         }
       });
     } else {
-      // Get employee profile from token
-      const employee = await Employee.findById(req.user.id);
-      if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-      }
-      
-      res.json({
-        message: 'Profile retrieved',
-        user: {
-          id: employee._id,
-          employeeId: employee.employeeId,
-          email: employee.email,
-          role: 'employee'
+      // Check if it's an employee token
+      if (token.startsWith('EMPLOYEE_TOKEN_')) {
+        const employeeId = token.replace('EMPLOYEE_TOKEN_', '');
+        const employee = await Employee.findById(employeeId);
+        
+        if (!employee) {
+          return res.status(404).json({ message: 'Employee not found' });
         }
-      });
+        
+        res.json({
+          message: 'Profile retrieved',
+          user: {
+            id: employee._id,
+            employeeId: employee.employeeId,
+            email: employee.email,
+            role: 'employee'
+          }
+        });
+      } else {
+        return res.status(401).json({ message: 'Not authorized, invalid token' });
+      }
     }
   } catch (error) {
     console.error('Get profile error:', error);
@@ -129,7 +139,12 @@ const getProfile = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
   try {
-    const token = req.headers.authorization;
+    // Check if token exists
+    if (!req.headers.authorization) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
     const isAdmin = token === 'ADMIN_TOKEN';
     
     if (isAdmin) {
@@ -154,26 +169,31 @@ const updateProfile = async (req, res) => {
         }
       });
     } else {
-      // Update employee profile
-      const employee = await Employee.findByIdAndUpdate(
-        req.user.id,
-        { $set: req.body },
-        { new: true }
-      );
-      
-      if (!employee) {
-        return res.status(404).json({ message: 'Employee not found' });
-      }
-      
-      res.json({
-        message: 'Profile updated successfully',
-        user: {
-          id: employee._id,
-          employeeId: employee.employeeId,
-          email: employee.email,
-          role: 'employee'
+      // Check if it's an employee token
+      if (token.startsWith('EMPLOYEE_TOKEN_')) {
+        const employeeId = token.replace('EMPLOYEE_TOKEN_', '');
+        const employee = await Employee.findByIdAndUpdate(
+          employeeId,
+          { $set: req.body },
+          { new: true }
+        );
+        
+        if (!employee) {
+          return res.status(404).json({ message: 'Employee not found' });
         }
-      });
+        
+        res.json({
+          message: 'Profile updated successfully',
+          user: {
+            id: employee._id,
+            employeeId: employee.employeeId,
+            email: employee.email,
+            role: 'employee'
+          }
+        });
+      } else {
+        return res.status(401).json({ message: 'Not authorized, invalid token' });
+      }
     }
   } catch (error) {
     console.error('Update profile error:', error);
