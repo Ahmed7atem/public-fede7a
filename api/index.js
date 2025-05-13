@@ -142,142 +142,31 @@ app.get('/api/policies', getAllPolicies);
 app.get('/api/claims/special', async (req, res) => {
   try {
     const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({}).sort({ createdAt: -1 });
-    
-    if (!claims || claims.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No special claims found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: claims,
-      count: claims.length
-    });
+    const claims = await SpecialClaim.find({});
+    res.json({ success: true, data: claims });
   } catch (error) {
-    console.error('Error fetching special claims:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching special claims',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
 app.get('/api/claims/special/employee/:employeeId', async (req, res) => {
   try {
     const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
-    
-    if (!claims || claims.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No special claims found for this employee'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: claims,
-      count: claims.length
-    });
+    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId });
+    res.json({ success: true, data: claims });
   } catch (error) {
-    console.error('Error fetching employee special claims:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching employee special claims',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
 app.post('/api/claims/special', upload.array('attachments', 5), async (req, res) => {
   try {
-    console.log('Received special claim data:', req.body);
-    console.log('Received files:', req.files);
-    
-    // Validate required fields
-    const requiredFields = [
-      'policyNumber', 
-      'policyHolderName', 
-      'employeeId', 
-      'email', 
-      'number', 
-      'claimFor', 
-      'claimForId', 
-      'country', 
-      'claimAmount', 
-      'currency', 
-      'dateOfTreatment', 
-      'paymentMethod',
-      'bankName',
-      'branchName',
-      'accountNumber',
-      'swiftCode',
-      'iban',
-      'description'
-    ];
-    
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      });
-    }
-
-    // Use the SpecialClaim model
     const SpecialClaim = require('../models/SpecialClaim');
-    
-    // Process attachments if any
-    const attachments = req.files ? req.files.map(file => ({
-      filename: file.filename,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      path: file.path
-    })) : [];
-
-    // Create and save the claim with the exact schema
-    const specialClaim = new SpecialClaim({
-      policyNumber: req.body.policyNumber,
-      policyHolderName: req.body.policyHolderName,
-      employeeId: req.body.employeeId,
-      email: req.body.email,
-      number: req.body.number,
-      claimFor: req.body.claimFor,
-      claimForId: req.body.claimForId,
-      country: req.body.country,
-      claimAmount: parseFloat(req.body.claimAmount),
-      currency: req.body.currency,
-      dateOfTreatment: new Date(req.body.dateOfTreatment),
-      paymentMethod: req.body.paymentMethod,
-      bankName: req.body.bankName,
-      branchName: req.body.branchName,
-      accountNumber: req.body.accountNumber,
-      swiftCode: req.body.swiftCode,
-      iban: req.body.iban,
-      description: req.body.description,
-      attachments: attachments
-    });
-
-    const savedClaim = await specialClaim.save();
-    
-    res.status(201).json({
-      success: true,
-      message: 'Special claim created successfully',
-      data: savedClaim
-    });
+    const claim = new SpecialClaim(req.body);
+    const savedClaim = await claim.save();
+    res.status(201).json({ success: true, data: savedClaim });
   } catch (error) {
-    console.error('Error creating special claim:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating special claim',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
