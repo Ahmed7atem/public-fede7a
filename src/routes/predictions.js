@@ -23,6 +23,55 @@ router.get('/employee/:employeeId', protect, getPredictionsByEmployeeId);
 // @access  Private/Admin
 router.get('/type/:type', protect, admin, getPredictionsByType);
 
+// @route   POST /api/predictions
+// @desc    Create a new prediction
+// @access  Private/Admin
+router.post('/', protect, admin, async (req, res) => {
+  try {
+    const { Patient_ID, Health_Status, Insurance_Consumption, Needs_Insurance_Update, Suggested_Plan, Recommendations, Message } = req.body;
+
+    // Validate required fields
+    if (!Patient_ID || !Health_Status || !Insurance_Consumption || !Needs_Insurance_Update || !Suggested_Plan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    // Create new prediction
+    const newPrediction = new Prediction({
+      employeeId: Patient_ID,
+      predictionType: 'health_status',
+      predictionValue: Health_Status,
+      confidence: 0.85, // Default confidence
+      factors: Recommendations || [],
+      additionalData: {
+        insuranceConsumption: Insurance_Consumption,
+        needsInsuranceUpdate: Needs_Insurance_Update,
+        suggestedPlan: Suggested_Plan,
+        message: Message
+      },
+      predictedAt: new Date()
+    });
+
+    // Save the prediction
+    const savedPrediction = await newPrediction.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Prediction created successfully',
+      data: savedPrediction
+    });
+  } catch (error) {
+    console.error('Error creating prediction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating prediction',
+      error: error.message
+    });
+  }
+});
+
 // @route   PUT /api/predictions/:employeeId
 // @desc    Update prediction by employeeId
 // @access  Private/Admin

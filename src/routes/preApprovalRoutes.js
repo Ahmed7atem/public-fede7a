@@ -5,9 +5,10 @@ const path = require('path');
 const {
   getAllPreApprovals,
   getPreApprovalById,
-  getPreApprovalsByPatientId,
   createPreApproval,
-  updatePreApprovalStatus
+  updatePreApproval,
+  getPreApprovalsByEmployeeId,
+  deletePreApproval
 } = require('../controllers/preApprovalController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -44,19 +45,24 @@ router.get('/', protect, admin, getAllPreApprovals);
 // @access  Private
 router.get('/:id', protect, getPreApprovalById);
 
-// @route   GET /api/pre-approvals/patient/:patientId
-// @desc    Get pre-approval requests by patient ID
+// @route   GET /api/pre-approvals/employee/:employeeId
+// @desc    Get pre-approval requests by employee ID
 // @access  Private
-router.get('/patient/:patientId', protect, getPreApprovalsByPatientId);
+router.get('/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
 
 // @route   POST /api/pre-approvals
-// @desc    Create a new pre-approval request with documents
+// @desc    Create a new pre-approval request with optional attachments
 // @access  Private
-router.post('/', protect, upload.array('documents', 5), createPreApproval);
+router.post('/', protect, upload.array('attachments', 5), createPreApproval);
 
-// @route   PUT /api/pre-approvals/:id/status
+// @route   PUT /api/pre-approvals/:id
 // @desc    Update pre-approval request status
 // @access  Private/Admin
-router.put('/:id/status', protect, admin, updatePreApprovalStatus);
+router.put('/:id', protect, admin, updatePreApproval);
+
+// @route   DELETE /api/pre-approvals/:id
+// @desc    Delete pre-approval request
+// @access  Private/Admin
+router.delete('/:id', protect, admin, deletePreApproval);
 
 module.exports = router; 

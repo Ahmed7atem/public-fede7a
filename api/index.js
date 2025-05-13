@@ -91,8 +91,8 @@ const {
 } = require('../src/controllers/complaintController');
 
 const {
-  createPreApproval,
   getAllPreApprovals,
+  getPreApprovalById,
   getPreApprovalsByEmployeeId,
   getPreApprovalsByProviderId,
   updatePreApprovalStatus,
@@ -210,7 +210,16 @@ app.post('/api/claims/special', upload.array('attachments', 5), async (req, res)
   try {
     const SpecialClaim = require('../models/SpecialClaim');
     
-    // Create claim with exact data from request
+    // Process uploaded files
+    const processedAttachments = (req.files || []).map(file => ({
+      fileName: file.originalname,
+      filePath: file.path,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      uploadDate: new Date()
+    }));
+
+    // Create claim with processed attachments
     const claim = new SpecialClaim({
       policyNumber: req.body.policyNumber,
       policyHolderName: req.body.policyHolderName,
@@ -230,12 +239,13 @@ app.post('/api/claims/special', upload.array('attachments', 5), async (req, res)
       swiftCode: req.body.swiftCode,
       iban: req.body.iban,
       description: req.body.description,
-      attachments: req.files || []
+      attachments: processedAttachments
     });
 
     const savedClaim = await claim.save();
     res.status(201).json({ success: true, data: savedClaim });
   } catch (error) {
+    console.error('Error creating special claim:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -292,11 +302,11 @@ app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
 // Pre-approval routes
-app.post('/api/preapprovals', createPreApproval);
 app.get('/api/preapprovals', getAllPreApprovals);
+app.get('/api/preapprovals/:id', getPreApprovalById);
 app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
-app.get('/api/preapprovals/provider/:providerId', getPreApprovalsByProviderId);
-app.put('/api/preapprovals/:id/status', updatePreApprovalStatus);
+app.post('/api/preapprovals', createPreApproval);
+app.put('/api/preapprovals/:id', updatePreApproval);
 app.delete('/api/preapprovals/:id', deletePreApproval);
 
 // Feedback routes

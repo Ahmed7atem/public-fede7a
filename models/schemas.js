@@ -183,32 +183,63 @@ const claimSchema = new mongoose.Schema({
 
 // Pre-approval Claim Schema
 const preApprovalClaimSchema = new mongoose.Schema({
-  id: { type: String, required: true },
-  patientId: { type: String, required: true },
+  employeeId: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
   providerType: { 
     type: String, 
     required: true,
-    enum: ['Hospital', 'Clinic', 'Labs']
+    enum: ['Hospital', 'Clinic', 'Labs', 'Pharmacy', 'Other'],
+    trim: true
   },
-  category: { type: String, required: true },
-  appointmentDateTime: { type: Date, required: true },
-  documents: [{
-    filename: String,
-    path: String,
-    mimetype: String,
-    size: Number,
-    uploadDate: { type: Date, default: Date.now }
+  providerName: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  description: { 
+    type: String, 
+    required: false,
+    trim: true
+  },
+  attachments: [{
+    fileName: {
+      type: String,
+      required: true
+    },
+    filePath: {
+      type: String,
+      required: true
+    },
+    fileType: {
+      type: String,
+      required: true
+    },
+    fileSize: {
+      type: Number,
+      required: true
+    },
+    uploadDate: {
+      type: Date,
+      default: Date.now
+    }
   }],
-  additionalDetails: String,
   status: { 
     type: String, 
     required: true,
     enum: ['Pending', 'Approved', 'Denied'],
     default: 'Pending'
   },
-  processedAt: Date,
-  processedBy: String,
-  notes: String
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 }, { timestamps: true });
 
 // Doctor Schema - Updated with all required fields

@@ -1,228 +1,184 @@
 {
   "info": {
-    "name": "Health Provider API Collection",
-    "description": "Collection of all GET and POST APIs for the Health Provider application",
+    "name": "Pre-approval APIs",
+    "description": "Collection of APIs for managing pre-approval requests",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
-            }
+      "name": "Get All Pre-approvals",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
           }
-        },
-        {
-          "name": "Register",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\",\n    \"name\": \"John Doe\"\n}"
-            }
-          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals"]
         }
-      ]
+      }
     },
     {
-      "name": "Health Providers",
-      "item": [
-        {
-          "name": "Get All Providers",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/health-providers",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health-providers"]
-            }
+      "name": "Get Pre-approval by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
           }
-        },
-        {
-          "name": "Get Provider by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/health-providers/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health-providers", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "provider_id_here"
-                }
-              ]
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "pre-approval-id-here",
+              "description": "ID of the pre-approval request"
             }
-          }
-        },
-        {
-          "name": "Create Provider",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/health-providers",
-              "host": ["{{base_url}}"],
-              "path": ["api", "health-providers"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Provider Name\",\n    \"address\": \"Provider Address\",\n    \"phone\": \"1234567890\",\n    \"email\": \"provider@example.com\"\n}"
-            }
-          }
+          ]
         }
-      ]
+      }
     },
     {
-      "name": "Pre-approvals",
-      "item": [
-        {
-          "name": "Get All Pre-approvals",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/pre-approvals",
-              "host": ["{{base_url}}"],
-              "path": ["api", "pre-approvals"]
-            }
+      "name": "Get Pre-approvals by Employee ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
           }
-        },
-        {
-          "name": "Get Pre-approval by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/pre-approvals/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "pre-approvals", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "pre_approval_id_here"
-                }
-              ]
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals/employee/:employeeId",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals", "employee", ":employeeId"],
+          "variable": [
+            {
+              "key": "employeeId",
+              "value": "EMP123",
+              "description": "Employee ID"
             }
-          }
-        },
-        {
-          "name": "Create Pre-approval",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/pre-approvals",
-              "host": ["{{base_url}}"],
-              "path": ["api", "pre-approvals"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"providerId\": \"provider_id_here\",\n    \"serviceType\": \"service_type\",\n    \"description\": \"Service description\",\n    \"estimatedCost\": 1000,\n    \"requestedDate\": \"2024-03-20\"\n}"
-            }
-          }
+          ]
         }
-      ]
+      }
     },
     {
-      "name": "Upload",
-      "item": [
-        {
-          "name": "Upload File",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/upload",
-              "host": ["{{base_url}}"],
-              "path": ["api", "upload"]
-            },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": "/path/to/file"
-                }
-              ]
-            }
+      "name": "Create Pre-approval",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
           }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "employeeId",
+              "value": "EMP123",
+              "type": "text"
+            },
+            {
+              "key": "providerType",
+              "value": "Hospital",
+              "type": "text"
+            },
+            {
+              "key": "providerName",
+              "value": "City General Hospital",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "Scheduled for knee replacement surgery",
+              "type": "text"
+            },
+            {
+              "key": "attachments",
+              "type": "file",
+              "src": "/path/to/your/file.jpg"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals"]
         }
-      ]
+      }
+    },
+    {
+      "name": "Update Pre-approval Status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"status\": \"Approved\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "pre-approval-id-here",
+              "description": "ID of the pre-approval request"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Pre-approval",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/pre-approvals/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pre-approvals", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "pre-approval-id-here",
+              "description": "ID of the pre-approval request"
+            }
+          ]
+        }
+      }
     }
   ],
   "variable": [
@@ -233,7 +189,7 @@
     },
     {
       "key": "token",
-      "value": "your_jwt_token_here",
+      "value": "your-jwt-token-here",
       "type": "string"
     }
   ]

@@ -9,10 +9,18 @@ const { PreApprovalClaim } = require('../../models');
 const getAllPreApprovals = async (req, res) => {
   try {
     const preApprovals = await PreApprovalClaim.find().sort({ createdAt: -1 }).lean();
-    res.json(preApprovals);
+    res.json({
+      success: true,
+      data: preApprovals,
+      count: preApprovals.length
+    });
   } catch (error) {
     console.error('Error fetching pre-approvals:', error);
-    res.status(500).json({ message: 'Error fetching pre-approvals', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching pre-approvals', 
+      error: error.message 
+    });
   }
 };
 
@@ -23,15 +31,24 @@ const getAllPreApprovals = async (req, res) => {
  */
 const getPreApprovalById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const preApproval = await PreApprovalClaim.findOne({ id }).lean();
+    const preApproval = await PreApprovalClaim.findById(req.params.id).lean();
     if (!preApproval) {
-      return res.status(404).json({ message: 'Pre-approval request not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Pre-approval request not found' 
+      });
     }
-    res.json(preApproval);
+    res.json({
+      success: true,
+      data: preApproval
+    });
   } catch (error) {
     console.error('Error fetching pre-approval:', error);
-    res.status(500).json({ message: 'Error fetching pre-approval', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching pre-approval', 
+      error: error.message 
+    });
   }
 };
 
@@ -58,56 +75,121 @@ const getPreApprovalsByPatientId = async (req, res) => {
  */
 const createPreApproval = async (req, res) => {
   try {
-    const { employeeId, providerId, service, notes } = req.body;
+    const { employeeId, providerType, providerName, description } = req.body;
+
+    // Validate required fields
+    if (!employeeId || !providerType || !providerName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: employeeId, providerType, and providerName are required'
+      });
+    }
+
+    // Process uploaded files
+    const processedAttachments = (req.files || []).map(file => ({
+      fileName: file.originalname,
+      filePath: file.path,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      uploadDate: new Date()
+    }));
+
+    // Create new pre-approval
     const preApproval = new PreApprovalClaim({
       employeeId,
-      providerId,
-      service,
-      status: 'pending',
-      notes,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      providerType,
+      providerName,
+      description,
+      attachments: processedAttachments,
+      status: 'Pending'
     });
-    const saved = await preApproval.save();
-    res.status(201).json(saved);
+
+    const savedPreApproval = await preApproval.save();
+    res.status(201).json({
+      success: true,
+      message: 'Pre-approval request created successfully',
+      data: savedPreApproval
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating pre-approval', error: error.message });
+    console.error('Error creating pre-approval:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error creating pre-approval', 
+      error: error.message 
+    });
   }
 };
 
 /**
  * @desc    Update pre-approval status
- * @route   PUT /api/pre-approvals/:id/status
+ * @route   PUT /api/pre-approvals/:id
  * @access  Private/Admin
  */
-const updatePreApprovalStatus = async (req, res) => {
+const updatePreApproval = async (req, res) => {
   try {
-    const { status, notes } = req.body;
+    const { status } = req.body;
+    
+    if (!status || !['Pending', 'Approved', 'Denied'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: Pending, Approved, Denied'
+      });
+    }
+
     const preApproval = await PreApprovalClaim.findByIdAndUpdate(
       req.params.id,
-      { status, notes, updatedAt: new Date() },
+      { 
+        status,
+        updatedAt: new Date()
+      },
       { new: true }
     );
+
     if (!preApproval) {
-      return res.status(404).json({ message: 'Pre-approval not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Pre-approval not found' 
+      });
     }
-    res.json(preApproval);
+
+    res.json({
+      success: true,
+      message: 'Pre-approval status updated successfully',
+      data: preApproval
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating pre-approval', error: error.message });
+    console.error('Error updating pre-approval:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error updating pre-approval', 
+      error: error.message 
+    });
   }
 };
 
 /**
- * @desc    Get pre-approvals by employee
+ * @desc    Get pre-approvals by employee ID
  * @route   GET /api/pre-approvals/employee/:employeeId
  * @access  Private
  */
 const getPreApprovalsByEmployeeId = async (req, res) => {
   try {
-    const preApprovals = await PreApprovalClaim.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 }).lean();
-    res.json(preApprovals);
+    const preApprovals = await PreApprovalClaim.find({ 
+      employeeId: req.params.employeeId 
+    }).sort({ createdAt: -1 }).lean();
+
+    res.json({
+      success: true,
+      data: preApprovals,
+      count: preApprovals.length
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching employee pre-approvals', error: error.message });
+    console.error('Error fetching employee pre-approvals:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching employee pre-approvals', 
+      error: error.message 
+    });
   }
 };
 
@@ -134,11 +216,22 @@ const deletePreApproval = async (req, res) => {
   try {
     const preApproval = await PreApprovalClaim.findByIdAndDelete(req.params.id);
     if (!preApproval) {
-      return res.status(404).json({ message: 'Pre-approval not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Pre-approval not found' 
+      });
     }
-    res.json({ message: 'Pre-approval deleted' });
+    res.json({ 
+      success: true,
+      message: 'Pre-approval deleted successfully' 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting pre-approval', error: error.message });
+    console.error('Error deleting pre-approval:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error deleting pre-approval', 
+      error: error.message 
+    });
   }
 };
 
@@ -147,7 +240,7 @@ module.exports = {
   getPreApprovalById,
   getPreApprovalsByPatientId,
   createPreApproval,
-  updatePreApprovalStatus,
+  updatePreApproval,
   getPreApprovalsByEmployeeId,
   getPreApprovalsByProviderId,
   deletePreApproval
