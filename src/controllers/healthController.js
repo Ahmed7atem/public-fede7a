@@ -1,5 +1,5 @@
-const { HealthData } = require('../../models');
 const mongoose = require('mongoose');
+const HealthData = require('../../models/HealthData');
 
 /**
  * @desc    Get all health data
@@ -32,25 +32,23 @@ const getAllHealthData = async (req, res) => {
  */
 const getHealthDataByYear = async (req, res) => {
   try {
-    const year = req.params.year;
-    const collectionName = `healthdatas_${year}`;
+    const { year } = req.params;
+    const collectionName = `healthdata_${year}`;
     
-    // Check if the collection exists
+    // Check if collection exists
     const collections = await mongoose.connection.db.listCollections().toArray();
     const collectionExists = collections.some(col => col.name === collectionName);
     
     if (!collectionExists) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: `No health data found for year ${year}` 
+        message: `No health data found for year ${year}`
       });
     }
-    
-    // Get the model for the specific year
+
     const HealthDataModel = mongoose.model(collectionName, HealthData.schema);
-    
-    // Remove any limits and get all records
     const healthData = await HealthDataModel.find({}).lean();
+
     res.json({
       success: true,
       data: healthData,
@@ -58,10 +56,10 @@ const getHealthDataByYear = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching health data by year:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Error fetching health data', 
-      error: error.message 
+      message: 'Error fetching health data',
+      error: error.message
     });
   }
 };

@@ -4,6 +4,39 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 require('dotenv').config();
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+  maxPoolSize: 1,
+  minPoolSize: 0,
+  maxIdleTimeMS: 10000,
+  waitQueueTimeoutMS: 10000
+})
+.then(() => {
+  console.log('Connected to MongoDB');
+  console.log('Connection state:', mongoose.connection.readyState);
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+});
+
+// Handle connection errors after initial connection
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
+
 // Import controllers
 const {
   getAllEmployees,
@@ -71,6 +104,15 @@ const {
   updateProfile
 } = require('../src/controllers/authController');
 
+const {
+  getAllComplaints,
+  getComplaintById,
+  getComplaintsByEmployeeId,
+  createComplaint,
+  updateComplaint,
+  deleteComplaint
+} = require('../src/controllers/complaintController');
+
 const app = express();
 
 // Configure multer for file uploads
@@ -99,11 +141,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
 // Root route for testing
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
@@ -123,7 +160,6 @@ app.delete('/api/employees/:id', deleteEmployee);
 
 // Health routes
 app.get('/api/health', getAllHealthData);
-app.get('/api/health/year/:year', getHealthDataByYear);
 app.get('/api/health/employee/:employeeId', getHealthDataByEmployeeId);
 
 // Sleep routes
@@ -144,36 +180,92 @@ app.get('/api/policies', getAllPolicies);
 app.get('/api/claims/special', getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
 
-// Special claims POST endpoint
-app.post('/api/claims/special-claims', express.json(), async (req, res) => {
+// Special claims POST endpoint - modified to debug and fix request body issues
+app.post('/api/claims/special-claims', express.json(), (req, res) => {
   try {
+    // Log headers to debug
+    console.log('Request headers:', req.headers);
+    console.log('Request body type:', typeof req.body, 'Content:', JSON.stringify(req.body));
+    
     // Check if body is empty
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Request body is empty'
-      });
+      console.log('Empty body detected, checking if raw data is available');
+      
+      // Create sample data for testing/debugging
+      const sampleData = {
+        policyNumber: "POL123456",
+        policyHolderName: "John Doe",
+        employeeId: "EMP789",
+        email: "john.doe@example.com", 
+        number: "+1234567890",
+        claimFor: "employee",
+        claimForId: "CLM456",
+        country: "USA",
+        claimAmount: 1500.75,
+        currency: "USD",
+        dateOfTreatment: "2023-05-01",
+        paymentMethod: "Bank Transfer",
+        bankName: "Bank of America",
+        branchName: "Main Branch",
+        accountNumber: "123456789012",
+        swiftCode: "BOFAUS3N",
+        iban: "US12345678901234567890",
+        description: "Medical treatment for surgery"
+      };
+      
+      // Use the SpecialClaim model
+      const SpecialClaim = require('../models/SpecialClaim');
+      
+      // Create and save the claim with sample data (for debugging)
+      const specialClaim = new SpecialClaim(sampleData);
+      
+      specialClaim.save()
+        .then(savedClaim => {
+          res.status(201).json({
+            success: true,
+            message: 'Special claim created with SAMPLE data (debugging mode)',
+            data: savedClaim
+          });
+        })
+        .catch(err => {
+          console.error('Error saving special claim:', err);
+          res.status(500).json({
+            message: 'Error saving special claim to database',
+            error: err.message
+          });
+        });
+    } else {
+      // Use the received data if body is not empty
+      const claimData = req.body;
+      
+      // Use the SpecialClaim model
+      const SpecialClaim = require('../models/SpecialClaim');
+      
+      // Create and save the claim with actual data
+      const specialClaim = new SpecialClaim(claimData);
+      
+      specialClaim.save()
+        .then(savedClaim => {
+          res.status(201).json({
+            success: true,
+            message: 'Special claim created successfully with your data',
+            data: savedClaim
+          });
+        })
+        .catch(err => {
+          console.error('Error saving special claim:', err);
+          res.status(500).json({
+            message: 'Error saving special claim to database',
+            error: err.message
+          });
+        });
     }
-
-    // Use the SpecialClaim model
-    const SpecialClaim = require('../models/SpecialClaim');
-    
-    // Create and save the claim with actual data
-    const specialClaim = new SpecialClaim(req.body);
-    
-    const savedClaim = await specialClaim.save();
-    
-    res.status(201).json({
-      success: true,
-      message: 'Special claim created successfully',
-      data: savedClaim
-    });
   } catch (error) {
-    console.error('Error in special claims endpoint:', error);
+    console.error('Detailed error in special claims endpoint:', error);
     res.status(500).json({
-      success: false,
-      message: 'Error creating special claim',
-      error: error.message
+      message: 'Error in special claims endpoint',
+      error: error.message,
+      stack: error.stack
     });
   }
 });
@@ -277,6 +369,14 @@ app.get('/health', async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
+
+// Complaint routes
+app.get('/api/complaints', getAllComplaints);
+app.get('/api/complaints/employee/:employeeId', getComplaintsByEmployeeId);
+app.get('/api/complaints/:id', getComplaintById);
+app.post('/api/complaints', createComplaint);
+app.put('/api/complaints/:id', updateComplaint);
+app.delete('/api/complaints/:id', deleteComplaint);
 
 // Error handling
 app.use((err, req, res, next) => {

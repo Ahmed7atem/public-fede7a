@@ -1,0 +1,160 @@
+{
+    "info": {
+      "name": "Complaint Tickets API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get All Complaint Tickets",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints"]
+          }
+        }
+      },
+      {
+        "name": "Get Complaint Ticket by ID",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints/:id",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints", ":id"],
+            "variable": [
+              {
+                "key": "id",
+                "value": "680e316203b6e01f8eec231f"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Get Complaint Tickets by Employee ID",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints/employee/:employeeId",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints", "employee", ":employeeId"],
+            "variable": [
+              {
+                "key": "employeeId",
+                "value": "8f7b7927-6c04-401a-ab0b-61000132f970"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Create Complaint Ticket",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"subject\": \"Service Issue\",\n  \"category\": \"Others\",\n  \"description\": \"Issue with claim processing\",\n  \"employeeId\": \"8f7b7927-6c04-401a-ab0b-61000132f970\"\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints"]
+          }
+        }
+      },
+      {
+        "name": "Update Complaint Ticket",
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"status\": \"In Progress\",\n  \"description\": \"Updated description of the issue\"\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints/:id",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints", ":id"],
+            "variable": [
+              {
+                "key": "id",
+                "value": "680e316203b6e01f8eec231f"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Delete Complaint Ticket",
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/complaints/:id",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "complaints", ":id"],
+            "variable": [
+              {
+                "key": "id",
+                "value": "680e316203b6e01f8eec231f"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "https://public-fede7a.vercel.app"
+      },
+      {
+        "key": "token",
+        "value": "your-auth-token-here"
+      }
+    ]
+  }
