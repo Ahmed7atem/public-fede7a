@@ -99,9 +99,11 @@ const {
 const {
   getAllPreApprovals,
   getPreApprovalById,
+  getPreApprovalsByPatientId,
+  createPreApproval,
+  updatePreApproval,
   getPreApprovalsByEmployeeId,
   getPreApprovalsByProviderId,
-  updatePreApprovalStatus,
   deletePreApproval
 } = require('../src/controllers/preApprovalController');
 
