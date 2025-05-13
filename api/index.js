@@ -44,12 +44,25 @@ const {
 
 const {
   getAllProviders,
-  getAllDoctors
+  getAllDoctors,
+  getProvidersByType,
+  getProviderById,
+  getProvidersBySpecialty,
+  createProvider,
+  addReview,
+  getProviderReviews,
+  getCategories,
+  getSpecializations
 } = require('../src/controllers/providerController');
 
 const {
   getAllPolicies,
-  getAllPolicyDocuments
+  getAllPolicyDocuments,
+  getPolicyById,
+  getPolicyByEmployeeId,
+  createPolicy,
+  updatePolicy,
+  deletePolicy
 } = require('../src/controllers/policyController');
 
 const {
@@ -253,11 +266,22 @@ app.get('/api/wearable/employee/:employeeId', getWearableDataByEmployeeId);
 
 // Provider routes
 app.get('/api/providers', getAllProviders);
-app.get('/api/doctors', getAllDoctors);
+app.get('/api/providers/type/:type', getProvidersByType);
+app.get('/api/providers/:id', getProviderById);
+app.get('/api/providers/specialty/:specialty', getProvidersBySpecialty);
+app.post('/api/providers', createProvider);
+app.post('/api/providers/:id/reviews', addReview);
+app.get('/api/providers/:id/reviews', getProviderReviews);
+app.get('/api/providers/categories', getCategories);
+app.get('/api/providers/specializations', getSpecializations);
 
 // Policy routes
 app.get('/api/policies', getAllPolicies);
-app.get('/api/policies/documents', getAllPolicyDocuments);
+app.get('/api/policies/:id', getPolicyById);
+app.get('/api/policies/employee/:employeeId', getPolicyByEmployeeId);
+app.post('/api/policies', createPolicy);
+app.put('/api/policies/:id', updatePolicy);
+app.delete('/api/policies/:id', deletePolicy);
 
 // Analytics routes
 app.get('/api/analytics/employee/:employeeId', getEmployeeAnalytics);
