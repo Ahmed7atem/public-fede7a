@@ -2,38 +2,94 @@
 const mongoose = require('mongoose');
 
 const specialClaimSchema = new mongoose.Schema({
-  policyNumber: { type: String, required: true, trim: true },
-  policyHolderName: { type: String, required: true, trim: true },
-  employeeId: { type: String, required: true, trim: true },
+  policyNumber: {
+    type: String,
+    required: true
+  },
+  policyHolderName: {
+    type: String,
+    required: true
+  },
+  employeeId: {
+    type: String,
+    required: true
+  },
   email: {
     type: String,
-    required: true,
-    trim: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+    required: true
   },
-  number: { type: String, required: true, trim: true },
-  claimFor: { type: String, required: true, trim: true },
-  claimForId: { type: String, required: true, trim: true },
-  country: { type: String, required: true, trim: true },
-  claimAmount: { type: Number, required: true, min: [0, 'Claim amount cannot be negative'] },
-  currency: { type: String, required: true, trim: true, enum: ['USD', 'EUR', 'GBP', 'INR', 'AUD'] },
-  dateOfTreatment: { type: Date, required: true },
-  paymentMethod: { type: String, required: true, trim: true, enum: ['Bank Transfer', 'Cheque', 'Online Payment'] },
-  bankName: { type: String, required: true, trim: true },
-  branchName: { type: String, required: true, trim: true },
-  accountNumber: { type: String, required: true, trim: true },
-  swiftCode: { type: String, required: true, trim: true },
-  iban: { type: String, required: true, trim: true },
-  description: { type: String, trim: true, default: '' },
+  number: {
+    type: String,
+    required: true
+  },
+  claimFor: {
+    type: String,
+    required: true
+  },
+  claimForId: {
+    type: String,
+    required: true
+  },
+  country: {
+    type: String,
+    required: true
+  },
+  claimAmount: {
+    type: Number,
+    required: true
+  },
+  currency: {
+    type: String,
+    required: true
+  },
+  dateOfTreatment: {
+    type: Date,
+    required: true
+  },
+  paymentMethod: {
+    type: String,
+    required: true
+  },
+  bankName: {
+    type: String,
+    required: true
+  },
+  branchName: {
+    type: String,
+    required: true
+  },
+  accountNumber: {
+    type: String,
+    required: true
+  },
+  swiftCode: {
+    type: String,
+    required: true
+  },
+  iban: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
   attachments: [{
-    filename: { type: String, required: true },
-    path: { type: String, required: true },
-    mimetype: { type: String, required: true },
-    size: { type: Number, required: true },
-    uploadDate: { type: Date, default: Date.now },
-  }],
-}, { timestamps: true });
+    filename: String,
+    originalname: String,
+    mimetype: String,
+    size: Number,
+    path: String
+  }]
+}, {
+  timestamps: true
+});
+
+// Pre-save middleware to update updatedAt
+specialClaimSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 // Check if the model exists before creating a new one
 module.exports = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);
