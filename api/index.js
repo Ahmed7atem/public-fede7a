@@ -78,7 +78,8 @@ const {
 const {
   getAllPredictions,
   getPredictionsByEmployeeId,
-  getPredictionsByType
+  getPredictionsByType,
+  getPredictionById
 } = require('../src/controllers/predictionController');
 
 const {
@@ -99,11 +100,9 @@ const {
 const {
   getAllPreApprovals,
   getPreApprovalById,
-  getPreApprovalsByPatientId,
-  createPreApproval,
-  updatePreApproval,
   getPreApprovalsByEmployeeId,
   getPreApprovalsByProviderId,
+  updatePreApprovalStatus,
   deletePreApproval
 } = require('../src/controllers/preApprovalController');
 
@@ -245,17 +244,46 @@ app.get('/api/analytics/organization', getOrganizationAnalytics);
 app.get('/api/analytics/alerts', getHealthAlerts);
 
 // Prediction routes
-app.get('/api/predictions', getAllPredictions);
-app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
-app.get('/api/predictions/type/:type', getPredictionsByType);
+app.get('/api/predictions', protect, getAllPredictions);
+app.get('/api/predictions/:id', protect, getPredictionById);
+app.get('/api/predictions/employee/:employeeId', protect, getPredictionsByEmployeeId);
+app.get('/api/predictions/type/:type', protect, getPredictionsByType);
+app.post('/api/predictions', protect, async (req, res) => {
+  try {
+    const prediction = new Prediction({
+      patientId: req.body.Patient_ID,
+      healthStatus: req.body.Health_Status,
+      insuranceConsumption: req.body.Insurance_Consumption,
+      needsInsuranceUpdate: req.body.Needs_Insurance_Update === 'Yes',
+      suggestedPlan: req.body.Suggested_Plan,
+      recommendations: req.body.Recommendations,
+      message: req.body.Message,
+      predictedAt: new Date()
+    });
+
+    const savedPrediction = await prediction.save();
+    res.status(201).json({
+      success: true,
+      message: 'Prediction created successfully',
+      data: savedPrediction
+    });
+  } catch (error) {
+    console.error('Error creating prediction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating prediction',
+      error: error.message
+    });
+  }
+});
 
 // Pre-approval routes
-app.get('/api/pre-approvals', protect, getAllPreApprovals);
-app.get('/api/pre-approvals/:id', protect, getPreApprovalById);
-app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
-app.post('/api/pre-approvals', protect, upload.array('attachments', 5), createPreApproval);
-app.put('/api/pre-approvals/:id', protect, updatePreApproval);
-app.delete('/api/pre-approvals/:id', protect, deletePreApproval);
+app.get('/api/preapprovals', getAllPreApprovals);
+app.get('/api/preapprovals/:id', getPreApprovalById);
+app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
+app.post('/api/preapprovals', createPreApproval);
+app.put('/api/preapprovals/:id', updatePreApproval);
+app.delete('/api/preapprovals/:id', deletePreApproval);
 
 // Feedback routes
 app.get('/api/feedbacks', getAllFeedbacks);

@@ -262,9 +262,19 @@ const deleteClaim = async (req, res) => {
 const getSpecialClaims = async (req, res) => {
   try {
     const claims = await SpecialClaim.find({}).lean();
-    res.json(claims);
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length,
+      message: claims.length === 0 ? 'No special claims found' : 'Special claims retrieved successfully'
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching special claims:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching special claims', 
+      error: error.message 
+    });
   }
 };
 
