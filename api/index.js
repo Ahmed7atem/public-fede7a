@@ -142,7 +142,17 @@ app.get('/api/policies', getAllPolicies);
 app.get('/api/claims/special', async (req, res) => {
   try {
     const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({}).sort({ createdAt: -1 });
+    
+    // Add timeout to the query
+    const claims = await Promise.race([
+      SpecialClaim.find({})
+        .select('policyNumber policyHolderName employeeId email number claimFor claimForId country claimAmount currency dateOfTreatment paymentMethod bankName branchName accountNumber swiftCode iban description attachments createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .lean(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 8000)
+      )
+    ]);
     
     if (!claims || claims.length === 0) {
       return res.status(404).json({
@@ -158,6 +168,12 @@ app.get('/api/claims/special', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching special claims:', error);
+    if (error.message === 'Query timeout') {
+      return res.status(504).json({
+        success: false,
+        message: 'Request timed out. Please try again.'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Error fetching special claims',
@@ -169,7 +185,17 @@ app.get('/api/claims/special', async (req, res) => {
 app.get('/api/claims/special/employee/:employeeId', async (req, res) => {
   try {
     const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
+    
+    // Add timeout to the query
+    const claims = await Promise.race([
+      SpecialClaim.find({ employeeId: req.params.employeeId })
+        .select('policyNumber policyHolderName employeeId email number claimFor claimForId country claimAmount currency dateOfTreatment paymentMethod bankName branchName accountNumber swiftCode iban description attachments createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .lean(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 8000)
+      )
+    ]);
     
     if (!claims || claims.length === 0) {
       return res.status(404).json({
@@ -185,9 +211,115 @@ app.get('/api/claims/special/employee/:employeeId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching employee special claims:', error);
+    if (error.message === 'Query timeout') {
+      return res.status(504).json({
+        success: false,
+        message: 'Request timed out. Please try again.'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Error fetching employee special claims',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/claims/special', upload.array('attachments', 5), async (req, res) => {
+  try {
+    console.log('Received special claim data:', req.body);
+    console.log('Received files:', req.files);
+    
+    // Validate required fields
+    const requiredFields = [
+      'policyNumber', 
+      'policyHolderName', 
+      'employeeId', 
+      'email', 
+      'number', 
+      'claimFor', 
+      'claimForId', 
+      'country', 
+      'claimAmount', 
+      'currency', 
+      'dateOfTreatment', 
+      'paymentMethod',
+      'bankName',
+      'branchName',
+      'accountNumber',
+      'swiftCode',
+      'iban',
+      'description'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+
+    // Use the SpecialClaim model
+    const SpecialClaim = require('../models/SpecialClaim');
+    
+    // Process attachments if any
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: file.path
+    })) : [];
+
+    // Create and save the claim with the exact schema
+    const specialClaim = new SpecialClaim({
+      policyNumber: req.body.policyNumber,
+      policyHolderName: req.body.policyHolderName,
+      employeeId: req.body.employeeId,
+      email: req.body.email,
+      number: req.body.number,
+      claimFor: req.body.claimFor,
+      claimForId: req.body.claimForId,
+      country: req.body.country,
+      claimAmount: parseFloat(req.body.claimAmount),
+      currency: req.body.currency,
+      dateOfTreatment: new Date(req.body.dateOfTreatment),
+      paymentMethod: req.body.paymentMethod,
+      bankName: req.body.bankName,
+      branchName: req.body.branchName,
+      accountNumber: req.body.accountNumber,
+      swiftCode: req.body.swiftCode,
+      iban: req.body.iban,
+      description: req.body.description,
+      attachments: attachments
+    });
+
+    // Add timeout to the save operation
+    const savedClaim = await Promise.race([
+      specialClaim.save(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Save timeout')), 8000)
+      )
+    ]);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Special claim created successfully',
+      data: savedClaim
+    });
+  } catch (error) {
+    console.error('Error creating special claim:', error);
+    if (error.message === 'Save timeout') {
+      return res.status(504).json({
+        success: false,
+        message: 'Request timed out. Please try again.'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Error creating special claim',
       error: error.message
     });
   }
