@@ -82,7 +82,8 @@ const specialClaimSchema = new mongoose.Schema({
     path: String
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'specialclaims' // Explicitly set the collection name
 });
 
 // Pre-save middleware to update updatedAt
