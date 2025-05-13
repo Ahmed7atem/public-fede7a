@@ -58,22 +58,19 @@ const getPreApprovalsByPatientId = async (req, res) => {
  */
 const createPreApproval = async (req, res) => {
   try {
-    const preApprovalData = {
-      ...req.body,
-      id: `PRE-${Date.now().toString().slice(-6)}`,
-      documents: req.files ? req.files.map(file => ({
-        filename: file.filename,
-        path: file.path,
-        mimetype: file.mimetype,
-        size: file.size
-      })) : []
-    };
-    
-    const preApproval = new PreApprovalClaim(preApprovalData);
-    const savedPreApproval = await preApproval.save();
-    res.status(201).json(savedPreApproval);
+    const { employeeId, providerId, service, notes } = req.body;
+    const preApproval = new PreApprovalClaim({
+      employeeId,
+      providerId,
+      service,
+      status: 'pending',
+      notes,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    const saved = await preApproval.save();
+    res.status(201).json(saved);
   } catch (error) {
-    console.error('Error creating pre-approval:', error);
     res.status(500).json({ message: 'Error creating pre-approval', error: error.message });
   }
 };
@@ -86,25 +83,62 @@ const createPreApproval = async (req, res) => {
 const updatePreApprovalStatus = async (req, res) => {
   try {
     const { status, notes } = req.body;
-    const preApproval = await PreApprovalClaim.findOneAndUpdate(
-      { id: req.params.id },
-      { 
-        status,
-        notes,
-        processedAt: new Date(),
-        processedBy: req.user.id // Assuming you have user info in request
-      },
+    const preApproval = await PreApprovalClaim.findByIdAndUpdate(
+      req.params.id,
+      { status, notes, updatedAt: new Date() },
       { new: true }
     );
-    
     if (!preApproval) {
-      return res.status(404).json({ message: 'Pre-approval request not found' });
+      return res.status(404).json({ message: 'Pre-approval not found' });
     }
-    
     res.json(preApproval);
   } catch (error) {
-    console.error('Error updating pre-approval status:', error);
-    res.status(500).json({ message: 'Error updating pre-approval status', error: error.message });
+    res.status(500).json({ message: 'Error updating pre-approval', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get pre-approvals by employee
+ * @route   GET /api/pre-approvals/employee/:employeeId
+ * @access  Private
+ */
+const getPreApprovalsByEmployeeId = async (req, res) => {
+  try {
+    const preApprovals = await PreApprovalClaim.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 }).lean();
+    res.json(preApprovals);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching employee pre-approvals', error: error.message });
+  }
+};
+
+/**
+ * @desc    Get pre-approvals by provider
+ * @route   GET /api/pre-approvals/provider/:providerId
+ * @access  Private
+ */
+const getPreApprovalsByProviderId = async (req, res) => {
+  try {
+    const preApprovals = await PreApprovalClaim.find({ providerId: req.params.providerId }).sort({ createdAt: -1 }).lean();
+    res.json(preApprovals);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching provider pre-approvals', error: error.message });
+  }
+};
+
+/**
+ * @desc    Delete pre-approval
+ * @route   DELETE /api/pre-approvals/:id
+ * @access  Private/Admin
+ */
+const deletePreApproval = async (req, res) => {
+  try {
+    const preApproval = await PreApprovalClaim.findByIdAndDelete(req.params.id);
+    if (!preApproval) {
+      return res.status(404).json({ message: 'Pre-approval not found' });
+    }
+    res.json({ message: 'Pre-approval deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting pre-approval', error: error.message });
   }
 };
 
@@ -113,5 +147,8 @@ module.exports = {
   getPreApprovalById,
   getPreApprovalsByPatientId,
   createPreApproval,
-  updatePreApprovalStatus
+  updatePreApprovalStatus,
+  getPreApprovalsByEmployeeId,
+  getPreApprovalsByProviderId,
+  deletePreApproval
 }; 

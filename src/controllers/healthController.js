@@ -24,6 +24,9 @@ const healthDataSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// Create the model only if it doesn't exist
+const HealthData = mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema);
+
 /**
  * @desc    Get all health data
  * @route   GET /api/health
@@ -32,7 +35,6 @@ const healthDataSchema = new mongoose.Schema({
 const getAllHealthData = async (req, res) => {
   try {
     console.log('Getting all health data...');
-    const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({}).lean();
     console.log(`Found ${healthData.length} health data records`);
     res.json({
@@ -118,7 +120,6 @@ const getHealthDataByEmployeeId = async (req, res) => {
   try {
     const id = req.params.employeeId;
     console.log(`Getting health data for employee: ${id}`);
-    const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({ employeeId: id }).lean();
     console.log(`Found ${healthData.length} records for employee ${id}`);
     

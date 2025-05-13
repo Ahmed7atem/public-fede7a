@@ -10,6 +10,9 @@ const feedbackSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 }, { collection: 'feedbacks' });
 
+// Create the model only if it doesn't exist
+const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema);
+
 /**
  * @desc    Get all feedbacks
  * @route   GET /api/feedbacks
@@ -17,7 +20,6 @@ const feedbackSchema = new mongoose.Schema({
  */
 const getAllFeedbacks = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedbacks = await Feedback.find({}).lean();
     res.json({
       success: true,
@@ -40,7 +42,6 @@ const getAllFeedbacks = async (req, res) => {
  */
 const getFeedbackById = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedback = await Feedback.findById(req.params.id).lean();
     
     if (!feedback) {
@@ -70,7 +71,6 @@ const getFeedbackById = async (req, res) => {
  */
 const getFeedbacksByEmployeeId = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedbacks = await Feedback.find({ employeeId: req.params.employeeId }).lean();
     
     res.json({
@@ -94,7 +94,6 @@ const getFeedbacksByEmployeeId = async (req, res) => {
  */
 const createFeedback = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedback = new Feedback(req.body);
     const savedFeedback = await feedback.save();
     
@@ -118,7 +117,6 @@ const createFeedback = async (req, res) => {
  */
 const updateFeedback = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedback = await Feedback.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: Date.now() },
@@ -152,7 +150,6 @@ const updateFeedback = async (req, res) => {
  */
 const deleteFeedback = async (req, res) => {
   try {
-    const Feedback = mongoose.model('Feedback', feedbackSchema);
     const feedback = await Feedback.findByIdAndDelete(req.params.id).lean();
     
     if (!feedback) {

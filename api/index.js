@@ -91,11 +91,11 @@ const {
 } = require('../src/controllers/complaintController');
 
 const {
-  getAllPreApprovals,
-  getPreApprovalById,
-  getPreApprovalsByEmployeeId,
   createPreApproval,
-  updatePreApproval,
+  getAllPreApprovals,
+  getPreApprovalsByEmployeeId,
+  getPreApprovalsByProviderId,
+  updatePreApprovalStatus,
   deletePreApproval
 } = require('../src/controllers/preApprovalController');
 
@@ -292,11 +292,11 @@ app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
 // Pre-approval routes
-app.get('/api/preapprovals', getAllPreApprovals);
-app.get('/api/preapprovals/:id', getPreApprovalById);
-app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
 app.post('/api/preapprovals', createPreApproval);
-app.put('/api/preapprovals/:id', updatePreApproval);
+app.get('/api/preapprovals', getAllPreApprovals);
+app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
+app.get('/api/preapprovals/provider/:providerId', getPreApprovalsByProviderId);
+app.put('/api/preapprovals/:id/status', updatePreApprovalStatus);
 app.delete('/api/preapprovals/:id', deletePreApproval);
 
 // Feedback routes
