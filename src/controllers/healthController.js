@@ -1,5 +1,28 @@
 const mongoose = require('mongoose');
-const HealthData = require('../../models/HealthData');
+
+// Define the health data schema
+const healthDataSchema = new mongoose.Schema({
+  employeeId: { type: String, required: true },
+  date: { type: Date, required: true },
+  bloodPressure: {
+    systolic: Number,
+    diastolic: Number
+  },
+  heartRate: Number,
+  temperature: Number,
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  bloodSugar: Number,
+  cholesterol: {
+    total: Number,
+    hdl: Number,
+    ldl: Number
+  },
+  notes: String,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
 
 /**
  * @desc    Get all health data
@@ -8,7 +31,7 @@ const HealthData = require('../../models/HealthData');
  */
 const getAllHealthData = async (req, res) => {
   try {
-    // Remove any limits and get all records
+    const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({}).lean();
     res.json({
       success: true,
@@ -33,7 +56,15 @@ const getAllHealthData = async (req, res) => {
 const getHealthDataByYear = async (req, res) => {
   try {
     const { year } = req.params;
-    const collectionName = `healthdata_${year}`;
+    const currentYear = new Date().getFullYear().toString();
+    
+    // Determine which collection to use
+    let collectionName;
+    if (year === currentYear) {
+      collectionName = 'healthdatas';
+    } else {
+      collectionName = `healthdata_${year}`;
+    }
     
     // Check if collection exists
     const collections = await mongoose.connection.db.listCollections().toArray();
@@ -46,7 +77,7 @@ const getHealthDataByYear = async (req, res) => {
       });
     }
 
-    const HealthDataModel = mongoose.model(collectionName, HealthData.schema);
+    const HealthDataModel = mongoose.model(collectionName, healthDataSchema);
     const healthData = await HealthDataModel.find({}).lean();
 
     res.json({
@@ -72,7 +103,7 @@ const getHealthDataByYear = async (req, res) => {
 const getHealthDataByEmployeeId = async (req, res) => {
   try {
     const id = req.params.employeeId;
-    // Remove any limits and get all records for the employee
+    const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({ employeeId: id }).lean();
     if (!healthData || healthData.length === 0) {
       return res.status(404).json({ 
