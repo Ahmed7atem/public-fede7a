@@ -44,7 +44,6 @@ const {
 
 const {
   getAllProviders,
-  getAllDoctors,
   getProvidersByType,
   getProviderById,
   getProvidersBySpecialty,
@@ -57,7 +56,6 @@ const {
 
 const {
   getAllPolicies,
-  getAllPolicyDocuments,
   getPolicyById,
   getPolicyByEmployeeId,
   createPolicy,
