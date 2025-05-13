@@ -31,8 +31,10 @@ const healthDataSchema = new mongoose.Schema({
  */
 const getAllHealthData = async (req, res) => {
   try {
+    console.log('Getting all health data...');
     const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({}).lean();
+    console.log(`Found ${healthData.length} health data records`);
     res.json({
       success: true,
       data: healthData,
@@ -56,29 +58,41 @@ const getAllHealthData = async (req, res) => {
 const getHealthDataByYear = async (req, res) => {
   try {
     const { year } = req.params;
+    console.log(`Getting health data for year: ${year}`);
     const currentYear = new Date().getFullYear().toString();
     
     // Determine which collection to use
     let collectionName;
     if (year === currentYear) {
       collectionName = 'healthdatas';
+      console.log('Using current year collection:', collectionName);
     } else {
       collectionName = `healthdata_${year}`;
+      console.log('Using historical collection:', collectionName);
     }
     
     // Check if collection exists
+    console.log('Checking if collection exists...');
     const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionNames = collections.map(col => col.name);
+    console.log('Available collections:', collectionNames);
+    
     const collectionExists = collections.some(col => col.name === collectionName);
+    console.log(`Collection ${collectionName} exists:`, collectionExists);
     
     if (!collectionExists) {
+      console.log(`Collection ${collectionName} not found`);
       return res.status(404).json({
         success: false,
         message: `No health data found for year ${year}`
       });
     }
 
+    console.log(`Creating model for collection: ${collectionName}`);
     const HealthDataModel = mongoose.model(collectionName, healthDataSchema);
+    console.log('Fetching data...');
     const healthData = await HealthDataModel.find({}).lean();
+    console.log(`Found ${healthData.length} records`);
 
     res.json({
       success: true,
@@ -103,8 +117,11 @@ const getHealthDataByYear = async (req, res) => {
 const getHealthDataByEmployeeId = async (req, res) => {
   try {
     const id = req.params.employeeId;
+    console.log(`Getting health data for employee: ${id}`);
     const HealthData = mongoose.model('HealthData', healthDataSchema);
     const healthData = await HealthData.find({ employeeId: id }).lean();
+    console.log(`Found ${healthData.length} records for employee ${id}`);
+    
     if (!healthData || healthData.length === 0) {
       return res.status(404).json({ 
         success: false,

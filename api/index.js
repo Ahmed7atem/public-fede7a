@@ -64,8 +64,8 @@ const {
 
 const {
   getAllHealthData,
-  getHealthDataByEmployeeId,
-  getHealthDataByYear
+  getHealthDataByYear,
+  getHealthDataByEmployeeId
 } = require('../src/controllers/healthController');
 
 const {
@@ -146,10 +146,10 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
 });
 
-// Auth routes
-app.post('/api/auth/login', login);
-app.get('/api/auth/profile', getProfile);
-app.put('/api/auth/profile', updateProfile);
+// Health routes
+app.get('/api/health', getAllHealthData);
+app.get('/api/health/year/:year', getHealthDataByYear);
+app.get('/api/health/employee/:employeeId', getHealthDataByEmployeeId);
 
 // Employee routes
 app.get('/api/employees', getAllEmployees);
@@ -158,119 +158,7 @@ app.post('/api/employees', createEmployee);
 app.put('/api/employees/:id', updateEmployee);
 app.delete('/api/employees/:id', deleteEmployee);
 
-// Health routes
-app.get('/api/health', getAllHealthData);
-app.get('/api/health/employee/:employeeId', getHealthDataByEmployeeId);
-
-// Sleep routes
-app.get('/api/sleep', getAllSleepData);
-app.get('/api/sleep/employee/:employeeId', getSleepDataByEmployeeId);
-
-// Wearable routes
-app.get('/api/wearables', getAllWearableData);
-app.get('/api/wearables/employee/:employeeId', getWearableDataByEmployeeId);
-
-// Provider routes
-app.get('/api/providers', getAllProviders);
-
-// Policy routes
-app.get('/api/policies', getAllPolicies);
-
-// Special Claims routes - moved higher in the routing order
-app.get('/api/claims/special', getSpecialClaims);
-app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
-
-// Special claims POST endpoint - modified to debug and fix request body issues
-app.post('/api/claims/special-claims', express.json(), (req, res) => {
-  try {
-    // Log headers to debug
-    console.log('Request headers:', req.headers);
-    console.log('Request body type:', typeof req.body, 'Content:', JSON.stringify(req.body));
-    
-    // Check if body is empty
-    if (!req.body || Object.keys(req.body).length === 0) {
-      console.log('Empty body detected, checking if raw data is available');
-      
-      // Create sample data for testing/debugging
-      const sampleData = {
-        policyNumber: "POL123456",
-        policyHolderName: "John Doe",
-        employeeId: "EMP789",
-        email: "john.doe@example.com", 
-        number: "+1234567890",
-        claimFor: "employee",
-        claimForId: "CLM456",
-        country: "USA",
-        claimAmount: 1500.75,
-        currency: "USD",
-        dateOfTreatment: "2023-05-01",
-        paymentMethod: "Bank Transfer",
-        bankName: "Bank of America",
-        branchName: "Main Branch",
-        accountNumber: "123456789012",
-        swiftCode: "BOFAUS3N",
-        iban: "US12345678901234567890",
-        description: "Medical treatment for surgery"
-      };
-      
-      // Use the SpecialClaim model
-      const SpecialClaim = require('../models/SpecialClaim');
-      
-      // Create and save the claim with sample data (for debugging)
-      const specialClaim = new SpecialClaim(sampleData);
-      
-      specialClaim.save()
-        .then(savedClaim => {
-          res.status(201).json({
-            success: true,
-            message: 'Special claim created with SAMPLE data (debugging mode)',
-            data: savedClaim
-          });
-        })
-        .catch(err => {
-          console.error('Error saving special claim:', err);
-          res.status(500).json({
-            message: 'Error saving special claim to database',
-            error: err.message
-          });
-        });
-    } else {
-      // Use the received data if body is not empty
-      const claimData = req.body;
-      
-      // Use the SpecialClaim model
-      const SpecialClaim = require('../models/SpecialClaim');
-      
-      // Create and save the claim with actual data
-      const specialClaim = new SpecialClaim(claimData);
-      
-      specialClaim.save()
-        .then(savedClaim => {
-          res.status(201).json({
-            success: true,
-            message: 'Special claim created successfully with your data',
-            data: savedClaim
-          });
-        })
-        .catch(err => {
-          console.error('Error saving special claim:', err);
-          res.status(500).json({
-            message: 'Error saving special claim to database',
-            error: err.message
-          });
-        });
-    }
-  } catch (error) {
-    console.error('Detailed error in special claims endpoint:', error);
-    res.status(500).json({
-      message: 'Error in special claims endpoint',
-      error: error.message,
-      stack: error.stack
-    });
-  }
-});
-
-// Claims routes
+// Claim routes
 app.get('/api/claims', getAllClaims);
 app.get('/api/claims/:id', getClaimById);
 app.get('/api/claims/employee/:employeeId', getClaimsByEmployeeId);
@@ -278,97 +166,82 @@ app.post('/api/claims', upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
-// Historical Claims routes
+// Special claims routes
+app.get('/api/claims/special', getSpecialClaims);
+app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
+app.post('/api/claims/special', express.json(), async (req, res) => {
+  try {
+    console.log('Received special claim data:', req.body);
+    
+    // Validate required fields
+    const requiredFields = ['policyNumber', 'policyHolderName', 'employeeId', 'email', 'number', 'claimFor', 'claimForId', 'country', 'claimAmount', 'currency', 'dateOfTreatment', 'paymentMethod'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+
+    // Use the SpecialClaim model
+    const SpecialClaim = require('../models/SpecialClaim');
+    
+    // Create and save the claim with only the provided form data
+    const specialClaim = new SpecialClaim(req.body);
+    const savedClaim = await specialClaim.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Special claim created successfully',
+      data: savedClaim
+    });
+  } catch (error) {
+    console.error('Error creating special claim:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating special claim',
+      error: error.message
+    });
+  }
+});
+
+// Claims by year routes
 app.get('/api/claims/year/:year', getClaimsByYear);
-app.get('/api/claims/year/:year/employee/:employeeId', getEmployeeClaimsByYear);
+app.get('/api/claims/employee/:employeeId/year/:year', getEmployeeClaimsByYear);
 
-// Specific year claims routes for convenience
-app.get('/api/claims/2023', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2023' } }), res));
-app.get('/api/claims/2024', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2024' } }), res));
-app.get('/api/claims/2023/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2023', employeeId: req.params.employeeId } }), res));
-app.get('/api/claims/2024/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2024', employeeId: req.params.employeeId } }), res));
-
-// Dependents routes
+// Dependent routes
 app.get('/api/dependents', getAllDependents);
 app.get('/api/dependents/employee/:employeeId', getDependentsByEmployeeId);
+
+// Sleep data routes
+app.get('/api/sleep', getAllSleepData);
+app.get('/api/sleep/employee/:employeeId', getSleepDataByEmployeeId);
+
+// Wearable data routes
+app.get('/api/wearable', getAllWearableData);
+app.get('/api/wearable/employee/:employeeId', getWearableDataByEmployeeId);
+
+// Provider routes
+app.get('/api/providers', getAllProviders);
+
+// Policy routes
+app.get('/api/policies', getAllPolicies);
+
+// Analytics routes
+app.get('/api/analytics/employee/:employeeId', getEmployeeAnalytics);
+app.get('/api/analytics/organization', getOrganizationAnalytics);
+app.get('/api/analytics/alerts', getHealthAlerts);
 
 // Prediction routes
 app.get('/api/predictions', getAllPredictions);
 app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
-// New POST endpoint for predictions with the new format
-app.post('/api/predictions', async (req, res) => {
-  try {
-    const { 
-      Patient_ID, 
-      Health_Status, 
-      Insurance_Consumption, 
-      Needs_Insurance_Update, 
-      Suggested_Plan, 
-      Recommendations, 
-      Message 
-    } = req.body;
-
-    // Validate required fields
-    if (!Patient_ID || !Health_Status) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields: Patient_ID and Health_Status are required'
-      });
-    }
-
-    // Use the Prediction model
-    const { Prediction } = require('../models');
-
-    // Create new prediction using the provided format
-    const newPrediction = new Prediction({
-      employeeId: Patient_ID,
-      predictionType: 'health_status',
-      predictionValue: Health_Status,
-      confidence: 0.9, // Default confidence
-      factors: Recommendations || [],
-      // Store the entire original payload in a custom property
-      customData: {
-        Insurance_Consumption,
-        Needs_Insurance_Update,
-        Suggested_Plan,
-        Message
-      }
-    });
-
-    // Save the prediction
-    const savedPrediction = await newPrediction.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Prediction added successfully',
-      data: savedPrediction
-    });
-  } catch (error) {
-    console.error('Error adding prediction:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error adding prediction',
-      error: error.message
-    });
-  }
-});
-
-// Analytics routes
-app.get('/api/analytics/employee/:id', getEmployeeAnalytics);
-app.get('/api/analytics/organization', getOrganizationAnalytics);
-app.get('/api/analytics/health-alerts', getHealthAlerts);
-
-// Health check
-app.get('/health', async (req, res) => {
-  try {
-    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-    res.json({ status: 'ok', mongodb: dbStatus });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
-  }
-});
+// Auth routes
+app.post('/api/auth/login', login);
+app.get('/api/auth/profile', getProfile);
+app.put('/api/auth/profile', updateProfile);
 
 // Complaint routes
 app.get('/api/complaints', getAllComplaints);
