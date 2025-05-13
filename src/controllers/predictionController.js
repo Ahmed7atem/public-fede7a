@@ -14,10 +14,11 @@ const getAllPredictions = async (req, res) => {
 
     res.json({
       success: true,
-      data: predictions
+      data: predictions,
+      count: predictions.length
     });
   } catch (error) {
-    console.error('Error fetching predictions:', error);
+    console.error('Error fetching all predictions:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching predictions',
@@ -40,7 +41,8 @@ const getPredictionsByEmployeeId = async (req, res) => {
 
     res.json({
       success: true,
-      data: predictions
+      data: predictions,
+      count: predictions.length
     });
   } catch (error) {
     console.error('Error fetching employee predictions:', error);
@@ -66,7 +68,8 @@ const getPredictionsByType = async (req, res) => {
 
     res.json({
       success: true,
-      data: predictions
+      data: predictions,
+      count: predictions.length
     });
   } catch (error) {
     console.error('Error fetching predictions by type:', error);

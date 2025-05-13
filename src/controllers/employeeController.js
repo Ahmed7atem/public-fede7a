@@ -4,39 +4,63 @@ const { Employee } = require('../../models');
 /**
  * @desc    Get all employees
  * @route   GET /api/employees
- * @access  Public
+ * @access  Private/Admin
  */
 const getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().lean();
-    res.json(employees);
+    const employees = await Employee.find({})
+      .select('-password')
+      .lean();
+
+    res.json({
+      success: true,
+      data: employees,
+      count: employees.length
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching employees', error: error.message });
+    console.error('Error fetching all employees:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employees',
+      error: error.message
+    });
   }
 };
 
 /**
  * @desc    Get employee by ID
  * @route   GET /api/employees/:id
- * @access  Public
+ * @access  Private
  */
 const getEmployeeById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const employee = await Employee.findOne({ employeeId: id }).lean();
-    
+    const employee = await Employee.findOne({ employeeId: req.params.id })
+      .select('-password')
+      .lean();
+
     if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
     }
-    
-    res.json(employee);
+
+    res.json({
+      success: true,
+      data: employee
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching employee', error: error.message });
+    console.error('Error fetching employee:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employee',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Create a new employee
+ * @desc    Create new employee
  * @route   POST /api/employees
  * @access  Private/Admin
  */
@@ -44,64 +68,82 @@ const createEmployee = async (req, res) => {
   try {
     const employee = new Employee(req.body);
     const savedEmployee = await employee.save();
-    res.status(201).json(savedEmployee);
+
+    res.status(201).json({
+      success: true,
+      data: savedEmployee
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating employee', error: error.message });
+    console.error('Error creating employee:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating employee',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Update an employee
+ * @desc    Update employee
  * @route   PUT /api/employees/:id
  * @access  Private/Admin
  */
 const updateEmployee = async (req, res) => {
   try {
-    const id = req.params.id;
-    const updates = req.body;
-    let employee = null;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      employee = await Employee.findByIdAndUpdate(id, updates, { new: true });
-    }
+    const employee = await Employee.findOneAndUpdate(
+      { employeeId: req.params.id },
+      req.body,
+      { new: true }
+    ).select('-password');
+
     if (!employee) {
-      employee = await Employee.findOneAndUpdate({ employeeId: id }, updates, { new: true });
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
     }
-    if (!employee) {
-      employee = await Employee.findOneAndUpdate({ Policy_ID: id }, updates, { new: true });
-    }
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
-    }
-    res.json(employee);
+
+    res.json({
+      success: true,
+      data: employee
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating employee', error: error.message });
+    console.error('Error updating employee:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating employee',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Delete an employee
+ * @desc    Delete employee
  * @route   DELETE /api/employees/:id
  * @access  Private/Admin
  */
 const deleteEmployee = async (req, res) => {
   try {
-    const id = req.params.id;
-    let employee = null;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      employee = await Employee.findByIdAndDelete(id);
-    }
+    const employee = await Employee.findOneAndDelete({ employeeId: req.params.id });
+
     if (!employee) {
-      employee = await Employee.findOneAndDelete({ employeeId: id });
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
     }
-    if (!employee) {
-      employee = await Employee.findOneAndDelete({ Policy_ID: id });
-    }
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
-    }
-    res.json({ message: 'Employee removed' });
+
+    res.json({
+      success: true,
+      message: 'Employee removed'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting employee', error: error.message });
+    console.error('Error deleting employee:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting employee',
+      error: error.message
+    });
   }
 };
 

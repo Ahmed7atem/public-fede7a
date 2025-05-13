@@ -69,11 +69,19 @@ const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
  */
 const getAllClaims = async (req, res) => {
   try {
-    const claims = await Claim.find().limit(10).lean();
-    res.json(claims);
+    const claims = await Claim.find({}).lean();
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
   } catch (error) {
-    console.error('Error fetching claims:', error);
-    res.status(500).json({ message: 'Error fetching claims', error: error.message });
+    console.error('Error fetching all claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching claims',
+      error: error.message
+    });
   }
 };
 
@@ -85,14 +93,25 @@ const getAllClaims = async (req, res) => {
 const getClaimById = async (req, res) => {
   try {
     const employeeId = req.params.id;
-    const claim = await Claim.findOne({ patientId: employeeId }).lean();
-    if (!claim) {
-      return res.status(404).json({ message: 'Claim not found' });
+    const claims = await Claim.find({ patientId: employeeId }).lean();
+    if (!claims || claims.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Claims not found'
+      });
     }
-    res.json(claim);
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
   } catch (error) {
-    console.error('Error fetching claim:', error);
-    res.status(500).json({ message: 'Error fetching claim', error: error.message });
+    console.error('Error fetching claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching claims',
+      error: error.message
+    });
   }
 };
 
@@ -105,10 +124,18 @@ const getClaimsByEmployeeId = async (req, res) => {
   try {
     const employeeId = req.params.employeeId;
     const claims = await Claim.find({ employeeId }).lean();
-    res.json(claims);
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
   } catch (error) {
     console.error('Error fetching employee claims:', error);
-    res.status(500).json({ message: 'Error fetching employee claims', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employee claims',
+      error: error.message
+    });
   }
 };
 
@@ -217,28 +244,21 @@ const deleteClaim = async (req, res) => {
 const getSpecialClaims = async (req, res) => {
   try {
     const specialClaims = await SpecialClaim.find({})
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Add pending fields to each claim
-    const claimsWithPendingFields = specialClaims.map(claim => ({
-      ...claim.toObject(),
-      providerId: 'pending',
-      patientAge: 'pending',
-      providerSpecialty: 'pending',
-      claimStatus: 'pending',
-      patientIncome: 'pending',
-      patientMaritalStatus: 'pending',
-      patientEmploymentStatus: 'pending',
-      claimType: 'pending',
-      claimSubmissionMethod: 'pending',
-      diagnosisDescription: 'pending',
-      procedureDescription: 'pending'
-    }));
-
-    res.json({ specialClaims: claimsWithPendingFields });
+    res.json({
+      success: true,
+      data: specialClaims,
+      count: specialClaims.length
+    });
   } catch (error) {
     console.error('Error fetching special claims:', error);
-    res.status(500).json({ message: 'Error fetching special claims', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching special claims',
+      error: error.message
+    });
   }
 };
 
@@ -251,43 +271,33 @@ const getSpecialClaimsByEmployeeId = async (req, res) => {
   try {
     const { employeeId } = req.params;
     const specialClaims = await SpecialClaim.find({ employeeId })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Add pending fields to each claim
-    const claimsWithPendingFields = specialClaims.map(claim => ({
-      ...claim.toObject(),
-      providerId: 'pending',
-      patientAge: 'pending',
-      providerSpecialty: 'pending',
-      claimStatus: 'pending',
-      patientIncome: 'pending',
-      patientMaritalStatus: 'pending',
-      patientEmploymentStatus: 'pending',
-      claimType: 'pending',
-      claimSubmissionMethod: 'pending',
-      diagnosisDescription: 'pending',
-      procedureDescription: 'pending'
-    }));
-
-    res.json({ specialClaims: claimsWithPendingFields });
+    res.json({
+      success: true,
+      data: specialClaims,
+      count: specialClaims.length
+    });
   } catch (error) {
     console.error('Error fetching special claims:', error);
-    res.status(500).json({ message: 'Error fetching special claims', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching special claims',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Get all claims from a specific year
+ * @desc    Get claims by year
  * @route   GET /api/claims/year/:year
  * @access  Private/Admin
  */
 const getClaimsByYear = async (req, res) => {
   try {
     const { year } = req.params;
-    // Use the correct collection name format (claims2023 instead of claims_2023)
     const collectionName = year === 'current' ? 'claims' : `claims${year}`;
-    
-    console.log(`Looking for claims in collection: ${collectionName}`);
     
     // Get the collection for the specified year
     const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
@@ -296,11 +306,18 @@ const getClaimsByYear = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log(`Found ${claims.length} claims in year ${year}`);
-    res.json({ claims });
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
   } catch (error) {
     console.error(`Error fetching claims for year ${req.params.year}:`, error);
-    res.status(500).json({ message: `Error fetching claims for year ${req.params.year}`, error: error.message });
+    res.status(500).json({
+      success: false,
+      message: `Error fetching claims for year ${req.params.year}`,
+      error: error.message
+    });
   }
 };
 
@@ -312,10 +329,7 @@ const getClaimsByYear = async (req, res) => {
 const getEmployeeClaimsByYear = async (req, res) => {
   try {
     const { year, employeeId } = req.params;
-    // Use the correct collection name format (claims2023 instead of claims_2023)
     const collectionName = year === 'current' ? 'claims' : `claims${year}`;
-    
-    console.log(`Looking for claims in collection: ${collectionName} for employee: ${employeeId}`);
     
     // Get the collection for the specified year
     const ClaimModel = mongoose.models[collectionName] || mongoose.model(collectionName, claimSchema);
@@ -330,11 +344,18 @@ const getEmployeeClaimsByYear = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log(`Found ${claims.length} claims for employee ${employeeId} in year ${year}`);
-    res.json({ claims });
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
   } catch (error) {
     console.error(`Error fetching employee claims for year ${req.params.year}:`, error);
-    res.status(500).json({ message: `Error fetching employee claims for year ${req.params.year}`, error: error.message });
+    res.status(500).json({
+      success: false,
+      message: `Error fetching employee claims for year ${req.params.year}`,
+      error: error.message
+    });
   }
 };
 

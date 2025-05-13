@@ -8,10 +8,20 @@ const mongoose = require('mongoose');
  */
 const getAllHealthData = async (req, res) => {
   try {
-    const healthData = await HealthData.find().lean();
-    res.json(healthData);
+    // Remove any limits and get all records
+    const healthData = await HealthData.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+    console.error('Error fetching all health data:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching health data', 
+      error: error.message 
+    });
   }
 };
 
@@ -23,15 +33,36 @@ const getAllHealthData = async (req, res) => {
 const getHealthDataByYear = async (req, res) => {
   try {
     const year = req.params.year;
-    const collectionName = `healthdata_${year}`;
+    const collectionName = `healthdatas_${year}`;
+    
+    // Check if the collection exists
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionExists = collections.some(col => col.name === collectionName);
+    
+    if (!collectionExists) {
+      return res.status(404).json({ 
+        success: false,
+        message: `No health data found for year ${year}` 
+      });
+    }
     
     // Get the model for the specific year
     const HealthDataModel = mongoose.model(collectionName, HealthData.schema);
     
-    const healthData = await HealthDataModel.find().lean();
-    res.json(healthData);
+    // Remove any limits and get all records
+    const healthData = await HealthDataModel.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+    console.error('Error fetching health data by year:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching health data', 
+      error: error.message 
+    });
   }
 };
 
@@ -43,13 +74,26 @@ const getHealthDataByYear = async (req, res) => {
 const getHealthDataByEmployeeId = async (req, res) => {
   try {
     const id = req.params.employeeId;
-    const healthData = await HealthData.findOne({ employeeId: id }).lean();
-    if (!healthData) {
-      return res.status(404).json({ message: 'Health data not found for this employee' });
+    // Remove any limits and get all records for the employee
+    const healthData = await HealthData.find({ employeeId: id }).lean();
+    if (!healthData || healthData.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Health data not found for this employee' 
+      });
     }
-    res.json(healthData);
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+    console.error('Error fetching health data by employee:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching health data', 
+      error: error.message 
+    });
   }
 };
 
