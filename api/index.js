@@ -108,9 +108,6 @@ const {
   deleteFeedback
 } = require('../src/controllers/feedbackController');
 
-// Import pre-approval routes
-const preApprovalRoutes = require('../src/routes/preApprovalRoutes');
-
 const app = express();
 
 // Configure multer for file uploads
@@ -189,59 +186,9 @@ app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
 // Special claims routes
-app.get('/api/claims/special', async (req, res) => {
-  try {
-    const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({});
-    res.json({ success: true, data: claims });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-app.get('/api/claims/special/employee/:employeeId', async (req, res) => {
-  try {
-    const SpecialClaim = require('../models/SpecialClaim');
-    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId });
-    res.json({ success: true, data: claims });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-app.post('/api/claims/special', upload.array('attachments', 5), async (req, res) => {
-  try {
-    const SpecialClaim = require('../models/SpecialClaim');
-    
-    // Create claim with exact data from request
-    const claim = new SpecialClaim({
-      policyNumber: req.body.policyNumber,
-      policyHolderName: req.body.policyHolderName,
-      employeeId: req.body.employeeId,
-      email: req.body.email,
-      number: req.body.number,
-      claimFor: req.body.claimFor,
-      claimForId: req.body.claimForId,
-      country: req.body.country,
-      claimAmount: req.body.claimAmount,
-      currency: req.body.currency,
-      dateOfTreatment: req.body.dateOfTreatment,
-      paymentMethod: req.body.paymentMethod,
-      bankName: req.body.bankName,
-      branchName: req.body.branchName,
-      accountNumber: req.body.accountNumber,
-      swiftCode: req.body.swiftCode,
-      iban: req.body.iban,
-      description: req.body.description,
-      attachments: req.files || []
-    });
-
-    const savedClaim = await claim.save();
-    res.status(201).json({ success: true, data: savedClaim });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+app.get('/api/claims/special', getSpecialClaims);
+app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
+app.post('/api/claims/special', upload.array('attachments', 5), createSpecialClaim);
 
 // Claims by year routes
 app.get('/api/claims/year/:year', getClaimsByYear);
@@ -295,7 +242,12 @@ app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
 // Pre-approval routes
-app.use('/api/pre-approvals', preApprovalRoutes);
+app.get('/api/preapprovals', getAllPreApprovals);
+app.get('/api/preapprovals/:id', getPreApprovalById);
+app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
+app.post('/api/preapprovals', createPreApproval);
+app.put('/api/preapprovals/:id', updatePreApproval);
+app.delete('/api/preapprovals/:id', deletePreApproval);
 
 // Feedback routes
 app.get('/api/feedbacks', getAllFeedbacks);

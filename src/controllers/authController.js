@@ -9,7 +9,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // First check if user is an admin
+    // Check if user is an admin
     const admin = await Admin.findOne({ email });
     if (admin) {
       // Check admin password - direct comparison
@@ -34,38 +34,7 @@ const login = async (req, res) => {
       });
     }
     
-    // If not admin, check employees
-    const employee = await Employee.findOne({ email }).select('+password');
-    if (!employee) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    // Check employee password - direct comparison instead of using matchPassword
-    const isMatch = employee.password === password;
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    // Use static token for employee
-    const token = `EMPLOYEE_TOKEN_${employee._id}`;
-
-    // Get all employee data
-    const employeeData = await Employee.findOne({ email }).lean();
-
-    // Remove sensitive data
-    const { password: _, ...employeeInfo } = employeeData;
-
-    res.json({
-      token,
-      employee: {
-        ...employeeInfo,
-        // Format dates
-        Start_Date: new Date(employeeInfo.Start_Date),
-        End_Date: new Date(employeeInfo.End_Date),
-        createdAt: new Date(employeeInfo.createdAt),
-        updatedAt: new Date(employeeInfo.updatedAt)
-      }
-    });
+    return res.status(401).json({ message: 'Invalid credentials' });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Error during login', error: error.message });
@@ -104,27 +73,7 @@ const getProfile = async (req, res) => {
         }
       });
     } else {
-      // Check if it's an employee token
-      if (token.startsWith('EMPLOYEE_TOKEN_')) {
-        const employeeId = token.replace('EMPLOYEE_TOKEN_', '');
-        const employee = await Employee.findById(employeeId);
-        
-        if (!employee) {
-          return res.status(404).json({ message: 'Employee not found' });
-        }
-        
-        res.json({
-          message: 'Profile retrieved',
-          user: {
-            id: employee._id,
-            employeeId: employee.employeeId,
-            email: employee.email,
-            role: 'employee'
-          }
-        });
-      } else {
-        return res.status(401).json({ message: 'Not authorized, invalid token' });
-      }
+      return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
   } catch (error) {
     console.error('Get profile error:', error);
@@ -169,31 +118,7 @@ const updateProfile = async (req, res) => {
         }
       });
     } else {
-      // Check if it's an employee token
-      if (token.startsWith('EMPLOYEE_TOKEN_')) {
-        const employeeId = token.replace('EMPLOYEE_TOKEN_', '');
-        const employee = await Employee.findByIdAndUpdate(
-          employeeId,
-          { $set: req.body },
-          { new: true }
-        );
-        
-        if (!employee) {
-          return res.status(404).json({ message: 'Employee not found' });
-        }
-        
-        res.json({
-          message: 'Profile updated successfully',
-          user: {
-            id: employee._id,
-            employeeId: employee.employeeId,
-            email: employee.email,
-            role: 'employee'
-          }
-        });
-      } else {
-        return res.status(401).json({ message: 'Not authorized, invalid token' });
-      }
+      return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
   } catch (error) {
     console.error('Update profile error:', error);

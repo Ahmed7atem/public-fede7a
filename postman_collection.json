@@ -12,7 +12,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           }
         ],
@@ -30,7 +30,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           }
         ],
@@ -55,7 +55,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           }
         ],
@@ -80,7 +80,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           }
         ],
@@ -128,7 +128,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           },
           {
@@ -162,7 +162,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{token}}",
+            "value": "Bearer ADMIN_TOKEN",
             "type": "text"
           }
         ],
@@ -185,11 +185,6 @@
     {
       "key": "base_url",
       "value": "http://localhost:3000",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "your-jwt-token-here",
       "type": "string"
     }
   ]

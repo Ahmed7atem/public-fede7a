@@ -1,7 +1,7 @@
 // controllers/claimController.js
 const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
-const SpecialClaim = require('../../models/SpecialClaim');
+const { Claim, SpecialClaim } = require('../../models');
 
 // Define Claim Schema
 const claimSchema = new mongoose.Schema({
@@ -60,7 +60,7 @@ claimSchema.pre('save', function(next) {
 });
 
 // Create Claim model
-const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
+const ClaimModel = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
 
 /**
  * @desc    Get all claims
@@ -69,7 +69,7 @@ const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
  */
 const getAllClaims = async (req, res) => {
   try {
-    const claims = await Claim.find({}).lean();
+    const claims = await ClaimModel.find({}).lean();
     res.json({
       success: true,
       data: claims,
@@ -93,7 +93,7 @@ const getAllClaims = async (req, res) => {
 const getClaimById = async (req, res) => {
   try {
     const employeeId = req.params.id;
-    const claims = await Claim.find({ patientId: employeeId }).lean();
+    const claims = await ClaimModel.find({ patientId: employeeId }).lean();
     if (!claims || claims.length === 0) {
       return res.status(404).json({
         success: false,
@@ -123,7 +123,7 @@ const getClaimById = async (req, res) => {
 const getClaimsByEmployeeId = async (req, res) => {
   try {
     const employeeId = req.params.employeeId;
-    const claims = await Claim.find({ employeeId }).lean();
+    const claims = await ClaimModel.find({ employeeId }).lean();
     res.json({
       success: true,
       data: claims,
@@ -156,7 +156,7 @@ const createClaim = async (req, res) => {
       } : null
     };
     
-    const claim = new Claim(claimData);
+    const claim = new ClaimModel(claimData);
     const savedClaim = await claim.save();
     res.status(201).json(savedClaim);
   } catch (error) {
@@ -178,22 +178,40 @@ const createSpecialClaim = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Prepare claim data
-    const claimData = {
-      ...req.body,
-      attachments: req.files ? req.files.map(file => ({
-        filename: file.filename,
-        path: file.path,
-        mimetype: file.mimetype,
-        size: file.size,
-      })) : [],
-    };
+    // Process uploaded files
+    const processedAttachments = (req.files || []).map(file => ({
+      fileName: file.originalname,
+      filePath: file.path,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      uploadDate: new Date()
+    }));
 
-    // Create and save special claim
-    const specialClaim = new SpecialClaim(claimData);
-    const savedSpecialClaim = await specialClaim.save();
+    // Create claim with processed attachments
+    const claim = new SpecialClaim({
+      policyNumber: req.body.policyNumber,
+      policyHolderName: req.body.policyHolderName,
+      employeeId: req.body.employeeId,
+      email: req.body.email,
+      number: req.body.number,
+      claimFor: req.body.claimFor,
+      claimForId: req.body.claimForId,
+      country: req.body.country,
+      claimAmount: req.body.claimAmount,
+      currency: req.body.currency,
+      dateOfTreatment: req.body.dateOfTreatment,
+      paymentMethod: req.body.paymentMethod,
+      bankName: req.body.bankName,
+      branchName: req.body.branchName,
+      accountNumber: req.body.accountNumber,
+      swiftCode: req.body.swiftCode,
+      iban: req.body.iban,
+      description: req.body.description,
+      attachments: processedAttachments
+    });
 
-    res.status(201).json(savedSpecialClaim);
+    const savedClaim = await claim.save();
+    res.status(201).json(savedClaim);
   } catch (error) {
     console.error('Error creating special claim:', error);
     res.status(500).json({ message: 'Error creating special claim', error: error.message });
@@ -207,7 +225,7 @@ const createSpecialClaim = async (req, res) => {
  */
 const updateClaim = async (req, res) => {
   try {
-    const claim = await Claim.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const claim = await ClaimModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
@@ -225,7 +243,7 @@ const updateClaim = async (req, res) => {
  */
 const deleteClaim = async (req, res) => {
   try {
-    const claim = await Claim.findByIdAndDelete(req.params.id);
+    const claim = await ClaimModel.findByIdAndDelete(req.params.id);
     if (!claim) {
       return res.status(404).json({ message: 'Claim not found' });
     }
@@ -243,22 +261,10 @@ const deleteClaim = async (req, res) => {
  */
 const getSpecialClaims = async (req, res) => {
   try {
-    const specialClaims = await SpecialClaim.find({})
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json({
-      success: true,
-      data: specialClaims,
-      count: specialClaims.length
-    });
+    const claims = await SpecialClaim.find({}).lean();
+    res.json(claims);
   } catch (error) {
-    console.error('Error fetching special claims:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching special claims',
-      error: error.message
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -269,23 +275,10 @@ const getSpecialClaims = async (req, res) => {
  */
 const getSpecialClaimsByEmployeeId = async (req, res) => {
   try {
-    const { employeeId } = req.params;
-    const specialClaims = await SpecialClaim.find({ employeeId })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json({
-      success: true,
-      data: specialClaims,
-      count: specialClaims.length
-    });
+    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId }).lean();
+    res.json(claims);
   } catch (error) {
-    console.error('Error fetching special claims:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching special claims',
-      error: error.message
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 

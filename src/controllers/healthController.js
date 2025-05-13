@@ -37,18 +37,10 @@ const getAllHealthData = async (req, res) => {
     console.log('Getting all health data...');
     const healthData = await HealthData.find({}).lean();
     console.log(`Found ${healthData.length} health data records`);
-    res.json({
-      success: true,
-      data: healthData,
-      count: healthData.length
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching all health data:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching health data', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching health data', error: error.message });
   }
 };
 

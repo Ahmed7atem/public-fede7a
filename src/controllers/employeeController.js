@@ -8,22 +8,11 @@ const { Employee } = require('../../models');
  */
 const getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find({})
-      .select('-password')
-      .lean();
-
-    res.json({
-      success: true,
-      data: employees,
-      count: employees.length
-    });
+    const employees = await Employee.find().lean();
+    res.json(employees);
   } catch (error) {
-    console.error('Error fetching all employees:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching employees',
-      error: error.message
-    });
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'Error fetching employees', error: error.message });
   }
 };
 
