@@ -136,6 +136,7 @@ const predictionSchema = new mongoose.Schema({
   predictionValue: { type: String, required: true },
   confidence: { type: Number, required: true },
   factors: { type: Array, default: [] },
+  additionalData: { type: Object, default: {} },
   customData: { type: Object, default: {} }
 }, { timestamps: true });
 
