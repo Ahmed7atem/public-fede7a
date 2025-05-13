@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
+const { protect, admin } = require('../src/middleware/auth');
 
 // Import controllers
 const {
@@ -23,7 +26,10 @@ const {
   getClaimsByYear,
   getEmployeeClaimsByYear,
   getAllDependents,
-  getDependentsByEmployeeId
+  getDependentsByEmployeeId,
+  getSpecialClaims,
+  getSpecialClaimsByEmployeeId,
+  createSpecialClaim
 } = require('../src/controllers/claimController');
 
 const {
@@ -186,9 +192,9 @@ app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
 // Special claims routes
-app.get('/api/claims/special', getSpecialClaims);
-app.get('/api/claims/special/employee/:employeeId', getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special', upload.array('attachments', 5), createSpecialClaim);
+app.get('/api/claims/special', protect, getSpecialClaims);
+app.get('/api/claims/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
+app.post('/api/claims/special', protect, upload.array('attachments', 5), createSpecialClaim);
 
 // Claims by year routes
 app.get('/api/claims/year/:year', getClaimsByYear);
@@ -242,12 +248,12 @@ app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
 
 // Pre-approval routes
-app.get('/api/preapprovals', getAllPreApprovals);
-app.get('/api/preapprovals/:id', getPreApprovalById);
-app.get('/api/preapprovals/employee/:employeeId', getPreApprovalsByEmployeeId);
-app.post('/api/preapprovals', createPreApproval);
-app.put('/api/preapprovals/:id', updatePreApproval);
-app.delete('/api/preapprovals/:id', deletePreApproval);
+app.get('/api/pre-approvals', protect, getAllPreApprovals);
+app.get('/api/pre-approvals/:id', protect, getPreApprovalById);
+app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
+app.post('/api/pre-approvals', protect, upload.array('attachments', 5), createPreApproval);
+app.put('/api/pre-approvals/:id', protect, updatePreApproval);
+app.delete('/api/pre-approvals/:id', protect, deletePreApproval);
 
 // Feedback routes
 app.get('/api/feedbacks', getAllFeedbacks);

@@ -4,7 +4,7 @@ const {
   getAllDependents,
   getDependentsByEmployeeId
 } = require('../controllers/claimController');
-const { protect, admin } = require('../middlewares/authMiddleware');
+const { protect, admin } = require('../middleware/auth');
 
 // @route   GET /api/dependents
 // @desc    Get all dependents

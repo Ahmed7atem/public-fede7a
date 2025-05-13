@@ -28,6 +28,25 @@ const getAllPredictions = async (req, res) => {
 };
 
 /**
+ * @desc    Get prediction by ID
+ * @route   GET /api/predictions/:id
+ * @access  Private
+ */
+const getPredictionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prediction = await Prediction.findById(id).lean();
+    if (!prediction) {
+      return res.status(404).json({ success: false, message: 'Prediction not found' });
+    }
+    res.json({ success: true, data: prediction });
+  } catch (error) {
+    console.error('Error fetching prediction by ID:', error);
+    res.status(500).json({ success: false, message: 'Error fetching prediction by ID', error: error.message });
+  }
+};
+
+/**
  * @desc    Get predictions by employee ID
  * @route   GET /api/predictions/employee/:employeeId
  * @access  Private
@@ -83,6 +102,7 @@ const getPredictionsByType = async (req, res) => {
 
 module.exports = {
   getAllPredictions,
+  getPredictionById,
   getPredictionsByEmployeeId,
   getPredictionsByType
 }; 

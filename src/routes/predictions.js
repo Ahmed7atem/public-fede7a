@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middlewares/authMiddleware');
+const { protect, admin } = require('../middleware/auth');
 const {
   getAllPredictions,
+  getPredictionById,
   getPredictionsByEmployeeId,
   getPredictionsByType
 } = require('../controllers/predictionController');
@@ -12,6 +13,10 @@ const { Prediction } = require('../../models');
 // @desc    Get all predictions
 // @access  Private/Admin
 router.get('/', protect, admin, getAllPredictions);
+
+// @route   GET /api/predictions/:id
+// @desc    Get prediction by ID
+router.get('/:id', protect, getPredictionById);
 
 // @route   GET /api/predictions/employee/:employeeId
 // @desc    Get predictions by employee ID
