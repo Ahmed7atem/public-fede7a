@@ -1,136 +1,190 @@
 const mongoose = require('mongoose');
+const ComplaintTicket = require('../../models/ComplaintTicket');
 
 /**
- * @desc    Get all complaints
+ * @desc    Get all complaint tickets
  * @route   GET /api/complaints
  * @access  Private/Admin
  */
 const getAllComplaints = async (req, res) => {
   try {
-    // Mock complaints data since we don't have a Complaint model yet
-    const complaints = [
-      {
-        id: '1',
-        subject: 'Service Issue',
-        category: 'General',
-        description: 'Issue with claim processing',
-        status: 'Open',
-        createdAt: '2024-04-15T10:30:00Z'
-      },
-      {
-        id: '2',
-        subject: 'Policy Concern',
-        category: 'Policy',
-        description: 'Need clarification on policy coverage',
-        status: 'Resolved',
-        response: 'Policy details have been clarified',
-        createdAt: '2024-04-10T14:20:00Z',
-        resolvedAt: '2024-04-12T09:15:00Z'
-      }
-    ];
-    
-    res.json(complaints);
+    const complaints = await ComplaintTicket.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: complaints,
+      count: complaints.length
+    });
   } catch (error) {
-    console.error('Error fetching complaints:', error);
-    res.status(500).json({ message: 'Error fetching complaints', error: error.message });
+    console.error('Error fetching all complaints:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching complaints',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Get complaint by ID
+ * @desc    Get complaint ticket by ID
  * @route   GET /api/complaints/:id
- * @access  Private/Admin
+ * @access  Private
  */
 const getComplaintById = async (req, res) => {
   try {
-    const id = req.params.id;
-    
-    // Mock complaint data
-    const complaint = {
-      id,
-      subject: 'Service Issue',
-      category: 'General',
-      description: 'Issue with claim processing',
-      status: 'Open',
-      createdAt: '2024-04-15T10:30:00Z'
-    };
-    
-    res.json(complaint);
+    const complaint = await ComplaintTicket.findById(req.params.id).lean();
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint ticket not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: complaint
+    });
   } catch (error) {
     console.error('Error fetching complaint:', error);
-    res.status(500).json({ message: 'Error fetching complaint', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching complaint',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Create a new complaint
+ * @desc    Get complaint tickets by employee ID
+ * @route   GET /api/complaints/employee/:employeeId
+ * @access  Private
+ */
+const getComplaintsByEmployeeId = async (req, res) => {
+  try {
+    const complaints = await ComplaintTicket.find({ employeeId: req.params.employeeId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: complaints,
+      count: complaints.length
+    });
+  } catch (error) {
+    console.error('Error fetching employee complaints:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employee complaints',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Create a new complaint ticket
  * @route   POST /api/complaints
  * @access  Private
  */
 const createComplaint = async (req, res) => {
   try {
-    // Mock response for creating a complaint
-    const newComplaint = {
-      id: new mongoose.Types.ObjectId().toString(),
+    const complaintData = {
       ...req.body,
-      status: 'Open',
-      createdAt: new Date().toISOString()
+      attachments: req.files ? req.files.map(file => ({
+        filename: file.filename,
+        path: file.path,
+        mimetype: file.mimetype,
+        size: file.size
+      })) : []
     };
-    
-    res.status(201).json(newComplaint);
+
+    const complaint = new ComplaintTicket(complaintData);
+    const savedComplaint = await complaint.save();
+
+    res.status(201).json({
+      success: true,
+      data: savedComplaint
+    });
   } catch (error) {
     console.error('Error creating complaint:', error);
-    res.status(500).json({ message: 'Error creating complaint', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error creating complaint',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Update a complaint
+ * @desc    Update a complaint ticket
  * @route   PUT /api/complaints/:id
  * @access  Private/Admin
  */
 const updateComplaint = async (req, res) => {
   try {
-    const id = req.params.id;
-    
-    // Mock response for updating a complaint
-    const updatedComplaint = {
-      id,
-      subject: 'Service Issue',
-      category: 'General',
-      description: 'Issue with claim processing',
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-    
-    if (req.body.status === 'Resolved' && !updatedComplaint.resolvedAt) {
-      updatedComplaint.resolvedAt = new Date().toISOString();
+    const complaint = await ComplaintTicket.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    ).lean();
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint ticket not found'
+      });
     }
-    
-    res.json(updatedComplaint);
+
+    res.json({
+      success: true,
+      data: complaint
+    });
   } catch (error) {
     console.error('Error updating complaint:', error);
-    res.status(500).json({ message: 'Error updating complaint', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error updating complaint',
+      error: error.message
+    });
   }
 };
 
 /**
- * @desc    Delete a complaint
+ * @desc    Delete a complaint ticket
  * @route   DELETE /api/complaints/:id
  * @access  Private/Admin
  */
 const deleteComplaint = async (req, res) => {
   try {
-    res.json({ message: 'Complaint deleted successfully' });
+    const complaint = await ComplaintTicket.findByIdAndDelete(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint ticket not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Complaint ticket removed'
+    });
   } catch (error) {
     console.error('Error deleting complaint:', error);
-    res.status(500).json({ message: 'Error deleting complaint', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting complaint',
+      error: error.message
+    });
   }
 };
 
 module.exports = {
   getAllComplaints,
   getComplaintById,
+  getComplaintsByEmployeeId,
   createComplaint,
   updateComplaint,
   deleteComplaint

@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getAllComplaints,
   getComplaintById,
+  getComplaintsByEmployeeId,
   createComplaint,
   updateComplaint,
   deleteComplaint
@@ -13,9 +14,14 @@ const {
 // @access  Private/Admin
 router.get('/', getAllComplaints);
 
+// @route   GET /api/complaints/employee/:employeeId
+// @desc    Get complaints by employee ID
+// @access  Private
+router.get('/employee/:employeeId', getComplaintsByEmployeeId);
+
 // @route   GET /api/complaints/:id
 // @desc    Get complaint by ID
-// @access  Private/Admin
+// @access  Private
 router.get('/:id', getComplaintById);
 
 // @route   POST /api/complaints
