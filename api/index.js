@@ -20,16 +20,18 @@ const {
   createClaim,
   updateClaim,
   deleteClaim,
+  getSpecialClaims,
+  getSpecialClaimsByEmployeeId,
   getClaimsByYear,
   getEmployeeClaimsByYear,
+  createSpecialClaim,
   getAllDependents,
   getDependentsByEmployeeId
 } = require('../src/controllers/claimController');
 
 const {
   getAllHealthData,
-  getHealthDataByEmployeeId,
-  getHealthDataByYear
+  getHealthDataByEmployeeId
 } = require('../src/controllers/healthController');
 
 const {
@@ -71,14 +73,7 @@ const {
 const app = express();
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname)
-  }
-});
+const storage = multer.memoryStorage(); // Use memory storage instead of disk storage
 
 const upload = multer({ 
   storage: storage,
@@ -96,10 +91,34 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Database connection with retry logic
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('MongoDB Connected');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    // Retry connection after 5 seconds
+    setTimeout(connectDB, 5000);
+  }
+};
+
+connectDB();
+
+// Handle MongoDB connection events
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+  connectDB();
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
 
 // Root route for testing
 app.get('/', (req, res) => {
@@ -200,37 +219,87 @@ app.post('/api/claims', upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
-// Claims by year routes
+// Historical Claims routes
 app.get('/api/claims/year/:year', getClaimsByYear);
 app.get('/api/claims/employee/:employeeId/year/:year', getEmployeeClaimsByYear);
 
-// Dependent routes
+// Specific year claims routes for convenience
+app.get('/api/claims/2023', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2023' } }), res));
+app.get('/api/claims/2024', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2024' } }), res));
+app.get('/api/claims/2023/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2023', employeeId: req.params.employeeId } }), res));
+app.get('/api/claims/2024/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2024', employeeId: req.params.employeeId } }), res));
+
+// Dependents routes
 app.get('/api/dependents', getAllDependents);
 app.get('/api/dependents/employee/:employeeId', getDependentsByEmployeeId);
-
-// Sleep data routes
-app.get('/api/sleep', getAllSleepData);
-app.get('/api/sleep/employee/:employeeId', getSleepDataByEmployeeId);
-
-// Wearable data routes
-app.get('/api/wearable', getAllWearableData);
-app.get('/api/wearable/employee/:employeeId', getWearableDataByEmployeeId);
-
-// Provider routes
-app.get('/api/providers', getAllProviders);
-
-// Policy routes
-app.get('/api/policies', getAllPolicies);
-
-// Analytics routes
-app.get('/api/analytics/employee/:employeeId', getEmployeeAnalytics);
-app.get('/api/analytics/organization', getOrganizationAnalytics);
-app.get('/api/analytics/alerts', getHealthAlerts);
 
 // Prediction routes
 app.get('/api/predictions', getAllPredictions);
 app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', getPredictionsByType);
+
+// New POST endpoint for predictions with the new format
+app.post('/api/predictions', async (req, res) => {
+  try {
+    const { 
+      Patient_ID, 
+      Health_Status, 
+      Insurance_Consumption, 
+      Needs_Insurance_Update, 
+      Suggested_Plan, 
+      Recommendations, 
+      Message 
+    } = req.body;
+
+    // Validate required fields
+    if (!Patient_ID || !Health_Status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: Patient_ID and Health_Status are required'
+      });
+    }
+
+    // Use the Prediction model
+    const { Prediction } = require('../models');
+
+    // Create new prediction using the provided format
+    const newPrediction = new Prediction({
+      employeeId: Patient_ID,
+      predictionType: 'health_status',
+      predictionValue: Health_Status,
+      confidence: 0.9, // Default confidence
+      factors: Recommendations || [],
+      // Store the entire original payload in a custom property
+      customData: {
+        Insurance_Consumption,
+        Needs_Insurance_Update,
+        Suggested_Plan,
+        Message
+      }
+    });
+
+    // Save the prediction
+    const savedPrediction = await newPrediction.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Prediction added successfully',
+      data: savedPrediction
+    });
+  } catch (error) {
+    console.error('Error adding prediction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding prediction',
+      error: error.message
+    });
+  }
+});
+
+// Analytics routes
+app.get('/api/analytics/employee/:employeeId', getEmployeeAnalytics);
+app.get('/api/analytics/organization', getOrganizationAnalytics);
+app.get('/api/analytics/alerts', getHealthAlerts);
 
 // Health check
 app.get('/health', async (req, res) => {
@@ -245,7 +314,17 @@ app.get('/health', async (req, res) => {
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!' });
+  res.status(500).json({
+    success: false,
+    message: 'Something broke!',
+    error: err.message
+  });
+});
+
+// Start server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
 
 module.exports = app; 
