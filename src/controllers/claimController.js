@@ -312,20 +312,44 @@ const getSpecialClaims = async (req, res) => {
     console.log('Fetching special claims...');
     console.log('Mongoose connection state:', mongoose.connection.readyState);
     
+    // Check database connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('Database not connected. Current state:', mongoose.connection.readyState);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection error',
+        error: 'Database not connected'
+      });
+    }
+
     // Get the collection directly
     const collection = mongoose.connection.db.collection('specialclaims');
-    const claims = await collection.find({}).toArray();
+    console.log('Collection found:', collection ? 'yes' : 'no');
     
+    const claims = await collection.find({}).toArray();
     console.log(`Found ${claims.length} special claims`);
     
+    if (claims.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No special claims found'
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: claims,
       count: claims.length,
-      message: claims.length === 0 ? 'No special claims found' : 'Special claims retrieved successfully'
+      message: 'Special claims retrieved successfully'
     });
   } catch (error) {
     console.error('Error fetching special claims:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({ 
       success: false,
       message: 'Error fetching special claims', 
