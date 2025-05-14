@@ -25,12 +25,9 @@ const login = async (req, res) => {
       await admin.save();
 
       return res.json({
-        message: 'Login successful',
-        token: 'ADMIN_TOKEN',
-        user: {
-          id: admin._id,
-          email: admin.email,
-          name: admin.name,
+        success: true,
+        data: {
+          ...admin.toObject(),
           role: 'admin'
         }
       });
@@ -49,24 +46,10 @@ const login = async (req, res) => {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Generate JWT token
-      const token = jwt.sign(
-        { 
-          id: employee._id,
-          email: employee.email,
-          role: 'employee'
-        },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '24h' }
-      );
-
       return res.json({
-        message: 'Login successful',
-        token,
-        user: {
-          id: employee._id,
-          email: employee.email,
-          employeeId: employee.employeeId,
+        success: true,
+        data: {
+          ...employee.toObject(),
           role: 'employee'
         }
       });
