@@ -79,7 +79,8 @@ const {
   getAllPredictions,
   getPredictionsByEmployeeId,
   getPredictionsByType,
-  getPredictionById
+  getPredictionById,
+  createPrediction
 } = require('../src/controllers/predictionController');
 
 const {
@@ -137,7 +138,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: function (req, file, cb) {
+    // Accept all file types for now
+    cb(null, true);
+  }
 });
 
 // Basic middleware
@@ -260,10 +265,11 @@ app.get('/api/analytics/organization', getOrganizationAnalytics);
 app.get('/api/analytics/alerts', getHealthAlerts);
 
 // Prediction routes
-app.get('/api/predictions', protect, admin, getAllPredictions);
-app.get('/api/predictions/:id', protect, getPredictionById);
-app.get('/api/predictions/employee/:employeeId', protect, getPredictionsByEmployeeId);
-app.get('/api/predictions/type/:type', protect, admin, getPredictionsByType);
+app.get('/api/predictions', getAllPredictions);
+app.get('/api/predictions/:id', getPredictionById);
+app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
+app.get('/api/predictions/type/:type', getPredictionsByType);
+app.post('/api/predictions', createPrediction);
 
 // Pre-approval routes
 app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);

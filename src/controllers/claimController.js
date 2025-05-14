@@ -167,7 +167,7 @@ const createClaim = async (req, res) => {
 
 /**
  * @desc    Create a new special claim
- * @route   POST /api/special-claims
+ * @route   POST /api/claims/special
  * @access  Private
  */
 const createSpecialClaim = async (req, res) => {
@@ -188,7 +188,7 @@ const createSpecialClaim = async (req, res) => {
     }));
 
     // Create claim with processed attachments
-    const claim = new SpecialClaim({
+    const claimData = {
       policyNumber: req.body.policyNumber,
       policyHolderName: req.body.policyHolderName,
       employeeId: req.body.employeeId,
@@ -197,9 +197,9 @@ const createSpecialClaim = async (req, res) => {
       claimFor: req.body.claimFor,
       claimForId: req.body.claimForId,
       country: req.body.country,
-      claimAmount: req.body.claimAmount,
+      claimAmount: parseFloat(req.body.claimAmount),
       currency: req.body.currency,
-      dateOfTreatment: req.body.dateOfTreatment,
+      dateOfTreatment: new Date(req.body.dateOfTreatment),
       paymentMethod: req.body.paymentMethod,
       bankName: req.body.bankName,
       branchName: req.body.branchName,
@@ -208,13 +208,23 @@ const createSpecialClaim = async (req, res) => {
       iban: req.body.iban,
       description: req.body.description,
       attachments: processedAttachments
-    });
+    };
 
+    const claim = new SpecialClaim(claimData);
     const savedClaim = await claim.save();
-    res.status(201).json(savedClaim);
+
+    res.status(201).json({
+      success: true,
+      data: savedClaim,
+      message: 'Special claim created successfully'
+    });
   } catch (error) {
     console.error('Error creating special claim:', error);
-    res.status(500).json({ message: 'Error creating special claim', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error creating special claim', 
+      error: error.message 
+    });
   }
 };
 

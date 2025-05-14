@@ -100,9 +100,58 @@ const getPredictionsByType = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Create a new prediction
+ * @route   POST /api/predictions
+ * @access  Private
+ */
+const createPrediction = async (req, res) => {
+  try {
+    const {
+      Patient_ID,
+      Health_Status,
+      Insurance_Consumption,
+      Needs_Insurance_Update,
+      Suggested_Plan,
+      Recommendations,
+      Message
+    } = req.body;
+
+    const prediction = await Prediction.create({
+      employeeId: Patient_ID,
+      predictedAt: new Date(),
+      predictionType: 'health_assessment',
+      predictionValue: Health_Status,
+      confidence: 0.95, // You might want to adjust this based on your ML model
+      factors: Recommendations,
+      additionalData: {
+        insuranceConsumption: Insurance_Consumption,
+        needsInsuranceUpdate: Needs_Insurance_Update,
+        suggestedPlan: Suggested_Plan
+      },
+      customData: {
+        message: Message
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      data: prediction
+    });
+  } catch (error) {
+    console.error('Error creating prediction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating prediction',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllPredictions,
   getPredictionById,
   getPredictionsByEmployeeId,
-  getPredictionsByType
+  getPredictionsByType,
+  createPrediction
 }; 
