@@ -172,6 +172,9 @@ const createClaim = async (req, res) => {
  */
 const createSpecialClaim = async (req, res) => {
   try {
+    console.log('Received request body:', req.body);
+    console.log('Received files:', req.files);
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -179,14 +182,26 @@ const createSpecialClaim = async (req, res) => {
     }
 
     // Process uploaded files from memory storage
-    const processedAttachments = (req.files || []).map(file => ({
-      fileName: file.originalname,
-      fileType: file.mimetype,
-      fileSize: file.size,
-      uploadDate: new Date(),
-      // Store the buffer as base64 string
-      fileData: file.buffer.toString('base64')
-    }));
+    const processedAttachments = (req.files || []).map(file => {
+      console.log('Processing file:', file.originalname);
+      return {
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        uploadDate: new Date(),
+        fileData: file.buffer.toString('base64')
+      };
+    });
+
+    // Parse numeric values
+    const claimAmount = parseFloat(req.body.claimAmount);
+    if (isNaN(claimAmount)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid claim amount',
+        error: 'claimAmount must be a valid number'
+      });
+    }
 
     // Create claim with processed attachments
     const claimData = {
@@ -198,18 +213,20 @@ const createSpecialClaim = async (req, res) => {
       claimFor: req.body.claimFor,
       claimForId: req.body.claimForId,
       country: req.body.country,
-      claimAmount: parseFloat(req.body.claimAmount),
+      claimAmount: claimAmount,
       currency: req.body.currency,
       dateOfTreatment: new Date(req.body.dateOfTreatment),
       paymentMethod: req.body.paymentMethod,
-      bankName: req.body.bankName,
-      branchName: req.body.branchName,
-      accountNumber: req.body.accountNumber,
-      swiftCode: req.body.swiftCode,
-      iban: req.body.iban,
+      bankName: req.body.bankName || undefined,
+      branchName: req.body.branchName || undefined,
+      accountNumber: req.body.accountNumber || undefined,
+      swiftCode: req.body.swiftCode || undefined,
+      iban: req.body.iban || undefined,
       description: req.body.description,
       attachments: processedAttachments
     };
+
+    console.log('Creating claim with data:', JSON.stringify(claimData, null, 2));
 
     const claim = new SpecialClaim(claimData);
     const savedClaim = await claim.save();
@@ -221,10 +238,30 @@ const createSpecialClaim = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating special claim:', error);
-    res.status(500).json({ 
+    // Log the full error details
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      validationErrors: error.errors
+    });
+
+    // If it's a validation error, return more specific details
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation Error',
+        errors: Object.keys(error.errors).map(key => ({
+          field: key,
+          message: error.errors[key].message
+        }))
+      });
+    }
+
+    res.status(500).json({
       success: false,
-      message: 'Error creating special claim', 
-      error: error.message 
+      message: 'Error creating special claim',
+      error: error.message
     });
   }
 };
