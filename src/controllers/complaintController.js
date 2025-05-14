@@ -93,7 +93,12 @@ const createComplaint = async (req, res) => {
     console.log('Received request body:', req.body);
     console.log('Received file:', req.file);
 
-    const { providerType, description, employeeId } = req.body;
+    // Extract form data
+    const providerType = req.body.providerType;
+    const description = req.body.description;
+    const employeeId = req.body.employeeId;
+
+    console.log('Extracted fields:', { providerType, description, employeeId });
 
     // Validate required fields
     if (!providerType || !employeeId) {

@@ -32,7 +32,7 @@ const upload = multer({
       cb(new Error('Invalid file type. Only JPEG, PNG and PDF files are allowed.'));
     }
   }
-});
+}).single('attachment');
 
 // @route   GET /api/complaints
 // @desc    Get all complaints
@@ -52,7 +52,24 @@ router.get('/:id', getComplaintById);
 // @route   POST /api/complaints
 // @desc    Create a new complaint
 // @access  Private
-router.post('/', upload.single('attachment'), createComplaint);
+router.post('/', (req, res, next) => {
+  upload(req, res, function(err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        message: 'File upload error',
+        error: err.message
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type',
+        error: err.message
+      });
+    }
+    next();
+  });
+}, createComplaint);
 
 // @route   PUT /api/complaints/:id
 // @desc    Update a complaint
