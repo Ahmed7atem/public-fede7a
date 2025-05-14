@@ -90,10 +90,14 @@ const getComplaintsByEmployeeId = async (req, res) => {
  */
 const createComplaint = async (req, res) => {
   try {
+    console.log('Received request body:', req.body);
+    console.log('Received file:', req.file);
+
     const { providerType, description, employeeId } = req.body;
 
     // Validate required fields
     if (!providerType || !employeeId) {
+      console.log('Missing fields:', { providerType, employeeId });
       return res.status(400).json({
         success: false,
         message: 'Missing required fields',
@@ -112,6 +116,8 @@ const createComplaint = async (req, res) => {
         size: req.file.size
       } : null
     };
+
+    console.log('Creating complaint with data:', complaintData);
 
     const complaint = new ComplaintTicket(complaintData);
     const savedComplaint = await complaint.save();
