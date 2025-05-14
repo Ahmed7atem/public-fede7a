@@ -311,10 +311,12 @@ const getSpecialClaims = async (req, res) => {
   try {
     console.log('Fetching special claims...');
     console.log('Mongoose connection state:', mongoose.connection.readyState);
-    console.log('Available collections:', await mongoose.connection.db.collections().map(c => c.collectionName));
     
-    const claims = await SpecialClaim.find({}).lean();
-    console.log('Found claims:', JSON.stringify(claims, null, 2));
+    // Get the collection directly
+    const collection = mongoose.connection.db.collection('specialclaims');
+    const claims = await collection.find({}).toArray();
+    
+    console.log(`Found ${claims.length} special claims`);
     
     res.status(200).json({
       success: true,
