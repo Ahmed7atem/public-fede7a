@@ -20,7 +20,19 @@ const specialClaimSchema = new mongoose.Schema({
   swiftCode: String,
   iban: String,
   description: String,
-  attachments: Array
+  attachments: [{
+    fileName: String,
+    filePath: {
+      type: String,
+      required: true
+    },
+    fileType: String,
+    fileSize: Number,
+    uploadDate: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true,
   collection: 'specialclaims'

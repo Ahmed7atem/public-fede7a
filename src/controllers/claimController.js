@@ -261,8 +261,10 @@ const deleteClaim = async (req, res) => {
  */
 const getSpecialClaims = async (req, res) => {
   try {
+    console.log('Fetching special claims...');
     const claims = await SpecialClaim.find({}).lean();
-    res.json({
+    console.log('Found claims:', claims);
+    res.status(200).json({
       success: true,
       data: claims,
       count: claims.length,
