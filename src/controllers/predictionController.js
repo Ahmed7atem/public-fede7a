@@ -107,47 +107,50 @@ const getPredictionsByType = async (req, res) => {
  */
 const createPrediction = async (req, res) => {
   try {
-    const {
-      Patient_ID,
-      Health_Status,
-      Insurance_Consumption,
-      Needs_Insurance_Update,
-      Suggested_Plan,
-      Recommendations,
-      Message
-    } = req.body;
+    const { predictions } = req.body;
 
-    const prediction = await Prediction.create({
-      employeeId: Patient_ID,
-      predictedAt: new Date(),
-      predictionType: 'health_assessment',
-      predictionValue: Health_Status,
-      confidence: 0.95,
-      factors: Recommendations,
-      additionalData: {
-        insuranceConsumption: Insurance_Consumption,
-        needsInsuranceUpdate: Needs_Insurance_Update,
-        suggestedPlan: Suggested_Plan
-      },
-      customData: {
-        message: Message
-      }
-    });
+    if (!Array.isArray(predictions) || predictions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request body. Expected non-empty predictions array.'
+      });
+    }
+
+    const createdPredictions = await Promise.all(
+      predictions.map(async (prediction) => {
+        const {
+          Patient_ID,
+          health_status,
+          plan_consumption,
+          plan_upgrade,
+          health_recommendations
+        } = prediction;
+
+        return await Prediction.create({
+          employeeId: Patient_ID,
+          predictedAt: new Date(),
+          predictionType: 'health_assessment',
+          predictionValue: health_status,
+          confidence: 0.95,
+          factors: health_recommendations,
+          additionalData: {
+            insuranceConsumption: plan_consumption,
+            needsInsuranceUpdate: plan_upgrade.needs_upgrade,
+            suggestedPlan: plan_upgrade.suggested_plan
+          }
+        });
+      })
+    );
 
     res.status(201).json({
-      Patient_ID,
-      Health_Status,
-      Insurance_Consumption,
-      Needs_Insurance_Update,
-      Suggested_Plan,
-      Recommendations,
-      Message
+      success: true,
+      data: predictions
     });
   } catch (error) {
-    console.error('Error creating prediction:', error);
+    console.error('Error creating predictions:', error);
     res.status(500).json({
       success: false,
-      message: 'Error creating prediction',
+      message: 'Error creating predictions',
       error: error.message
     });
   }
