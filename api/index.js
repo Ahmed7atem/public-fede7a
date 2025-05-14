@@ -198,7 +198,7 @@ app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
 // Special claims routes
-app.get('/api/claims/special', protect, getSpecialClaims);
+app.get('/api/claims/special', protect, admin, getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
 app.post('/api/claims/special', protect, upload.array('attachments', 5), createSpecialClaim);
 

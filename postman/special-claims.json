@@ -1,6 +1,8 @@
 {
   "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890",
     "name": "Special Claims API",
+    "description": "API collection for managing special claims",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -19,7 +21,8 @@
           "raw": "{{baseUrl}}/api/claims/special",
           "host": ["{{baseUrl}}"],
           "path": ["api", "claims", "special"]
-        }
+        },
+        "description": "Get all special claims (requires admin access)"
       }
     },
     {
@@ -44,7 +47,8 @@
               "description": "Employee ID"
             }
           ]
-        }
+        },
+        "description": "Get special claims for a specific employee"
       }
     },
     {
@@ -64,97 +68,116 @@
             {
               "key": "policyNumber",
               "value": "POL123456",
-              "type": "text"
+              "type": "text",
+              "description": "Policy number"
             },
             {
               "key": "policyHolderName",
               "value": "John Doe",
-              "type": "text"
+              "type": "text",
+              "description": "Name of the policy holder"
             },
             {
               "key": "employeeId",
               "value": "EMP789",
-              "type": "text"
+              "type": "text",
+              "description": "Employee ID"
             },
             {
               "key": "email",
               "value": "john.doe@example.com",
-              "type": "text"
+              "type": "text",
+              "description": "Email address"
             },
             {
               "key": "number",
               "value": "+1234567890",
-              "type": "text"
+              "type": "text",
+              "description": "Contact number"
             },
             {
               "key": "claimFor",
               "value": "Medical",
-              "type": "text"
+              "type": "text",
+              "description": "Type of claim"
             },
             {
               "key": "claimForId",
               "value": "CLM456",
-              "type": "text"
+              "type": "text",
+              "description": "Claim ID"
             },
             {
               "key": "country",
               "value": "USA",
-              "type": "text"
+              "type": "text",
+              "description": "Country"
             },
             {
               "key": "claimAmount",
               "value": "1500.75",
-              "type": "text"
+              "type": "text",
+              "description": "Amount of the claim"
             },
             {
               "key": "currency",
               "value": "USD",
-              "type": "text"
+              "type": "text",
+              "description": "Currency code"
             },
             {
               "key": "dateOfTreatment",
-              "value": "2025-05-01",
-              "type": "text"
+              "value": "2024-05-14",
+              "type": "text",
+              "description": "Date of treatment (YYYY-MM-DD)"
             },
             {
               "key": "paymentMethod",
               "value": "Bank Transfer",
-              "type": "text"
+              "type": "text",
+              "description": "Payment method"
             },
             {
               "key": "bankName",
               "value": "Bank of America",
-              "type": "text"
+              "type": "text",
+              "description": "Bank name (required for bank transfer)"
             },
             {
               "key": "branchName",
               "value": "Main Branch",
-              "type": "text"
+              "type": "text",
+              "description": "Branch name (required for bank transfer)"
             },
             {
               "key": "accountNumber",
               "value": "123456789012",
-              "type": "text"
+              "type": "text",
+              "description": "Account number (required for bank transfer)"
             },
             {
               "key": "swiftCode",
               "value": "BOFAUS3N",
-              "type": "text"
+              "type": "text",
+              "description": "SWIFT code (required for bank transfer)"
             },
             {
               "key": "iban",
               "value": "US12345678901234567890",
-              "type": "text"
+              "type": "text",
+              "description": "IBAN (required for bank transfer)"
             },
             {
               "key": "description",
               "value": "Medical treatment for surgery",
-              "type": "text"
+              "type": "text",
+              "description": "Description of the claim"
             },
             {
               "key": "attachments",
               "type": "file",
-              "src": "/path/to/your/file.pdf"
+              "src": "",
+              "description": "Supporting documents (up to 5 files)"
             }
           ]
         },
@@ -162,20 +185,43 @@
           "raw": "{{baseUrl}}/api/claims/special",
           "host": ["{{baseUrl}}"],
           "path": ["api", "claims", "special"]
-        }
+        },
+        "description": "Create a new special claim with attachments"
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
       }
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
-      "type": "string"
+      "value": "https://public-fede7a.vercel.app",
+      "type": "string",
+      "description": "Base URL for the API"
     },
     {
       "key": "token",
       "value": "your-auth-token-here",
-      "type": "string"
+      "type": "string",
+      "description": "Authentication token"
     }
   ]
 }
