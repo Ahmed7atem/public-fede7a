@@ -262,8 +262,12 @@ const deleteClaim = async (req, res) => {
 const getSpecialClaims = async (req, res) => {
   try {
     console.log('Fetching special claims...');
+    console.log('Mongoose connection state:', mongoose.connection.readyState);
+    console.log('Available collections:', await mongoose.connection.db.collections().map(c => c.collectionName));
+    
     const claims = await SpecialClaim.find({}).lean();
-    console.log('Found claims:', claims);
+    console.log('Found claims:', JSON.stringify(claims, null, 2));
+    
     res.status(200).json({
       success: true,
       data: claims,

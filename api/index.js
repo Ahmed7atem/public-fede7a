@@ -103,7 +103,8 @@ const {
   getPreApprovalsByEmployeeId,
   getPreApprovalsByProviderId,
   updatePreApprovalStatus,
-  deletePreApproval
+  deletePreApproval,
+  createPreApproval
 } = require('../src/controllers/preApprovalController');
 
 const {
