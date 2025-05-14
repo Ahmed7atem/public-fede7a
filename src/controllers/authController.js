@@ -26,10 +26,8 @@ const login = async (req, res) => {
 
       return res.json({
         success: true,
-        data: {
-          ...admin.toObject(),
-          role: 'admin'
-        }
+        ...admin.toObject(),
+        role: 'admin'
       });
     }
 
@@ -48,10 +46,8 @@ const login = async (req, res) => {
 
       return res.json({
         success: true,
-        data: {
-          ...employee.toObject(),
-          role: 'employee'
-        }
+        ...employee.toObject(),
+        role: 'employee'
       });
     }
     
