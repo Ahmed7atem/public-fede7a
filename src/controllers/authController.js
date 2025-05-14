@@ -1,4 +1,5 @@
 const { Employee, Admin } = require('../../models');
+const jwt = require('jsonwebtoken');
 
 /**
  * @desc    Login user
@@ -8,6 +9,7 @@ const { Employee, Admin } = require('../../models');
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
     
     // Check if user is an admin
     const admin = await Admin.findOne({ email });
@@ -30,6 +32,42 @@ const login = async (req, res) => {
           email: admin.email,
           name: admin.name,
           role: 'admin'
+        }
+      });
+    }
+
+    // Check if user is an employee
+    const employee = await Employee.findOne({ email });
+    console.log('Employee found:', employee ? 'yes' : 'no');
+    
+    if (employee) {
+      // Check employee password - direct comparison
+      const isMatch = employee.password === password;
+      console.log('Password match:', isMatch ? 'yes' : 'no');
+      
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          id: employee._id,
+          email: employee.email,
+          role: 'employee'
+        },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        message: 'Login successful',
+        token,
+        user: {
+          id: employee._id,
+          email: employee.email,
+          employeeId: employee.employeeId,
+          role: 'employee'
         }
       });
     }
