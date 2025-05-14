@@ -122,7 +122,7 @@ const createPrediction = async (req, res) => {
       predictedAt: new Date(),
       predictionType: 'health_assessment',
       predictionValue: Health_Status,
-      confidence: 0.95, // You might want to adjust this based on your ML model
+      confidence: 0.95,
       factors: Recommendations,
       additionalData: {
         insuranceConsumption: Insurance_Consumption,
@@ -135,8 +135,13 @@ const createPrediction = async (req, res) => {
     });
 
     res.status(201).json({
-      success: true,
-      data: prediction
+      Patient_ID,
+      Health_Status,
+      Insurance_Consumption,
+      Needs_Insurance_Update,
+      Suggested_Plan,
+      Recommendations,
+      Message
     });
   } catch (error) {
     console.error('Error creating prediction:', error);
