@@ -22,16 +22,13 @@ const specialClaimSchema = new mongoose.Schema({
   description: String,
   attachments: [{
     fileName: String,
-    filePath: {
-      type: String,
-      required: true
-    },
     fileType: String,
     fileSize: Number,
     uploadDate: {
       type: Date,
       default: Date.now
-    }
+    },
+    fileData: String // Base64 encoded file data
   }]
 }, {
   timestamps: true,

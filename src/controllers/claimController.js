@@ -178,13 +178,14 @@ const createSpecialClaim = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Process uploaded files
+    // Process uploaded files from memory storage
     const processedAttachments = (req.files || []).map(file => ({
       fileName: file.originalname,
-      filePath: file.path,
       fileType: file.mimetype,
       fileSize: file.size,
-      uploadDate: new Date()
+      uploadDate: new Date(),
+      // Store the buffer as base64 string
+      fileData: file.buffer.toString('base64')
     }));
 
     // Create claim with processed attachments
