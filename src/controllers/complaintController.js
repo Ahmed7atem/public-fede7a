@@ -90,14 +90,27 @@ const getComplaintsByEmployeeId = async (req, res) => {
  */
 const createComplaint = async (req, res) => {
   try {
+    const { providerType, description, employeeId } = req.body;
+
+    // Validate required fields
+    if (!providerType || !employeeId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        error: 'providerType and employeeId are required'
+      });
+    }
+
     const complaintData = {
-      ...req.body,
-      attachments: req.files ? req.files.map(file => ({
-        filename: file.filename,
-        path: file.path,
-        mimetype: file.mimetype,
-        size: file.size
-      })) : []
+      providerType,
+      description,
+      employeeId,
+      attachment: req.file ? {
+        filename: req.file.filename,
+        path: req.file.path,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
     };
 
     const complaint = new ComplaintTicket(complaintData);

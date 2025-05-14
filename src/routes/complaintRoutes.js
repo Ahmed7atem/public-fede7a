@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const {
   getAllComplaints,
   getComplaintById,
@@ -8,6 +10,29 @@ const {
   updateComplaint,
   deleteComplaint
 } = require('../controllers/complaintController');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, `complaint-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG and PDF files are allowed.'));
+    }
+  }
+});
 
 // @route   GET /api/complaints
 // @desc    Get all complaints
@@ -27,7 +52,7 @@ router.get('/:id', getComplaintById);
 // @route   POST /api/complaints
 // @desc    Create a new complaint
 // @access  Private
-router.post('/', createComplaint);
+router.post('/', upload.single('attachment'), createComplaint);
 
 // @route   PUT /api/complaints/:id
 // @desc    Update a complaint
