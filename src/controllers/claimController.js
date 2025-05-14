@@ -309,33 +309,18 @@ const deleteClaim = async (req, res) => {
  */
 const getSpecialClaims = async (req, res) => {
   try {
-    console.log('Fetching special claims...');
+    console.log('Fetching special claims (Mongoose model)...');
     console.log('Mongoose connection state:', mongoose.connection.readyState);
     
-    // Check database connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('Database not connected. Current state:', mongoose.connection.readyState);
-      return res.status(500).json({
-        success: false,
-        message: 'Database connection error',
-        error: 'Database not connected'
-      });
-    }
-
-    // Get the collection directly
-    const collection = mongoose.connection.db.collection('specialclaims');
-    console.log('Collection found:', collection ? 'yes' : 'no');
-    
-    const claims = await collection.find({}).toArray();
-    console.log(`Found ${claims.length} special claims`);
-    
+    // Use the Mongoose model
+    const claims = await SpecialClaim.find({}).lean();
+    console.log('Claims found:', claims.length);
     if (claims.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'No special claims found'
       });
     }
-
     res.status(200).json({
       success: true,
       data: claims,
@@ -344,12 +329,6 @@ const getSpecialClaims = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching special claims:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    
     res.status(500).json({ 
       success: false,
       message: 'Error fetching special claims', 
