@@ -1,16 +1,8 @@
 // middlewares/fileUpload.js
 const multer = require('multer');
-const path = require('path');
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
+// Use memory storage for all environments since we store files in MongoDB
+const storage = multer.memoryStorage();
 
 // File filter
 const fileFilter = (req, file, cb) => {

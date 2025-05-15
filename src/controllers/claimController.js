@@ -213,10 +213,10 @@ const createClaim = async (req, res) => {
     const claimData = {
       ...req.body,
       attachment: req.file ? {
-        filename: req.file.filename,
-        path: req.file.path,
+        filename: req.file.originalname,
         mimetype: req.file.mimetype,
-        size: req.file.size
+        size: req.file.size,
+        data: req.file.buffer.toString('base64')
       } : null
     };
     
