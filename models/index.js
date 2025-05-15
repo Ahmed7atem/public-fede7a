@@ -11,7 +11,12 @@ const {
   Attachment,
   PolicyDocument,
   Prediction,
-  Admin
+  Admin,
+  HealthData2020,
+  HealthData2021,
+  HealthData2022,
+  HealthData2023,
+  HealthData2024
 } = require('./schemas');
 const PreApprovalClaim = require('./schemas').PreApprovalClaim;
 const Provider = require('./Provider');
@@ -78,5 +83,10 @@ module.exports = {
   Doctor,
   Provider,
   Admin,
-  SpecialClaim
+  SpecialClaim,
+  HealthData2020,
+  HealthData2021,
+  HealthData2022,
+  HealthData2023,
+  HealthData2024
 }; 

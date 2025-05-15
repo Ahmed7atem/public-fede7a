@@ -1,7 +1,11 @@
 // controllers/claimController.js
 const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
-const { Claim, SpecialClaim } = require('../../models');
+const { Claim, SpecialClaim, Claim2023, Claim2024 } = require('../../models');
+
+// Constants
+const ITEMS_PER_PAGE = 10;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // Define Claim Schema
 const claimSchema = new mongoose.Schema({
@@ -63,17 +67,34 @@ claimSchema.pre('save', function(next) {
 const ClaimModel = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
 
 /**
- * @desc    Get all claims
+ * @desc    Get all claims with pagination
  * @route   GET /api/claims
  * @access  Private/Admin
  */
 const getAllClaims = async (req, res) => {
   try {
-    const claims = await ClaimModel.find({}).lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [claims, total] = await Promise.all([
+      Claim.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Claim.countDocuments({})
+    ]);
+
     res.json({
       success: true,
       data: claims,
-      count: claims.length
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
     });
   } catch (error) {
     console.error('Error fetching all claims:', error);
@@ -92,42 +113,68 @@ const getAllClaims = async (req, res) => {
  */
 const getClaimById = async (req, res) => {
   try {
-    const employeeId = req.params.id;
-    const claims = await ClaimModel.find({ patientId: employeeId }).lean();
-    if (!claims || claims.length === 0) {
-      return res.status(404).json({
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
         success: false,
-        message: 'Claims not found'
+        message: 'Invalid claim ID format'
       });
     }
+
+    const claim = await Claim.findById(id).lean();
+    
+    if (!claim) {
+      return res.status(404).json({
+        success: false,
+        message: 'Claim not found'
+      });
+    }
+
     res.json({
       success: true,
-      data: claims,
-      count: claims.length
+      data: claim
     });
   } catch (error) {
-    console.error('Error fetching claims:', error);
+    console.error('Error fetching claim:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching claims',
+      message: 'Error fetching claim',
       error: error.message
     });
   }
 };
 
 /**
- * @desc    Get claims by employee ID
+ * @desc    Get claims by employee ID with pagination
  * @route   GET /api/claims/employee/:employeeId
  * @access  Private
  */
 const getClaimsByEmployeeId = async (req, res) => {
   try {
-    const employeeId = req.params.employeeId;
-    const claims = await ClaimModel.find({ employeeId }).lean();
+    const { employeeId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [claims, total] = await Promise.all([
+      Claim.find({ employeeId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Claim.countDocuments({ employeeId })
+    ]);
+
     res.json({
       success: true,
       data: claims,
-      count: claims.length
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
     });
   } catch (error) {
     console.error('Error fetching employee claims:', error);
@@ -146,6 +193,23 @@ const getClaimsByEmployeeId = async (req, res) => {
  */
 const createClaim = async (req, res) => {
   try {
+    // Validate request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    // Validate file size if file is present
+    if (req.file && req.file.size > MAX_FILE_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: 'File size exceeds maximum limit of 10MB'
+      });
+    }
+
     const claimData = {
       ...req.body,
       attachment: req.file ? {
@@ -156,12 +220,21 @@ const createClaim = async (req, res) => {
       } : null
     };
     
-    const claim = new ClaimModel(claimData);
+    const claim = new Claim(claimData);
     const savedClaim = await claim.save();
-    res.status(201).json(savedClaim);
+
+    res.status(201).json({
+      success: true,
+      data: savedClaim,
+      message: 'Claim created successfully'
+    });
   } catch (error) {
     console.error('Error creating claim:', error);
-    res.status(500).json({ message: 'Error creating claim', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error creating claim',
+      error: error.message
+    });
   }
 };
 
@@ -172,38 +245,55 @@ const createClaim = async (req, res) => {
  */
 const createSpecialClaim = async (req, res) => {
   try {
-    console.log('Received request body:', req.body);
-    console.log('Received files:', req.files);
-
-    // Check for validation errors
+    // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Process uploaded files from memory storage
-    const processedAttachments = (req.files || []).map(file => {
-      console.log('Processing file:', file.originalname);
-      return {
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        uploadDate: new Date(),
-        fileData: file.buffer.toString('base64')
-      };
-    });
-
-    // Parse numeric values
-    const claimAmount = parseFloat(req.body.claimAmount);
-    if (isNaN(claimAmount)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid claim amount',
-        error: 'claimAmount must be a valid number'
+        errors: errors.array()
       });
     }
 
-    // Create claim with processed attachments
+    // Validate file sizes
+    if (req.files) {
+      for (const file of req.files) {
+        if (file.size > MAX_FILE_SIZE) {
+          return res.status(400).json({
+            success: false,
+            message: `File ${file.originalname} exceeds maximum size limit of 10MB`
+          });
+        }
+      }
+    }
+
+    // Process uploaded files
+    const processedAttachments = (req.files || []).map(file => ({
+      fileName: file.originalname,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      uploadDate: new Date(),
+      fileData: file.buffer.toString('base64')
+    }));
+
+    // Validate and parse numeric values
+    const claimAmount = parseFloat(req.body.claimAmount);
+    if (isNaN(claimAmount) || claimAmount < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid claim amount',
+        error: 'claimAmount must be a valid positive number'
+      });
+    }
+
+    // Validate date
+    const dateOfTreatment = new Date(req.body.dateOfTreatment);
+    if (isNaN(dateOfTreatment.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date of treatment'
+      });
+    }
+
     const claimData = {
       policyNumber: req.body.policyNumber,
       policyHolderName: req.body.policyHolderName,
@@ -213,20 +303,18 @@ const createSpecialClaim = async (req, res) => {
       claimFor: req.body.claimFor,
       claimForId: req.body.claimForId,
       country: req.body.country,
-      claimAmount: claimAmount,
+      claimAmount,
       currency: req.body.currency,
-      dateOfTreatment: new Date(req.body.dateOfTreatment),
+      dateOfTreatment,
       paymentMethod: req.body.paymentMethod,
-      bankName: req.body.bankName || undefined,
-      branchName: req.body.branchName || undefined,
-      accountNumber: req.body.accountNumber || undefined,
-      swiftCode: req.body.swiftCode || undefined,
-      iban: req.body.iban || undefined,
+      bankName: req.body.bankName,
+      branchName: req.body.branchName,
+      accountNumber: req.body.accountNumber,
+      swiftCode: req.body.swiftCode,
+      iban: req.body.iban,
       description: req.body.description,
       attachments: processedAttachments
     };
-
-    console.log('Creating claim with data:', JSON.stringify(claimData, null, 2));
 
     const claim = new SpecialClaim(claimData);
     const savedClaim = await claim.save();
@@ -238,23 +326,12 @@ const createSpecialClaim = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating special claim:', error);
-    // Log the full error details
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      validationErrors: error.errors
-    });
-
-    // If it's a validation error, return more specific details
+    
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Validation Error',
-        errors: Object.keys(error.errors).map(key => ({
-          field: key,
-          message: error.errors[key].message
-        }))
+        message: 'Validation error',
+        errors: Object.values(error.errors).map(err => err.message)
       });
     }
 
@@ -586,11 +663,11 @@ module.exports = {
   getClaimById,
   getClaimsByEmployeeId,
   createClaim,
+  createSpecialClaim,
   updateClaim,
   deleteClaim,
   getSpecialClaims,
   getSpecialClaimsByEmployeeId,
-  createSpecialClaim,
   getClaimsByYear,
   getEmployeeClaimsByYear,
   getAllDependents,

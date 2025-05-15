@@ -552,6 +552,159 @@ module.exports = mongoose.model('SpecialClaim', specialClaimSchema);
 const Claim2023 = mongoose.model('claims2023', claim2023Schema);
 const Claim2024 = mongoose.model('claims2024', claim2024Schema);
 
+// Yearly Health Data Schemas
+const healthData2020Schema = new mongoose.Schema({
+  employeeId: { type: String, required: true, index: true },
+  recordedAt: { type: Date, default: Date.now },
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true, collection: 'healthdata_2020' });
+
+const healthData2021Schema = new mongoose.Schema({
+  employeeId: { type: String, required: true, index: true },
+  recordedAt: { type: Date, default: Date.now },
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true, collection: 'healthdata_2021' });
+
+const healthData2022Schema = new mongoose.Schema({
+  employeeId: { type: String, required: true, index: true },
+  recordedAt: { type: Date, default: Date.now },
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true, collection: 'healthdata_2022' });
+
+const healthData2023Schema = new mongoose.Schema({
+  employeeId: { type: String, required: true, index: true },
+  recordedAt: { type: Date, default: Date.now },
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true, collection: 'healthdata_2023' });
+
+const healthData2024Schema = new mongoose.Schema({
+  employeeId: { type: String, required: true, index: true },
+  recordedAt: { type: Date, default: Date.now },
+  weight: Number,
+  height: Number,
+  bmi: Number,
+  hemoglobin: Number,
+  cholesterol: Number,
+  bloodSugar: Number,
+  creatinine: Number,
+  chronicDisease: String,
+  chronicDiseaseCount: Number,
+  familyMedicalHistory: String,
+  claimedAmount: Number,
+  insuranceScore: Number,
+  smokerScore: Number,
+  familyScore: Number,
+  lifestyleScore: Number,
+  bmiScore: Number,
+  hemoglobinScore: Number,
+  sugarScore: Number,
+  cholesterolScore: Number,
+  creatinineScore: Number,
+  physicalScore: Number,
+  wellnessScore: Number,
+  version: String,
+  policy: Object
+}, { timestamps: true, collection: 'healthdata_2024' });
+
+// Register yearly health data models
+const HealthData2020 = mongoose.model('HealthData2020', healthData2020Schema);
+const HealthData2021 = mongoose.model('HealthData2021', healthData2021Schema);
+const HealthData2022 = mongoose.model('HealthData2022', healthData2022Schema);
+const HealthData2023 = mongoose.model('HealthData2023', healthData2023Schema);
+const HealthData2024 = mongoose.model('HealthData2024', healthData2024Schema);
+
 module.exports = {
   Employee,
   HealthData,
@@ -568,5 +721,10 @@ module.exports = {
   Admin,
   Dependent,
   Claim2023,
-  Claim2024
+  Claim2024,
+  HealthData2020,
+  HealthData2021,
+  HealthData2022,
+  HealthData2023,
+  HealthData2024
 }; 
