@@ -7,7 +7,7 @@ const { SleepData } = require('../../models');
  */
 const getAllSleepData = async (req, res) => {
   try {
-    const sleepData = await SleepData.find().limit(10).lean();
+    const sleepData = await SleepData.find().lean();
     res.json(sleepData);
   } catch (error) {
     console.error('Error fetching sleep data:', error);

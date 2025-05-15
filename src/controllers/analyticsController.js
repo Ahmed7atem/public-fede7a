@@ -455,32 +455,29 @@ const getHealthAlerts = async (req, res) => {
     // In a real app, we would analyze data to identify anomalies and health concerns
     // For now, we'll return a mock response
     
-    res.json({
-      alerts: [
-        {
-          id: "alert-1",
-          type: "High Risk",
-          description: "5 employees showing signs of hypertension",
-          affectedCount: 5,
-          recommendations: ["Schedule health checkups", "Provide blood pressure information"]
-        },
-        {
-          id: "alert-2",
-          type: "Medium Risk",
-          description: "Increasing stress levels detected in Engineering department",
-          affectedCount: 12,
-          recommendations: ["Offer stress management workshops", "Review workload distribution"]
-        },
-        {
-          id: "alert-3",
-          type: "Low Risk",
-          description: "Seasonal allergies affecting productivity",
-          affectedCount: 28,
-          recommendations: ["Share allergy management resources", "Consider air purifiers"]
-        }
-      ],
-      timestamp: new Date().toISOString()
-    });
+    res.json([
+      {
+        id: "alert-1",
+        type: "High Risk",
+        description: "5 employees showing signs of hypertension",
+        affectedCount: 5,
+        recommendations: ["Schedule health checkups", "Provide blood pressure information"]
+      },
+      {
+        id: "alert-2",
+        type: "Medium Risk",
+        description: "Increasing stress levels detected in Engineering department",
+        affectedCount: 12,
+        recommendations: ["Offer stress management workshops", "Review workload distribution"]
+      },
+      {
+        id: "alert-3",
+        type: "Low Risk",
+        description: "Seasonal allergies affecting productivity",
+        affectedCount: 28,
+        recommendations: ["Share allergy management resources", "Consider air purifiers"]
+      }
+    ]);
   } catch (error) {
     console.error('Error getting health alerts:', error);
     res.status(500).json({ message: 'Error getting health alerts', error: error.message });
@@ -689,10 +686,7 @@ const getAllData = async (req, res) => {
       }
     }));
 
-    res.json({
-      totalEmployees,
-      employees: employeeData,
-    });
+    res.json(employeeData);
   } catch (error) {
     console.error('Error getting all data:', error);
     res.status(500).json({ message: 'Error getting all data', error: error.message });
@@ -818,10 +812,7 @@ const getAllEmployeesData = async (req, res) => {
       }
     }));
 
-    res.json({
-      totalEmployees,
-      employees: employeeData,
-    });
+    res.json(employeeData);
   } catch (error) {
     console.error('Error getting all employees data:', error);
     res.status(500).json({ message: 'Error getting all employees data', error: error.message });

@@ -9,18 +9,10 @@ const { PreApprovalClaim } = require('../../models');
 const getAllPreApprovals = async (req, res) => {
   try {
     const preApprovals = await PreApprovalClaim.find().sort({ createdAt: -1 }).lean();
-    res.json({
-      success: true,
-      data: preApprovals,
-      count: preApprovals.length
-    });
+    res.json(preApprovals);
   } catch (error) {
     console.error('Error fetching pre-approvals:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching pre-approvals', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching pre-approvals', error: error.message });
   }
 };
 
@@ -33,22 +25,12 @@ const getPreApprovalById = async (req, res) => {
   try {
     const preApproval = await PreApprovalClaim.findById(req.params.id).lean();
     if (!preApproval) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Pre-approval request not found' 
-      });
+      return res.status(404).json({ message: 'Pre-approval request not found' });
     }
-    res.json({
-      success: true,
-      data: preApproval
-    });
+    res.json(preApproval);
   } catch (error) {
     console.error('Error fetching pre-approval:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching pre-approval', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching pre-approval', error: error.message });
   }
 };
 
@@ -178,18 +160,10 @@ const getPreApprovalsByEmployeeId = async (req, res) => {
       employeeId: req.params.employeeId 
     }).sort({ createdAt: -1 }).lean();
 
-    res.json({
-      success: true,
-      data: preApprovals,
-      count: preApprovals.length
-    });
+    res.json(preApprovals);
   } catch (error) {
     console.error('Error fetching employee pre-approvals:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching employee pre-approvals', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching employee pre-approvals', error: error.message });
   }
 };
 

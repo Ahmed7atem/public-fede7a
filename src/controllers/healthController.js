@@ -77,35 +77,17 @@ const validateHealthMetrics = (data) => {
 };
 
 /**
- * @desc    Get all health data with pagination
+ * @desc    Get all health data
  * @route   GET /api/health
  * @access  Private/Admin
  */
 const getAllHealthData = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching all health data:', error);
     return errorResponse(res, 500, 'Error fetching health data', error);
@@ -146,29 +128,11 @@ const getHealthDataByYear = async (req, res) => {
       return errorResponse(res, 400, 'Invalid year');
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await Model.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      Model.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Model.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error in getHealthDataByYear:', error);
     return errorResponse(res, 500, 'Error fetching health data by year', error);
@@ -176,7 +140,7 @@ const getHealthDataByYear = async (req, res) => {
 };
 
 /**
- * @desc    Get health data by employee ID with pagination
+ * @desc    Get health data by employee ID
  * @route   GET /api/health/employee/:employeeId
  * @access  Private
  */
@@ -188,33 +152,15 @@ const getHealthDataByEmployeeId = async (req, res) => {
       return errorResponse(res, 400, 'Employee ID is required');
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
-
-    const [healthData, total] = await Promise.all([
-      HealthData.find({ employeeId })
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData.countDocuments({ employeeId })
-    ]);
+    const healthData = await HealthData.find({ employeeId })
+      .sort({ recordedAt: -1 })
+      .lean();
 
     if (!healthData || healthData.length === 0) {
       return errorResponse(res, 404, 'Health data not found for this employee');
     }
 
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data by employee:', error);
     return errorResponse(res, 500, 'Error fetching health data', error);
@@ -239,10 +185,7 @@ const getHealthDataById = async (req, res) => {
       return errorResponse(res, 404, 'Health data not found');
     }
 
-    res.json({
-      success: true,
-      data: healthData
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching health data by ID:', error);
     return errorResponse(res, 500, 'Error fetching health data', error);
@@ -353,29 +296,11 @@ const deleteHealthData = async (req, res) => {
 // Year-specific health data functions
 const getHealthData2020 = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData2020.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData2020.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData2020.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching 2020 health data:', error);
     return errorResponse(res, 500, 'Error fetching 2020 health data', error);
@@ -384,29 +309,11 @@ const getHealthData2020 = async (req, res) => {
 
 const getHealthData2021 = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData2021.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData2021.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData2021.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching 2021 health data:', error);
     return errorResponse(res, 500, 'Error fetching 2021 health data', error);
@@ -415,29 +322,11 @@ const getHealthData2021 = async (req, res) => {
 
 const getHealthData2022 = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData2022.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData2022.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData2022.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching 2022 health data:', error);
     return errorResponse(res, 500, 'Error fetching 2022 health data', error);
@@ -446,29 +335,11 @@ const getHealthData2022 = async (req, res) => {
 
 const getHealthData2023 = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData2023.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData2023.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData2023.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching 2023 health data:', error);
     return errorResponse(res, 500, 'Error fetching 2023 health data', error);
@@ -477,29 +348,11 @@ const getHealthData2023 = async (req, res) => {
 
 const getHealthData2024 = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
-    const skip = (page - 1) * limit;
+    const healthData = await HealthData2024.find({})
+      .sort({ recordedAt: -1 })
+      .lean();
 
-    const [healthData, total] = await Promise.all([
-      HealthData2024.find({})
-        .sort({ recordedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      HealthData2024.countDocuments({})
-    ]);
-
-    res.json({
-      success: true,
-      data: healthData,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-        limit
-      }
-    });
+    res.json(healthData);
   } catch (error) {
     console.error('Error fetching 2024 health data:', error);
     return errorResponse(res, 500, 'Error fetching 2024 health data', error);

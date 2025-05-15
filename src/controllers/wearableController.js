@@ -7,7 +7,7 @@ const { WearableData } = require('../../models');
  */
 const getAllWearableData = async (req, res) => {
   try {
-    const wearableData = await WearableData.find().limit(10).lean();
+    const wearableData = await WearableData.find().lean();
     res.json(wearableData);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching wearable data', error: error.message });

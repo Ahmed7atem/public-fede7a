@@ -21,17 +21,9 @@ const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', feedback
 const getAllFeedbacks = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({}).lean();
-    res.json({
-      success: true,
-      data: feedbacks,
-      count: feedbacks.length
-    });
+    res.json(feedbacks);
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching feedbacks', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching feedbacks', error: error.message });
   }
 };
 
@@ -45,22 +37,12 @@ const getFeedbackById = async (req, res) => {
     const feedback = await Feedback.findById(req.params.id).lean();
     
     if (!feedback) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Feedback not found' 
-      });
+      return res.status(404).json({ message: 'Feedback not found' });
     }
     
-    res.json({
-      success: true,
-      data: feedback
-    });
+    res.json(feedback);
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching feedback', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching feedback', error: error.message });
   }
 };
 
@@ -72,18 +54,9 @@ const getFeedbackById = async (req, res) => {
 const getFeedbacksByEmployeeId = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ employeeId: req.params.employeeId }).lean();
-    
-    res.json({
-      success: true,
-      data: feedbacks,
-      count: feedbacks.length
-    });
+    res.json(feedbacks);
   } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching feedbacks', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error fetching feedbacks', error: error.message });
   }
 };
 
