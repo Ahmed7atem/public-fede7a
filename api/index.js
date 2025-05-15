@@ -90,15 +90,6 @@ const {
 } = require('../src/controllers/authController');
 
 const {
-  getAllComplaints,
-  getComplaintById,
-  getComplaintsByEmployeeId,
-  createComplaint,
-  updateComplaint,
-  deleteComplaint
-} = require('../src/controllers/complaintController');
-
-const {
   getAllPreApprovals,
   getPreApprovalById,
   getPreApprovalsByEmployeeId,
@@ -116,6 +107,9 @@ const {
   updateFeedback,
   deleteFeedback
 } = require('../src/controllers/feedbackController');
+
+// Import routes
+const complaintRoutes = require('../src/routes/complaintRoutes');
 
 const app = express();
 
@@ -277,12 +271,7 @@ app.get('/api/auth/profile', protect, getProfile);
 app.put('/api/auth/profile', protect, updateProfile);
 
 // Complaint routes
-app.get('/api/complaints', getAllComplaints);
-app.get('/api/complaints/employee/:employeeId', getComplaintsByEmployeeId);
-app.get('/api/complaints/:id', getComplaintById);
-app.post('/api/complaints', upload.single('attachment'), createComplaint);
-app.put('/api/complaints/:id', updateComplaint);
-app.delete('/api/complaints/:id', deleteComplaint);
+app.use('/api/complaints', complaintRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
