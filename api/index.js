@@ -29,23 +29,39 @@ const {
   getDependentsByEmployeeId,
   getSpecialClaims,
   getSpecialClaimsByEmployeeId,
-  createSpecialClaim
+  createSpecialClaim,
+  getClaims2023,
+  getClaims2024,
+  getClaimsByEmployeeId2023,
+  getClaimsByEmployeeId2024
 } = require('../src/controllers/claimController');
 
 const {
   getAllHealthData,
   getHealthDataByEmployeeId,
-  getHealthDataByYear
+  getHealthDataByYear,
+  getHealthData2020,
+  getHealthData2021,
+  getHealthData2022,
+  getHealthData2023,
+  getHealthData2024
 } = require('../src/controllers/healthController');
 
 const {
   getAllSleepData,
-  getSleepDataByEmployeeId
+  getSleepDataByEmployeeId,
+  getSleepDataById,
+  createSleepData,
+  updateSleepData,
+  deleteSleepData
 } = require('../src/controllers/sleepController');
 
 const {
   getAllWearableData,
-  getWearableDataByEmployeeId
+  getWearableDataByEmployeeId,
+  createWearableData,
+  updateWearableData,
+  deleteWearableData
 } = require('../src/controllers/wearableController');
 
 const {
@@ -66,7 +82,10 @@ const {
   getPolicyByEmployeeId,
   createPolicy,
   updatePolicy,
-  deletePolicy
+  deletePolicy,
+  getPolicyDocuments,
+  uploadPolicyDocument,
+  deletePolicyDocument
 } = require('../src/controllers/policyController');
 
 const {
@@ -175,6 +194,11 @@ app.get('/', (req, res) => {
 app.get('/api/health', getAllHealthData);
 app.get('/api/health/year/:year', getHealthDataByYear);
 app.get('/api/health/employee/:employeeId', getHealthDataByEmployeeId);
+app.get('/api/health/2020', getHealthData2020);
+app.get('/api/health/2021', getHealthData2021);
+app.get('/api/health/2022', getHealthData2022);
+app.get('/api/health/2023', getHealthData2023);
+app.get('/api/health/2024', getHealthData2024);
 
 // Employee routes
 app.get('/api/employees', getAllEmployees);
@@ -191,6 +215,14 @@ app.post('/api/claims', upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', updateClaim);
 app.delete('/api/claims/:id', deleteClaim);
 
+// Claims 2023 routes
+app.get('/api/claims/2023', getClaims2023);
+app.get('/api/claims/2023/employee/:employeeId', getClaimsByEmployeeId2023);
+
+// Claims 2024 routes
+app.get('/api/claims/2024', getClaims2024);
+app.get('/api/claims/2024/employee/:employeeId', getClaimsByEmployeeId2024);
+
 // Special claims routes
 app.get('/api/claims/special', protect, admin, getSpecialClaims);
 app.get('/api/claims/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
@@ -200,24 +232,24 @@ app.post('/api/claims/special', protect, upload.array('attachments', 5), createS
 app.get('/api/claims/year/:year', getClaimsByYear);
 app.get('/api/claims/employee/:employeeId/year/:year', getEmployeeClaimsByYear);
 
-// Specific year claims routes for convenience
-app.get('/api/claims/2023', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2023' } }), res));
-app.get('/api/claims/2024', (req, res) => getClaimsByYear(Object.assign(req, { params: { year: '2024' } }), res));
-app.get('/api/claims/2023/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2023', employeeId: req.params.employeeId } }), res));
-app.get('/api/claims/2024/employee/:employeeId', (req, res) => getEmployeeClaimsByYear(Object.assign(req, { params: { year: '2024', employeeId: req.params.employeeId } }), res));
-
 // Dependent routes
 app.get('/api/dependents', getAllDependents);
 app.get('/api/dependents/employee/:employeeId', getDependentsByEmployeeId);
 
 // Sleep data routes
 app.get('/api/sleep', getAllSleepData);
+app.get('/api/sleep/:id', getSleepDataById);
 app.get('/api/sleep/employee/:employeeId', getSleepDataByEmployeeId);
+app.post('/api/sleep', createSleepData);
+app.put('/api/sleep/:id', updateSleepData);
+app.delete('/api/sleep/:id', deleteSleepData);
 
 // Wearable data routes
 app.get('/api/wearables', getAllWearableData);
-app.get('/api/wearables/:id', getWearableDataById);
 app.get('/api/wearables/employee/:employeeId', getWearableDataByEmployeeId);
+app.post('/api/wearables', createWearableData);
+app.put('/api/wearables/:id', updateWearableData);
+app.delete('/api/wearables/:id', deleteWearableData);
 
 // Provider routes
 app.get('/api/providers', getAllProviders);
@@ -238,22 +270,16 @@ app.post('/api/policies', createPolicy);
 app.put('/api/policies/:id', updatePolicy);
 app.delete('/api/policies/:id', deletePolicy);
 
-// Analytics routes
-app.get('/api/analytics/employee/:employeeId', getEmployeeAnalytics);
-app.get('/api/analytics/organization', getOrganizationAnalytics);
-app.get('/api/analytics/alerts', getHealthAlerts);
-
-// Prediction routes
-app.get('/api/predictions', getAllPredictions);
-app.get('/api/predictions/:id', getPredictionById);
-app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
-app.get('/api/predictions/type/:type', getPredictionsByType);
-app.post('/api/predictions', createPrediction);
+// Policy document routes
+app.get('/api/policies/documents', getPolicyDocuments);
+app.post('/api/policies/documents', upload.single('document'), uploadPolicyDocument);
+app.delete('/api/policies/documents/:id', deletePolicyDocument);
 
 // Pre-approval routes
 app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);
 app.get('/api/pre-approvals/:id', protect, getPreApprovalById);
 app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
+app.get('/api/pre-approvals/provider/:providerId', protect, getPreApprovalsByProviderId);
 app.post('/api/pre-approvals', protect, upload.array('attachments', 5), createPreApproval);
 app.put('/api/pre-approvals/:id', protect, admin, updatePreApproval);
 app.delete('/api/pre-approvals/:id', protect, admin, deletePreApproval);
@@ -273,6 +299,18 @@ app.put('/api/auth/profile', protect, updateProfile);
 
 // Complaint routes
 app.use('/api/complaints', complaintRoutes);
+
+// Analytics routes
+app.get('/api/analytics/employee/:id', protect, getEmployeeAnalytics);
+app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics);
+app.get('/api/analytics/alerts', protect, getHealthAlerts);
+
+// Prediction routes
+app.get('/api/predictions', getAllPredictions);
+app.get('/api/predictions/:id', getPredictionById);
+app.get('/api/predictions/employee/:employeeId', getPredictionsByEmployeeId);
+app.get('/api/predictions/type/:type', getPredictionsByType);
+app.post('/api/predictions', createPrediction);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
