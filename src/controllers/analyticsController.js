@@ -29,7 +29,7 @@ const getEmployeeAnalytics = async (req, res) => {
     const latestHealth = healthData[0] || {};
 
     // Get wearable data
-    const wearableData = await WearableData.find({ employeeId: employeeId }).sort({ date: -1 }).lean();
+    const wearableData = await WearableData.find({ employee: employeeId }).sort({ date: -1 }).lean();
     const latestWearable = wearableData[0] || {};
     
     // Calculate wearable stats
@@ -43,7 +43,7 @@ const getEmployeeAnalytics = async (req, res) => {
     };
 
     // Get sleep data
-    const sleepData = await SleepData.find({ employeeId: employeeId }).sort({ startTime: -1 }).lean();
+    const sleepData = await SleepData.find({ employee: employeeId }).sort({ startTime: -1 }).lean();
     const latestSleep = sleepData[0] || {};
     
     // Calculate sleep stats
@@ -136,18 +136,48 @@ const getOrganizationAnalytics = async (req, res) => {
 
     // Calculate gender distribution
     const genderDistribution = employees.reduce((acc, emp) => {
-      const gender = emp.gender || 'other';
+      const gender = emp.Gender || 'other';
       acc[gender] = (acc[gender] || 0) + 1;
       return acc;
     }, {});
 
     // Calculate average age
-    const totalAge = employees.reduce((sum, emp) => sum + (emp.age || 0), 0);
+    const totalAge = employees.reduce((sum, emp) => sum + (emp.Age || 0), 0);
     const averageAge = totalEmployees > 0 ? Math.round(totalAge / totalEmployees) : 0;
 
-    // Get all health data
-    const healthData = await HealthData.find();
-    const bmiData = healthData.map(data => data.bmi || 0).filter(bmi => bmi > 0);
+    // Get all health data from all years
+    const [healthData2020, healthData2021, healthData2022, healthData2023, healthData2024, currentHealthData] = await Promise.all([
+      HealthData.find({}, null, { collection: 'healthdata_2020' }).lean(),
+      HealthData.find({}, null, { collection: 'healthdata_2021' }).lean(),
+      HealthData.find({}, null, { collection: 'healthdata_2022' }).lean(),
+      HealthData.find({}, null, { collection: 'healthdata_2023' }).lean(),
+      HealthData.find({}, null, { collection: 'healthdata_2024' }).lean(),
+      HealthData.find().lean()
+    ]);
+
+    // Combine all health data
+    const allHealthData = [
+      ...healthData2020,
+      ...healthData2021,
+      ...healthData2022,
+      ...healthData2023,
+      ...healthData2024,
+      ...currentHealthData
+    ];
+
+    // Calculate year-over-year health metrics
+    const yearlyHealthMetrics = {
+      2020: calculateYearlyHealthMetrics(healthData2020),
+      2021: calculateYearlyHealthMetrics(healthData2021),
+      2022: calculateYearlyHealthMetrics(healthData2022),
+      2023: calculateYearlyHealthMetrics(healthData2023),
+      2024: calculateYearlyHealthMetrics(healthData2024)
+    };
+
+    // Calculate year-over-year changes
+    const healthTrends = calculateHealthTrends(yearlyHealthMetrics);
+
+    const bmiData = allHealthData.map(data => data.bmi || 0).filter(bmi => bmi > 0);
     const averageBMI = bmiData.length > 0 
       ? (bmiData.reduce((sum, bmi) => sum + bmi, 0) / bmiData.length).toFixed(2)
       : "0.00";
@@ -168,8 +198,8 @@ const getOrganizationAnalytics = async (req, res) => {
     });
 
     // Get wearable data
-    const wearableData = await WearableData.find();
-    const stepsData = wearableData.map(data => data.steps || 0);
+    const wearableData = await WearableData.find().lean();
+    const stepsData = wearableData.map(data => data.stepCount || 0);
     const heartRateData = wearableData.map(data => data.heartRateAvg || 0);
     
     const averageSteps = stepsData.length > 0 
@@ -181,7 +211,7 @@ const getOrganizationAnalytics = async (req, res) => {
       : 0;
 
     // Get sleep data
-    const sleepData = await SleepData.find();
+    const sleepData = await SleepData.find().lean();
     const sleepQualityData = sleepData.map(data => data.sleepQuality || 0);
     const averageSleep = sleepQualityData.length > 0
       ? (sleepQualityData.reduce((sum, quality) => sum + quality, 0) / sleepQualityData.length).toFixed(1)
@@ -229,30 +259,82 @@ const getOrganizationAnalytics = async (req, res) => {
       ? ((sleepQuality.optimal / totalSleep) * 100).toFixed(1)
       : "0.0";
 
-    // Get claims data
-    const claims = await Claim.find();
-    const totalClaims = claims.length;
-    const approvedClaims = claims.filter(claim => claim.status === 'approved').length;
-    const pendingClaims = claims.filter(claim => claim.status === 'pending').length;
-    const rejectedClaims = claims.filter(claim => claim.status === 'rejected').length;
+    // Get claims data from all collections
+    const [currentClaims, claims2023, claims2024, specialClaims, preApprovalClaims] = await Promise.all([
+      Claim.find().lean(),
+      Claim.find({}, null, { collection: 'claims2023' }).lean(),
+      Claim.find({}, null, { collection: 'claims2024' }).lean(),
+      Claim.find({}, null, { collection: 'specialclaims' }).lean(),
+      Claim.find({}, null, { collection: 'preapprovalclaims' }).lean()
+    ]);
+
+    // Combine all claims
+    const allClaims = [
+      ...currentClaims,
+      ...claims2023,
+      ...claims2024,
+      ...specialClaims,
+      ...preApprovalClaims
+    ];
+
+    // Calculate claims by year
+    const claimsByYear = {
+      2023: claims2023,
+      2024: claims2024
+    };
+
+    // Calculate year-over-year claims metrics
+    const claimsTrends = calculateClaimsTrends(claimsByYear);
+
+    const totalClaims = allClaims.length;
+    const approvedClaims = allClaims.filter(claim => claim.claimStatus === 'approved').length;
+    const pendingClaims = allClaims.filter(claim => claim.claimStatus === 'pending').length;
+    const rejectedClaims = allClaims.filter(claim => claim.claimStatus === 'rejected').length;
     
-    const totalAmount = claims.reduce((sum, claim) => sum + (claim.amount || 0), 0).toFixed(2);
+    const totalAmount = allClaims.reduce((sum, claim) => sum + (claim.claimAmount || 0), 0).toFixed(2);
     const averageAmount = totalClaims > 0 ? (totalAmount / totalClaims).toFixed(2) : "0.00";
     const approvalRate = totalClaims > 0 ? ((approvedClaims / totalClaims) * 100).toFixed(1) : "0.0";
     const averageClaimPerEmployee = totalEmployees > 0 ? (totalClaims / totalEmployees).toFixed(2) : "0.00";
+
+    // Calculate chronic disease distribution
+    const chronicDiseaseDistribution = employees.reduce((acc, emp) => {
+      const disease = emp.Chronic_Disease || 'None';
+      acc[disease] = (acc[disease] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Calculate wellness score distribution
+    const wellnessScoreDistribution = {
+      excellent: 0,
+      good: 0,
+      fair: 0,
+      poor: 0
+    };
+
+    employees.forEach(emp => {
+      const score = emp.Wellness_Score || 0;
+      if (score >= 90) wellnessScoreDistribution.excellent++;
+      else if (score >= 70) wellnessScoreDistribution.good++;
+      else if (score >= 50) wellnessScoreDistribution.fair++;
+      else wellnessScoreDistribution.poor++;
+    });
 
     res.json({
       overview: {
         totalEmployees,
         averageAge,
-        genderDistribution
+        genderDistribution,
+        chronicDiseaseDistribution,
+        wellnessScoreDistribution
       },
       healthMetrics: {
         averageBMI,
         bmiDistribution,
         averageSteps,
         averageSleep,
-        averageHeartRate
+        averageHeartRate,
+        yearlyHealthMetrics,
+        healthTrends
       },
       activityAnalysis: {
         activityLevels,
@@ -272,13 +354,95 @@ const getOrganizationAnalytics = async (req, res) => {
         totalAmount,
         averageAmount,
         approvalRate,
-        averageClaimPerEmployee
+        averageClaimPerEmployee,
+        claimsTrends
       }
     });
   } catch (error) {
     console.error('Error getting organization analytics:', error);
     res.status(500).json({ message: 'Error getting organization analytics', error: error.message });
   }
+};
+
+// Helper function to calculate yearly health metrics
+const calculateYearlyHealthMetrics = (healthData) => {
+  const metrics = {
+    averageBMI: 0,
+    averageHemoglobin: 0,
+    averageCholesterol: 0,
+    averageBloodSugar: 0,
+    averageCreatinine: 0,
+    recordCount: healthData.length
+  };
+
+  if (healthData.length > 0) {
+    metrics.averageBMI = (healthData.reduce((sum, data) => sum + (data.bmi || 0), 0) / healthData.length).toFixed(2);
+    metrics.averageHemoglobin = (healthData.reduce((sum, data) => sum + (data.hemoglobin || 0), 0) / healthData.length).toFixed(2);
+    metrics.averageCholesterol = (healthData.reduce((sum, data) => sum + (data.cholesterol || 0), 0) / healthData.length).toFixed(2);
+    metrics.averageBloodSugar = (healthData.reduce((sum, data) => sum + (data.bloodSugar || 0), 0) / healthData.length).toFixed(2);
+    metrics.averageCreatinine = (healthData.reduce((sum, data) => sum + (data.creatinine || 0), 0) / healthData.length).toFixed(2);
+  }
+
+  return metrics;
+};
+
+// Helper function to calculate health trends
+const calculateHealthTrends = (yearlyMetrics) => {
+  const years = Object.keys(yearlyMetrics).sort();
+  const trends = {};
+
+  for (let i = 1; i < years.length; i++) {
+    const currentYear = years[i];
+    const previousYear = years[i - 1];
+    const current = yearlyMetrics[currentYear];
+    const previous = yearlyMetrics[previousYear];
+
+    trends[`${previousYear}-${currentYear}`] = {
+      bmiChange: calculatePercentageChange(previous.averageBMI, current.averageBMI),
+      hemoglobinChange: calculatePercentageChange(previous.averageHemoglobin, current.averageHemoglobin),
+      cholesterolChange: calculatePercentageChange(previous.averageCholesterol, current.averageCholesterol),
+      bloodSugarChange: calculatePercentageChange(previous.averageBloodSugar, current.averageBloodSugar),
+      creatinineChange: calculatePercentageChange(previous.averageCreatinine, current.averageCreatinine),
+      recordCountChange: calculatePercentageChange(previous.recordCount, current.recordCount)
+    };
+  }
+
+  return trends;
+};
+
+// Helper function to calculate claims trends
+const calculateClaimsTrends = (claimsByYear) => {
+  const years = Object.keys(claimsByYear).sort();
+  const trends = {};
+
+  for (let i = 1; i < years.length; i++) {
+    const currentYear = years[i];
+    const previousYear = years[i - 1];
+    const currentClaims = claimsByYear[currentYear];
+    const previousClaims = claimsByYear[previousYear];
+
+    const currentTotal = currentClaims.length;
+    const previousTotal = previousClaims.length;
+    const currentAmount = currentClaims.reduce((sum, claim) => sum + (claim.claimAmount || 0), 0);
+    const previousAmount = previousClaims.reduce((sum, claim) => sum + (claim.claimAmount || 0), 0);
+
+    trends[`${previousYear}-${currentYear}`] = {
+      totalClaimsChange: calculatePercentageChange(previousTotal, currentTotal),
+      totalAmountChange: calculatePercentageChange(previousAmount, currentAmount),
+      averageAmountChange: calculatePercentageChange(
+        previousTotal > 0 ? previousAmount / previousTotal : 0,
+        currentTotal > 0 ? currentAmount / currentTotal : 0
+      )
+    };
+  }
+
+  return trends;
+};
+
+// Helper function to calculate percentage change
+const calculatePercentageChange = (previous, current) => {
+  if (!previous) return 100;
+  return ((current - previous) / previous * 100).toFixed(2);
 };
 
 /**
