@@ -203,6 +203,121 @@ const deleteHealthData = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get health data for 2020
+ * @route   GET /api/health/2020
+ * @access  Private/Admin
+ */
+const getHealthData2020 = async (req, res) => {
+  try {
+    const HealthData2020 = mongoose.model('healthdata_2020', healthDataSchema);
+    const healthData = await HealthData2020.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2020 health data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get health data for 2021
+ * @route   GET /api/health/2021
+ * @access  Private/Admin
+ */
+const getHealthData2021 = async (req, res) => {
+  try {
+    const HealthData2021 = mongoose.model('healthdata_2021', healthDataSchema);
+    const healthData = await HealthData2021.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2021 health data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get health data for 2022
+ * @route   GET /api/health/2022
+ * @access  Private/Admin
+ */
+const getHealthData2022 = async (req, res) => {
+  try {
+    const HealthData2022 = mongoose.model('healthdata_2022', healthDataSchema);
+    const healthData = await HealthData2022.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2022 health data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get health data for 2023
+ * @route   GET /api/health/2023
+ * @access  Private/Admin
+ */
+const getHealthData2023 = async (req, res) => {
+  try {
+    const HealthData2023 = mongoose.model('healthdata_2023', healthDataSchema);
+    const healthData = await HealthData2023.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2023 health data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get health data for 2024
+ * @route   GET /api/health/2024
+ * @access  Private/Admin
+ */
+const getHealthData2024 = async (req, res) => {
+  try {
+    const HealthData2024 = mongoose.model('healthdata_2024', healthDataSchema);
+    const healthData = await HealthData2024.find({}).lean();
+    res.json({
+      success: true,
+      data: healthData,
+      count: healthData.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2024 health data',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllHealthData,
   getHealthDataByYear,
@@ -210,5 +325,10 @@ module.exports = {
   getHealthDataById,
   createHealthData,
   updateHealthData,
-  deleteHealthData
+  deleteHealthData,
+  getHealthData2020,
+  getHealthData2021,
+  getHealthData2022,
+  getHealthData2023,
+  getHealthData2024
 }; 
