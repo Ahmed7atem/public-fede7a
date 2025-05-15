@@ -459,6 +459,128 @@ const getDependentsByEmployeeId = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get claims for 2023
+ * @route   GET /api/claims/2023
+ * @access  Private/Admin
+ */
+const getClaims2023 = async (req, res) => {
+  try {
+    const ClaimModel2023 = mongoose.models.claims2023 || mongoose.model('claims2023', claimSchema);
+    const claims = await ClaimModel2023.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
+  } catch (error) {
+    console.error('Error fetching 2023 claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2023 claims',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get claims for 2024
+ * @route   GET /api/claims/2024
+ * @access  Private/Admin
+ */
+const getClaims2024 = async (req, res) => {
+  try {
+    const ClaimModel2024 = mongoose.models.claims2024 || mongoose.model('claims2024', claimSchema);
+    const claims = await ClaimModel2024.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
+  } catch (error) {
+    console.error('Error fetching 2024 claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2024 claims',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get claims by employee ID for 2023
+ * @route   GET /api/claims/2023/employee/:employeeId
+ * @access  Private
+ */
+const getClaimsByEmployeeId2023 = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const ClaimModel2023 = mongoose.models.claims2023 || mongoose.model('claims2023', claimSchema);
+    
+    const claims = await ClaimModel2023.find({ 
+      $or: [
+        { patientId: employeeId },
+        { employeeId: employeeId }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
+  } catch (error) {
+    console.error('Error fetching 2023 employee claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2023 employee claims',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get claims by employee ID for 2024
+ * @route   GET /api/claims/2024/employee/:employeeId
+ * @access  Private
+ */
+const getClaimsByEmployeeId2024 = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const ClaimModel2024 = mongoose.models.claims2024 || mongoose.model('claims2024', claimSchema);
+    
+    const claims = await ClaimModel2024.find({ 
+      $or: [
+        { patientId: employeeId },
+        { employeeId: employeeId }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: claims,
+      count: claims.length
+    });
+  } catch (error) {
+    console.error('Error fetching 2024 employee claims:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching 2024 employee claims',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllClaims,
   getClaimById,
@@ -472,5 +594,9 @@ module.exports = {
   getClaimsByYear,
   getEmployeeClaimsByYear,
   getAllDependents,
-  getDependentsByEmployeeId
+  getDependentsByEmployeeId,
+  getClaims2023,
+  getClaims2024,
+  getClaimsByEmployeeId2023,
+  getClaimsByEmployeeId2024
 };
