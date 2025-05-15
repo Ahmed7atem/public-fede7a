@@ -202,6 +202,8 @@ app.get('/health', (req, res) => {
 
 // Auth routes
 app.post('/api/auth/login', login);
+app.get('/api/auth/profile', protect, getProfile);
+app.put('/api/auth/profile', protect, updateProfile);
 
 // Admin only routes
 app.get('/api/health', protect, admin, getAllHealthData);
@@ -233,46 +235,12 @@ app.post('/api/employees', protect, admin, createEmployee);
 app.put('/api/employees/:id', protect, admin, updateEmployee);
 app.delete('/api/employees/:id', protect, admin, deleteEmployee);
 
+// Claims routes
 app.get('/api/claims', protect, admin, getAllClaims);
 app.get('/api/claims/:id', protect, admin, getClaimById);
 app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', protect, admin, updateClaim);
 app.delete('/api/claims/:id', protect, admin, deleteClaim);
-
-app.get('/api/sleep', protect, admin, getAllSleepData);
-app.post('/api/sleep', protect, admin, createSleepData);
-app.put('/api/sleep/:id', protect, admin, updateSleepData);
-app.delete('/api/sleep/:id', protect, admin, deleteSleepData);
-
-app.get('/api/wearables', protect, admin, getAllWearableData);
-app.post('/api/wearables', protect, admin, createWearableData);
-app.put('/api/wearables/:id', protect, admin, updateWearableData);
-app.delete('/api/wearables/:id', protect, admin, deleteWearableData);
-
-app.get('/api/providers', protect, admin, getAllProviders);
-app.post('/api/providers', protect, admin, createProvider);
-app.post('/api/providers/:id/reviews', protect, admin, addReview);
-
-app.get('/api/policies', protect, admin, getAllPolicies);
-app.post('/api/policies', protect, admin, createPolicy);
-app.put('/api/policies/:id', protect, admin, updatePolicy);
-app.delete('/api/policies/:id', protect, admin, deletePolicy);
-
-app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);
-app.put('/api/pre-approvals/:id', protect, admin, updatePreApproval);
-app.delete('/api/pre-approvals/:id', protect, admin, deletePreApproval);
-
-app.get('/api/feedbacks', protect, admin, getAllFeedbacks);
-app.delete('/api/feedbacks/:id', protect, admin, deleteFeedback);
-
-app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics);
-app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
-
-app.get('/api/predictions', protect, admin, getAllPredictions);
-app.post('/api/predictions', protect, admin, createPrediction);
-
-// Complaint routes
-app.use('/api/complaints', complaintRoutes);
 
 // Special claims routes
 app.get('/api/claims/special', protect, admin, getSpecialClaims);
@@ -291,7 +259,20 @@ app.get('/api/claims/year/:year/employee/:employeeId', protect, getEmployeeClaim
 app.get('/api/dependents', protect, admin, getAllDependents);
 app.get('/api/dependents/employee/:employeeId', protect, getDependentsByEmployeeId);
 
-// Doctors/Providers routes
+// Sleep data routes
+app.get('/api/sleep', protect, admin, getAllSleepData);
+app.get('/api/sleep/:id', protect, admin, getSleepDataById);
+app.post('/api/sleep', protect, admin, createSleepData);
+app.put('/api/sleep/:id', protect, admin, updateSleepData);
+app.delete('/api/sleep/:id', protect, admin, deleteSleepData);
+
+// Wearable data routes
+app.get('/api/wearables', protect, admin, getAllWearableData);
+app.post('/api/wearables', protect, admin, createWearableData);
+app.put('/api/wearables/:id', protect, admin, updateWearableData);
+app.delete('/api/wearables/:id', protect, admin, deleteWearableData);
+
+// Provider routes
 app.get('/api/providers', protect, admin, getAllProviders);
 app.get('/api/providers/type/:type', protect, admin, getProvidersByType);
 app.get('/api/providers/specialty/:specialty', protect, admin, getProvidersBySpecialty);
@@ -302,38 +283,9 @@ app.get('/api/providers/:id/reviews', protect, admin, getProviderReviews);
 app.get('/api/providers/categories', protect, admin, getCategories);
 app.get('/api/providers/specializations', protect, admin, getSpecializations);
 
-// Employees routes
-app.get('/api/employees', protect, admin, getAllEmployees);
-app.get('/api/employees/:id', protect, getEmployeeById);
-app.post('/api/employees', protect, admin, createEmployee);
-app.put('/api/employees/:id', protect, admin, updateEmployee);
-app.delete('/api/employees/:id', protect, admin, deleteEmployee);
-
-// Feedback routes
-app.get('/api/feedbacks', protect, admin, getAllFeedbacks);
-app.get('/api/feedbacks/:id', protect, admin, getFeedbackById);
-app.get('/api/feedbacks/employee/:employeeId', protect, getFeedbacksByEmployeeId);
-app.post('/api/feedbacks', protect, createFeedback);
-app.put('/api/feedbacks/:id', protect, updateFeedback);
-app.delete('/api/feedbacks/:id', protect, admin, deleteFeedback);
-
-// Health data routes
-app.get('/api/health', protect, admin, getAllHealthData);
-app.get('/api/health/2020', protect, admin, getHealthData2020);
-app.get('/api/health/2021', protect, admin, getHealthData2021);
-app.get('/api/health/2022', protect, admin, getHealthData2022);
-app.get('/api/health/2023', protect, admin, getHealthData2023);
-app.get('/api/health/2024', protect, admin, getHealthData2024);
-app.get('/api/health/year/:year', protect, admin, getHealthDataByYear);
-app.get('/api/health/employee/:employeeId', protect, getHealthDataByEmployeeId);
-app.post('/api/health', protect, admin, createHealthData);
-app.put('/api/health/:id', protect, admin, updateHealthData);
-app.delete('/api/health/:id', protect, admin, deleteHealthData);
-
-// Policies routes
+// Policy routes
 app.get('/api/policies', protect, admin, getAllPolicies);
 app.get('/api/policies/:id', protect, admin, getPolicyById);
-app.get('/api/policies/employee/:employeeId', protect, getPolicyByEmployeeId);
 app.post('/api/policies', protect, admin, createPolicy);
 app.put('/api/policies/:id', protect, admin, updatePolicy);
 app.delete('/api/policies/:id', protect, admin, deletePolicy);
@@ -341,45 +293,38 @@ app.get('/api/policies/:id/documents', protect, admin, getPolicyDocuments);
 app.post('/api/policies/:id/documents', protect, admin, upload.single('document'), uploadPolicyDocument);
 app.delete('/api/policies/:id/documents/:documentId', protect, admin, deletePolicyDocument);
 
-// Pre-approval claims routes
+// Pre-approval routes
 app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);
 app.get('/api/pre-approvals/:id', protect, admin, getPreApprovalById);
-app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
 app.get('/api/pre-approvals/provider/:providerId', protect, admin, getPreApprovalsByProviderId);
 app.post('/api/pre-approvals', protect, createPreApproval);
 app.put('/api/pre-approvals/:id', protect, admin, updatePreApproval);
 app.delete('/api/pre-approvals/:id', protect, admin, deletePreApproval);
 
-// Predictions routes
+// Prediction routes
 app.get('/api/predictions', protect, admin, getAllPredictions);
 app.get('/api/predictions/:id', protect, admin, getPredictionById);
-app.get('/api/predictions/employee/:employeeId', protect, getPredictionsByEmployeeId);
 app.get('/api/predictions/type/:type', protect, admin, getPredictionsByType);
 app.post('/api/predictions', protect, admin, createPrediction);
 
-// Reviews routes
-app.get('/api/reviews', protect, admin, getProviderReviews);
-app.post('/api/reviews', protect, admin, addReview);
+// Feedback routes
+app.get('/api/feedbacks', protect, admin, getAllFeedbacks);
+app.get('/api/feedbacks/:id', protect, admin, getFeedbackById);
+app.post('/api/feedbacks', protect, createFeedback);
+app.put('/api/feedbacks/:id', protect, updateFeedback);
+app.delete('/api/feedbacks/:id', protect, admin, deleteFeedback);
 
-// Sleep data routes
-app.get('/api/sleep', protect, admin, getAllSleepData);
-app.get('/api/sleep/:id', protect, admin, getSleepDataById);
-app.get('/api/sleep/employee/:employeeId', protect, getSleepDataByEmployeeId);
-app.post('/api/sleep', protect, admin, createSleepData);
-app.put('/api/sleep/:id', protect, admin, updateSleepData);
-app.delete('/api/sleep/:id', protect, admin, deleteSleepData);
+// Analytics routes
+app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics);
+app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
-// Wearable data routes
-app.get('/api/wearables', protect, admin, getAllWearableData);
-app.get('/api/wearables/employee/:employeeId', protect, getWearableDataByEmployeeId);
-app.post('/api/wearables', protect, admin, createWearableData);
-app.put('/api/wearables/:id', protect, admin, updateWearableData);
-app.delete('/api/wearables/:id', protect, admin, deleteWearableData);
-
-// Upload routes (for handling uploads.chunks and uploads.files)
+// Upload routes
 app.post('/api/upload', protect, upload.single('file'), (req, res) => {
   res.json({ success: true, file: req.file });
 });
+
+// Complaint routes
+app.use('/api/complaints', complaintRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
