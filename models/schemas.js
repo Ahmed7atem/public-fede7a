@@ -286,7 +286,13 @@ const policySchema = new mongoose.Schema({
   premium: { type: Number, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  employeeId: { type: String, required: true }
+  employeeId: { type: String, required: true },
+  documents: [{
+    name: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    isActive: { type: Boolean, default: true },
+    uploadDate: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 // Claim Schema - Based on actual MongoDB structure (updated so "claimFor" is flat (i.e. two separate fields "claimFor" (a String enum) and "claimForId" (a String) instead of a nested object)

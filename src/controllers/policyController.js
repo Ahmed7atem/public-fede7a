@@ -222,11 +222,91 @@ const deletePolicy = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get policy documents
+ * @route   GET /api/policies/:id/documents
+ * @access  Private/Admin
+ */
+const getPolicyDocuments = async (req, res) => {
+  try {
+    const policy = await Policy.findOne({ policyId: req.params.id });
+    if (!policy) {
+      return res.status(404).json({ message: 'Policy not found' });
+    }
+    res.json(policy.documents || []);
+  } catch (error) {
+    console.error('Error fetching policy documents:', error);
+    res.status(500).json({ message: 'Error fetching policy documents', error: error.message });
+  }
+};
+
+/**
+ * @desc    Upload policy document
+ * @route   POST /api/policies/:id/documents
+ * @access  Private/Admin
+ */
+const uploadPolicyDocument = async (req, res) => {
+  try {
+    const policy = await Policy.findOne({ policyId: req.params.id });
+    if (!policy) {
+      return res.status(404).json({ message: 'Policy not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const document = {
+      name: req.file.originalname,
+      fileUrl: req.file.buffer.toString('base64'),
+      isActive: true,
+      uploadDate: new Date()
+    };
+
+    if (!policy.documents) {
+      policy.documents = [];
+    }
+    policy.documents.push(document);
+    await policy.save();
+
+    res.status(201).json(document);
+  } catch (error) {
+    console.error('Error uploading policy document:', error);
+    res.status(500).json({ message: 'Error uploading policy document', error: error.message });
+  }
+};
+
+/**
+ * @desc    Delete policy document
+ * @route   DELETE /api/policies/:id/documents/:documentId
+ * @access  Private/Admin
+ */
+const deletePolicyDocument = async (req, res) => {
+  try {
+    const policy = await Policy.findOne({ policyId: req.params.id });
+    if (!policy) {
+      return res.status(404).json({ message: 'Policy not found' });
+    }
+
+    const documentId = req.params.documentId;
+    policy.documents = policy.documents.filter(doc => doc._id.toString() !== documentId);
+    await policy.save();
+
+    res.json({ message: 'Document deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting policy document:', error);
+    res.status(500).json({ message: 'Error deleting policy document', error: error.message });
+  }
+};
+
 module.exports = {
   getAllPolicies,
   getPolicyById,
   getPolicyByEmployeeId,
   createPolicy,
   updatePolicy,
-  deletePolicy
+  deletePolicy,
+  getPolicyDocuments,
+  uploadPolicyDocument,
+  deletePolicyDocument
 }; 
