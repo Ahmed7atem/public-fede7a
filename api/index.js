@@ -280,7 +280,7 @@ app.put('/api/auth/profile', protect, updateProfile);
 app.get('/api/complaints', getAllComplaints);
 app.get('/api/complaints/employee/:employeeId', getComplaintsByEmployeeId);
 app.get('/api/complaints/:id', getComplaintById);
-app.post('/api/complaints', createComplaint);
+app.post('/api/complaints', upload.single('attachment'), createComplaint);
 app.put('/api/complaints/:id', updateComplaint);
 app.delete('/api/complaints/:id', deleteComplaint);
 
