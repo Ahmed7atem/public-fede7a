@@ -1,5 +1,6 @@
-const jwt = require('jsonwebtoken');
-const { Employee, Admin } = require('../models');
+// Remove model imports since we're using static tokens
+// const jwt = require('jsonwebtoken');
+// const { Employee, Admin } = require('../models');
 
 const protect = async (req, res, next) => {
   try {
