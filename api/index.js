@@ -215,8 +215,9 @@ app.get('/api/sleep', getAllSleepData);
 app.get('/api/sleep/employee/:employeeId', getSleepDataByEmployeeId);
 
 // Wearable data routes
-app.get('/api/wearable', getAllWearableData);
-app.get('/api/wearable/employee/:employeeId', getWearableDataByEmployeeId);
+app.get('/api/wearables', getAllWearableData);
+app.get('/api/wearables/:id', getWearableDataById);
+app.get('/api/wearables/employee/:employeeId', getWearableDataByEmployeeId);
 
 // Provider routes
 app.get('/api/providers', getAllProviders);

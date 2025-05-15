@@ -114,7 +114,10 @@ const wearableDataSchema = new mongoose.Schema({
   walkingSpeed: Number,
   walkingStepLength: Number,
   version: String
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  collection: 'wearabledatas'  // Explicitly set the collection name
+});
 
 // Sleep Data Schema - Based on actual MongoDB structure
 const sleepDataSchema = new mongoose.Schema({
