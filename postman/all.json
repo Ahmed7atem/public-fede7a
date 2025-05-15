@@ -113,7 +113,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -132,20 +132,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/employees/:id",
+                "raw": "{{baseUrl}}/api/employees/123",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "employees", ":id"],
-                "variable": [
-                  {
-                    "key": "id",
-                    "value": "EMP123",
-                    "description": "Employee ID"
-                  }
-                ]
+                "path": ["api", "employees", "123"]
               },
               "description": "Get employee by ID"
             },
@@ -157,17 +150,17 @@
               "method": "POST",
               "header": [
                 {
-                  "key": "Content-Type",
-                  "value": "application/json"
+                  "key": "Authorization",
+                  "value": "Bearer ADMIN_TOKEN"
                 },
                 {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "key": "Content-Type",
+                  "value": "application/json"
                 }
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"employeeId\": \"EMP123\",\n  \"email\": \"employee@example.com\",\n  \"name\": \"John Doe\",\n  \"age\": 30,\n  \"gender\": \"Male\",\n  \"weight\": 75,\n  \"height\": 180\n}"
+                "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"department\": \"IT\",\n  \"position\": \"Developer\",\n  \"joinDate\": \"2024-01-01\"\n}"
               },
               "url": {
                 "raw": "{{baseUrl}}/api/employees",
@@ -250,23 +243,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/health?page=1&limit=10",
+                "raw": "{{baseUrl}}/api/health",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "health"],
-                "query": [
-                  {
-                    "key": "page",
-                    "value": "1"
-                  },
-                  {
-                    "key": "limit",
-                    "value": "10"
-                  }
-                ]
+                "path": ["api", "health"]
               },
               "description": "Get all health data with pagination (Admin only)"
             },
@@ -303,23 +286,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/health/year/2024?page=1&limit=10",
+                "raw": "{{baseUrl}}/api/health/year/2024",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "health", "year", "2024"],
-                "query": [
-                  {
-                    "key": "page",
-                    "value": "1"
-                  },
-                  {
-                    "key": "limit",
-                    "value": "10"
-                  }
-                ]
+                "path": ["api", "health", "year", "2024"]
               },
               "description": "Get health data for a specific year (Admin only)"
             },
@@ -356,23 +329,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/health/employee/EMP123?page=1&limit=10",
+                "raw": "{{baseUrl}}/api/health/employee/123",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "health", "employee", "EMP123"],
-                "query": [
-                  {
-                    "key": "page",
-                    "value": "1"
-                  },
-                  {
-                    "key": "limit",
-                    "value": "10"
-                  }
-                ]
+                "path": ["api", "health", "employee", "123"]
               },
               "description": "Get health data for a specific employee"
             },
@@ -408,17 +371,17 @@
               "method": "POST",
               "header": [
                 {
-                  "key": "Content-Type",
-                  "value": "application/json"
+                  "key": "Authorization",
+                  "value": "Bearer ADMIN_TOKEN"
                 },
                 {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "key": "Content-Type",
+                  "value": "application/json"
                 }
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"employeeId\": \"EMP123\",\n  \"date\": \"2024-03-15\",\n  \"bloodPressure\": {\n    \"systolic\": 120,\n    \"diastolic\": 80\n  },\n  \"heartRate\": 72,\n  \"temperature\": 37.0,\n  \"weight\": 75,\n  \"height\": 180,\n  \"bmi\": 23.1,\n  \"bloodSugar\": 100,\n  \"cholesterol\": {\n    \"total\": 200,\n    \"hdl\": 50,\n    \"ldl\": 100\n  },\n  \"notes\": \"Regular checkup results\"\n}"
+                "raw": "{\n  \"employeeId\": \"123\",\n  \"recordedAt\": \"2024-03-20T10:00:00Z\",\n  \"weight\": 70,\n  \"height\": 175,\n  \"bloodPressure\": {\n    \"systolic\": 120,\n    \"diastolic\": 80\n  },\n  \"heartRate\": 72,\n  \"temperature\": 37.0,\n  \"bloodSugar\": 5.5,\n  \"cholesterol\": {\n    \"total\": 200,\n    \"hdl\": 50,\n    \"ldl\": 100\n  },\n  \"hemoglobin\": 14.0,\n  \"creatinine\": 1.0\n}"
               },
               "url": {
                 "raw": "{{baseUrl}}/api/health",
@@ -436,7 +399,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -467,7 +430,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -486,7 +449,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -517,7 +480,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -541,7 +504,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -565,23 +528,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/claims?page=1&limit=10",
+                "raw": "{{baseUrl}}/api/claims",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "claims"],
-                "query": [
-                  {
-                    "key": "page",
-                    "value": "1"
-                  },
-                  {
-                    "key": "limit",
-                    "value": "10"
-                  }
-                ]
+                "path": ["api", "claims"]
               },
               "description": "Get all claims with pagination"
             },
@@ -618,7 +571,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -644,7 +597,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -670,41 +623,31 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "body": {
                 "mode": "formdata",
                 "formdata": [
                   {
-                    "key": "patientId",
-                    "value": "EMP123",
-                    "type": "text"
-                  },
-                  {
-                    "key": "providerId",
-                    "value": "PRV456",
-                    "type": "text"
-                  },
-                  {
-                    "key": "serviceDate",
-                    "value": "2024-03-15",
+                    "key": "employeeId",
+                    "value": "123",
                     "type": "text"
                   },
                   {
                     "key": "amount",
-                    "value": "500",
+                    "value": "1000",
                     "type": "text"
                   },
                   {
                     "key": "description",
-                    "value": "Annual health checkup",
+                    "value": "Medical checkup",
                     "type": "text"
                   },
                   {
                     "key": "attachment",
                     "type": "file",
-                    "src": "/path/to/receipt.pdf"
+                    "src": "/path/to/file.pdf"
                   }
                 ]
               },
@@ -755,7 +698,7 @@
                 },
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "body": {
@@ -785,7 +728,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -811,7 +754,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -830,7 +773,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -856,20 +799,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/claims/year/:year",
+                "raw": "{{baseUrl}}/api/claims/2024",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "year", ":year"],
-                "variable": [
-                  {
-                    "key": "year",
-                    "value": "2023",
-                    "description": "Year"
-                  }
-                ]
+                "path": ["api", "claims", "2024"]
               },
               "description": "Get claims by year"
             },
@@ -882,7 +818,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -918,7 +854,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -937,7 +873,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -963,7 +899,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -994,13 +930,13 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/analytics/employee/EMP123",
+                "raw": "{{baseUrl}}/api/analytics/employee/123",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "analytics", "employee", "EMP123"]
+                "path": ["api", "analytics", "employee", "123"]
               },
               "description": "Get analytics for a specific employee"
             },
@@ -1036,7 +972,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
@@ -1055,7 +991,7 @@
               "header": [
                 {
                   "key": "Authorization",
-                  "value": "Bearer {{token}}"
+                  "value": "Bearer ADMIN_TOKEN"
                 }
               ],
               "url": {
