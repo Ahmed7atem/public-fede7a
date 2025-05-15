@@ -21,6 +21,9 @@ const complaintTicketSchema = new mongoose.Schema({
   collection: 'complainttickets'
 });
 
+// Drop the ticketId index if it exists
+complaintTicketSchema.index({ ticketId: 1 }, { unique: false });
+
 // Update the updatedAt timestamp before saving
 complaintTicketSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
