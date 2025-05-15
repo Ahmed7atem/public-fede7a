@@ -90,31 +90,11 @@ const getComplaintsByEmployeeId = async (req, res) => {
  */
 const createComplaint = async (req, res) => {
   try {
-    console.log('Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('Request headers:', req.headers);
-    console.log('Content-Type:', req.headers['content-type']);
-
-    // Extract form data
-    const { subject, category, description, employeeId } = req.body;
-
-    console.log('Extracted fields:', { subject, category, description, employeeId });
-
-    // Validate required fields
-    if (!subject || !category || !description || !employeeId) {
-      console.log('Missing fields:', { subject, category, description, employeeId });
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields',
-        error: 'subject, category, description, and employeeId are required',
-        receivedData: req.body
-      });
-    }
+    console.log('Raw request body:', req.body);
+    console.log('Raw request file:', req.file);
 
     const complaintData = {
-      subject,
-      category,
-      description,
-      employeeId,
+      ...req.body,
       attachments: req.file ? [{
         filename: req.file.filename,
         path: req.file.path,
@@ -134,12 +114,11 @@ const createComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating complaint:', error);
-    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error creating complaint',
       error: error.message,
-      details: error.stack
+      receivedData: req.body
     });
   }
 };

@@ -1,26 +1,10 @@
 const mongoose = require('mongoose');
 
 const complaintTicketSchema = new mongoose.Schema({
-  subject: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  category: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  employeeId: {
-    type: String,
-    required: true,
-    trim: true
-  },
+  subject: String,
+  category: String,
+  description: String,
+  employeeId: String,
   status: {
     type: String,
     enum: ['Open', 'In Progress', 'Resolved', 'Closed'],
