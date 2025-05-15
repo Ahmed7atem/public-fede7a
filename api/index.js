@@ -5,7 +5,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
-const { protect, admin } = require('../src/middleware/auth');
+
+// Import middleware
+const { protect, admin, employee } = require('./middlewares/authMiddleware');
 
 // Import controllers
 const {
@@ -212,183 +214,90 @@ app.post('/api/auth/login', (req, res) => {
         role: 'admin'
       }
     });
+  } else if (email === 'employee@medbond.com' && password === 'employee123') {
+    res.json({
+      success: true,
+      token: 'EMPLOYEE_TOKEN',
+      user: {
+        email: 'employee@medbond.com',
+        role: 'employee'
+      }
+    });
   } else {
     res.status(401).json({ message: 'Invalid credentials' });
   }
 });
 
-// Protected route middleware
-const protect = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (token === 'ADMIN_TOKEN') {
-    req.user = { role: 'admin' };
-    next();
-  } else {
-    res.status(401).json({ message: 'Not authorized' });
-  }
-};
-
-// Admin middleware
-const admin = (req, res, next) => {
-  if (req.user?.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Not authorized as admin' });
-  }
-};
-
-// Protected routes
-app.get('/api/health', protect, admin, (req, res) => {
-  res.json({
-    success: true,
-    data: [],
-    message: 'Health data endpoint'
-  });
-});
-
-app.get('/api/employees', protect, admin, (req, res) => {
-  res.json({
-    success: true,
-    data: [],
-    message: 'Employees endpoint'
-  });
-});
-
-app.get('/api/claims', protect, admin, (req, res) => {
-  res.json({
-    success: true,
-    data: [],
-    message: 'Claims endpoint'
-  });
-});
-
-// Health routes
+// Admin only routes
 app.get('/api/health', protect, admin, getAllHealthData);
 app.get('/api/health/year/:year', protect, admin, getHealthDataByYear);
-app.get('/api/health/employee/:employeeId', protect, getHealthDataByEmployeeId);
-app.post('/api/health', protect, admin, createHealthData);
-app.put('/api/health/:id', protect, admin, updateHealthData);
-app.delete('/api/health/:id', protect, admin, deleteHealthData);
-
-// Year-specific health data routes
 app.get('/api/health/2020', protect, admin, getHealthData2020);
 app.get('/api/health/2021', protect, admin, getHealthData2021);
 app.get('/api/health/2022', protect, admin, getHealthData2022);
 app.get('/api/health/2023', protect, admin, getHealthData2023);
 app.get('/api/health/2024', protect, admin, getHealthData2024);
+app.post('/api/health', protect, admin, createHealthData);
+app.put('/api/health/:id', protect, admin, updateHealthData);
+app.delete('/api/health/:id', protect, admin, deleteHealthData);
 
-// Employee routes
-app.get('/api/employees', protect, admin, getAllEmployees);
+// Employee routes (accessible by both admin and employee)
+app.get('/api/health/employee/:employeeId', protect, getHealthDataByEmployeeId);
 app.get('/api/employees/:id', protect, getEmployeeById);
+app.get('/api/claims/employee/:employeeId', protect, getClaimsByEmployeeId);
+app.get('/api/sleep/employee/:employeeId', protect, getSleepDataByEmployeeId);
+app.get('/api/wearables/employee/:employeeId', protect, getWearableDataByEmployeeId);
+app.get('/api/policies/employee/:employeeId', protect, getPolicyByEmployeeId);
+app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
+app.get('/api/feedbacks/employee/:employeeId', protect, getFeedbacksByEmployeeId);
+app.get('/api/analytics/employee/:id', protect, getEmployeeAnalytics);
+app.get('/api/predictions/employee/:employeeId', protect, getPredictionsByEmployeeId);
+
+// Admin management routes
+app.get('/api/employees', protect, admin, getAllEmployees);
 app.post('/api/employees', protect, admin, createEmployee);
 app.put('/api/employees/:id', protect, admin, updateEmployee);
 app.delete('/api/employees/:id', protect, admin, deleteEmployee);
 
-// Claim routes
 app.get('/api/claims', protect, admin, getAllClaims);
-app.get('/api/claims/:id', protect, getClaimById);
-app.get('/api/claims/employee/:employeeId', protect, getClaimsByEmployeeId);
-app.post('/api/claims', protect, upload.single('attachment'), createClaim);
+app.get('/api/claims/:id', protect, admin, getClaimById);
+app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', protect, admin, updateClaim);
 app.delete('/api/claims/:id', protect, admin, deleteClaim);
 
-// Claims 2023 routes
-app.get('/api/claims/2023', protect, admin, getClaims2023);
-app.get('/api/claims/2023/employee/:employeeId', protect, getClaimsByEmployeeId2023);
-
-// Claims 2024 routes
-app.get('/api/claims/2024', protect, admin, getClaims2024);
-app.get('/api/claims/2024/employee/:employeeId', protect, getClaimsByEmployeeId2024);
-
-// Special claims routes
-app.get('/api/claims/special', protect, admin, getSpecialClaims);
-app.get('/api/claims/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special', protect, upload.array('attachments', 5), createSpecialClaim);
-
-// Claims by year routes
-app.get('/api/claims/year/:year', protect, admin, getClaimsByYear);
-app.get('/api/claims/year/:year/employee/:employeeId', protect, getEmployeeClaimsByYear);
-
-// Dependent routes
-app.get('/api/dependents', protect, admin, getAllDependents);
-app.get('/api/dependents/employee/:employeeId', protect, getDependentsByEmployeeId);
-
-// Sleep data routes
 app.get('/api/sleep', protect, admin, getAllSleepData);
-app.get('/api/sleep/employee/:employeeId', protect, getSleepDataByEmployeeId);
-app.get('/api/sleep/:id', protect, getSleepDataById);
-app.post('/api/sleep', protect, createSleepData);
+app.post('/api/sleep', protect, admin, createSleepData);
 app.put('/api/sleep/:id', protect, admin, updateSleepData);
 app.delete('/api/sleep/:id', protect, admin, deleteSleepData);
 
-// Wearable data routes
 app.get('/api/wearables', protect, admin, getAllWearableData);
-app.get('/api/wearables/employee/:employeeId', protect, getWearableDataByEmployeeId);
-app.post('/api/wearables', protect, createWearableData);
+app.post('/api/wearables', protect, admin, createWearableData);
 app.put('/api/wearables/:id', protect, admin, updateWearableData);
 app.delete('/api/wearables/:id', protect, admin, deleteWearableData);
 
-// Provider routes
-app.get('/api/providers', protect, getAllProviders);
-app.get('/api/providers/type/:type', protect, getProvidersByType);
-app.get('/api/providers/specialty/:specialty', protect, getProvidersBySpecialty);
-app.get('/api/providers/:id', protect, getProviderById);
+app.get('/api/providers', protect, admin, getAllProviders);
 app.post('/api/providers', protect, admin, createProvider);
-app.post('/api/providers/:id/reviews', protect, addReview);
-app.get('/api/providers/:id/reviews', protect, getProviderReviews);
-app.get('/api/providers/categories', protect, getCategories);
-app.get('/api/providers/specializations', protect, getSpecializations);
+app.post('/api/providers/:id/reviews', protect, admin, addReview);
 
-// Policy routes
 app.get('/api/policies', protect, admin, getAllPolicies);
-app.get('/api/policies/:id', protect, getPolicyById);
-app.get('/api/policies/employee/:employeeId', protect, getPolicyByEmployeeId);
 app.post('/api/policies', protect, admin, createPolicy);
 app.put('/api/policies/:id', protect, admin, updatePolicy);
 app.delete('/api/policies/:id', protect, admin, deletePolicy);
 
-// Policy document routes
-app.get('/api/policies/documents', protect, getPolicyDocuments);
-app.post('/api/policies/documents', protect, admin, upload.single('document'), uploadPolicyDocument);
-app.delete('/api/policies/documents/:id', protect, admin, deletePolicyDocument);
-
-// Pre-approval routes
 app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);
-app.get('/api/pre-approvals/:id', protect, getPreApprovalById);
-app.get('/api/pre-approvals/employee/:employeeId', protect, getPreApprovalsByEmployeeId);
-app.get('/api/pre-approvals/provider/:providerId', protect, admin, getPreApprovalsByProviderId);
-app.post('/api/pre-approvals', protect, createPreApproval);
 app.put('/api/pre-approvals/:id', protect, admin, updatePreApproval);
 app.delete('/api/pre-approvals/:id', protect, admin, deletePreApproval);
 
-// Feedback routes
 app.get('/api/feedbacks', protect, admin, getAllFeedbacks);
-app.get('/api/feedbacks/:id', protect, getFeedbackById);
-app.get('/api/feedbacks/employee/:employeeId', protect, getFeedbacksByEmployeeId);
-app.post('/api/feedbacks', protect, createFeedback);
-app.put('/api/feedbacks/:id', protect, updateFeedback);
 app.delete('/api/feedbacks/:id', protect, admin, deleteFeedback);
 
-// Auth routes
-app.post('/api/auth/login', login);
-app.get('/api/auth/profile', protect, getProfile);
-app.put('/api/auth/profile', protect, updateProfile);
-
-// Complaint routes
-app.use('/api/complaints', complaintRoutes);
-
-// Analytics routes
-app.get('/api/analytics/employee/:id', protect, getEmployeeAnalytics);
 app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics);
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
-// Prediction routes
 app.get('/api/predictions', protect, admin, getAllPredictions);
-app.get('/api/predictions/employee/:employeeId', protect, getPredictionsByEmployeeId);
-app.get('/api/predictions/type/:type', protect, getPredictionsByType);
-app.get('/api/predictions/:id', protect, getPredictionById);
 app.post('/api/predictions', protect, admin, createPrediction);
+
+// Complaint routes
+app.use('/api/complaints', complaintRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
