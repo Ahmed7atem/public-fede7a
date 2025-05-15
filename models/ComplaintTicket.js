@@ -1,14 +1,19 @@
 const mongoose = require('mongoose');
 
 const complaintTicketSchema = new mongoose.Schema({
-  providerType: {
+  subject: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  category: {
     type: String,
     required: true,
     trim: true
   },
   description: {
     type: String,
-    required: false,
+    required: true,
     trim: true
   },
   employeeId: {
@@ -21,15 +26,15 @@ const complaintTicketSchema = new mongoose.Schema({
     enum: ['Open', 'In Progress', 'Resolved', 'Closed'],
     default: 'Open'
   },
-  attachment: {
+  attachments: [{
     filename: String,
     path: String,
     mimetype: String,
     size: Number
-  }
+  }]
 }, { 
   timestamps: true,
-  collection: 'complainttickets'  // Explicitly set the collection name
+  collection: 'complainttickets'
 });
 
 // Update the updatedAt timestamp before saving

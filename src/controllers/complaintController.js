@@ -95,33 +95,32 @@ const createComplaint = async (req, res) => {
     console.log('Content-Type:', req.headers['content-type']);
 
     // Extract form data
-    const providerType = req.body.providerType;
-    const description = req.body.description;
-    const employeeId = req.body.employeeId;
+    const { subject, category, description, employeeId } = req.body;
 
-    console.log('Extracted fields:', { providerType, description, employeeId });
+    console.log('Extracted fields:', { subject, category, description, employeeId });
 
     // Validate required fields
-    if (!providerType || !employeeId) {
-      console.log('Missing fields:', { providerType, employeeId });
+    if (!subject || !category || !description || !employeeId) {
+      console.log('Missing fields:', { subject, category, description, employeeId });
       return res.status(400).json({
         success: false,
         message: 'Missing required fields',
-        error: 'providerType and employeeId are required',
+        error: 'subject, category, description, and employeeId are required',
         receivedData: req.body
       });
     }
 
     const complaintData = {
-      providerType,
+      subject,
+      category,
       description,
       employeeId,
-      attachment: req.file ? {
+      attachments: req.file ? [{
         filename: req.file.filename,
         path: req.file.path,
         mimetype: req.file.mimetype,
         size: req.file.size
-      } : null
+      }] : []
     };
 
     console.log('Creating complaint with data:', complaintData);
