@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const ComplaintTicket = require('../../models/ComplaintTicket');
+const { ComplaintTicket } = require('../../models');
+// const ComplaintTicket = require('../../models/ComplaintTicket');
 // const Complaint = require('../../models/schemas').Complaint;
 
 /**

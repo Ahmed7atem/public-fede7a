@@ -21,6 +21,7 @@ const {
 const PreApprovalClaim = require('./schemas').PreApprovalClaim;
 const Provider = require('./Provider');
 const SpecialClaim = require('./SpecialClaim');
+const ComplaintTicket = require('./ComplaintTicket');
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
@@ -84,6 +85,7 @@ module.exports = {
   Provider,
   Admin,
   SpecialClaim,
+  ComplaintTicket,
   HealthData2020,
   HealthData2021,
   HealthData2022,
