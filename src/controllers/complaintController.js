@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ComplaintTicket = require('../../models/ComplaintTicket');
-const Complaint = require('../../models/schemas').Complaint;
+// const Complaint = require('../../models/schemas').Complaint;
 
 /**
  * @desc    Get all complaints
@@ -9,7 +9,7 @@ const Complaint = require('../../models/schemas').Complaint;
  */
 const getAllComplaints = async (req, res) => {
   try {
-    const complaints = await Complaint.find().sort({ createdAt: -1 });
+    const complaints = await ComplaintTicket.find().sort({ createdAt: -1 });
     res.json(complaints);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching complaints', error: error.message });
@@ -23,7 +23,7 @@ const getAllComplaints = async (req, res) => {
  */
 const getComplaintById = async (req, res) => {
   try {
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await ComplaintTicket.findById(req.params.id);
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
     }
@@ -40,7 +40,7 @@ const getComplaintById = async (req, res) => {
  */
 const getComplaintsByEmployeeId = async (req, res) => {
   try {
-    const complaints = await Complaint.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
+    const complaints = await ComplaintTicket.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
     res.json(complaints);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching complaints', error: error.message });
@@ -58,26 +58,24 @@ const createComplaint = async (req, res) => {
     const employeeId = req.user.employeeId;
 
     // Handle file upload
-    let attachment = null;
+    let attachments = [];
     if (req.file) {
-      // Store file directly in MongoDB as Binary data
-      attachment = {
-        name: req.file.originalname,
-        type: req.file.mimetype,
-        // Convert buffer to base64 string for storage in MongoDB
-        data: req.file.buffer.toString('base64'),
+      // Store file metadata
+      attachments.push({
+        filename: req.file.originalname,
+        mimetype: req.file.mimetype,
+        path: req.file.path || 'memory-storage',
         size: req.file.size
-      };
+      });
     }
 
-    const complaint = await Complaint.create({
-      title,
+    const complaint = await ComplaintTicket.create({
+      subject: title,
       description,
       category,
-      priority,
       employeeId,
-      attachment,
-      status: 'pending'
+      attachments,
+      status: 'Open'
     });
 
     res.status(201).json({
@@ -102,7 +100,7 @@ const createComplaint = async (req, res) => {
 const updateComplaint = async (req, res) => {
   try {
     const { status, response } = req.body;
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await ComplaintTicket.findById(req.params.id);
     
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
@@ -126,7 +124,7 @@ const updateComplaint = async (req, res) => {
  */
 const deleteComplaint = async (req, res) => {
   try {
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await ComplaintTicket.findById(req.params.id);
     
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
