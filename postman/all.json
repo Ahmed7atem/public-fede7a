@@ -10,7 +10,7 @@
         "name": "Authentication",
         "item": [
           {
-            "name": "Login",
+            "name": "Login Admin",
             "request": {
               "method": "POST",
               "header": [
@@ -24,11 +24,11 @@
                 "raw": "{\n  \"email\": \"admin@medbond.com\",\n  \"password\": \"admin123\"\n}"
               },
               "url": {
-                "raw": "{{baseUrl}}/api/auth/login",
-                "host": ["{{baseUrl}}"],
+                "raw": "https://public-fede7a.vercel.app/api/auth/login",
+                "host": ["https://public-fede7a.vercel.app"],
                 "path": ["api", "auth", "login"]
               },
-              "description": "Login to get authentication token"
+              "description": "Login as admin to get ADMIN_TOKEN"
             },
             "response": [
               {
@@ -41,8 +41,8 @@
                     "raw": "{\n  \"email\": \"admin@medbond.com\",\n  \"password\": \"admin123\"\n}"
                   },
                   "url": {
-                    "raw": "{{baseUrl}}/api/auth/login",
-                    "host": ["{{baseUrl}}"],
+                    "raw": "https://public-fede7a.vercel.app/api/auth/login",
+                    "host": ["https://public-fede7a.vercel.app"],
                     "path": ["api", "auth", "login"]
                   }
                 },
@@ -55,7 +55,57 @@
                     "value": "application/json"
                   }
                 ],
-                "body": "{\n  \"success\": true,\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"EMP123\",\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"role\": \"admin\"\n  }\n}"
+                "body": "{\n  \"success\": true,\n  \"token\": \"ADMIN_TOKEN\",\n  \"user\": {\n    \"email\": \"admin@medbond.com\",\n    \"role\": \"admin\"\n  }\n}"
+              }
+            ]
+          },
+          {
+            "name": "Login Employee",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"employee8f7b7927-6c04-401a-ab0b-61000132f970@example.com\",\n  \"password\": \"a06edjru\"\n}"
+              },
+              "url": {
+                "raw": "https://public-fede7a.vercel.app/api/auth/login",
+                "host": ["https://public-fede7a.vercel.app"],
+                "path": ["api", "auth", "login"]
+              },
+              "description": "Login as employee with actual database credentials"
+            },
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "POST",
+                  "header": [],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"employee8f7b7927-6c04-401a-ab0b-61000132f970@example.com\",\n  \"password\": \"a06edjru\"\n}"
+                  },
+                  "url": {
+                    "raw": "https://public-fede7a.vercel.app/api/auth/login",
+                    "host": ["https://public-fede7a.vercel.app"],
+                    "path": ["api", "auth", "login"]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"token\": \"EMPLOYEE_TOKEN\",\n  \"user\": {\n    \"email\": \"employee8f7b7927-6c04-401a-ab0b-61000132f970@example.com\",\n    \"role\": \"employee\"\n  }\n}"
               }
             ]
           },
@@ -97,14 +147,15 @@
                     "value": "application/json"
                   }
                 ],
-                "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"EMP123\",\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"role\": \"admin\",\n    \"department\": \"IT\",\n    \"joinDate\": \"2023-01-01\"\n  }\n}"
+                "body": "{\n  \"success\": true,\n  \"token\": \"EMPLOYEE_TOKEN\",\n  \"user\": {\n    \"email\": \"employee@medbond.com\",\n    \"role\": \"employee\"\n  }\n}"
+
               }
             ]
           }
         ]
       },
       {
-        "name": "Employees",
+        "name": "Admin Routes",
         "item": [
           {
             "name": "Get All Employees",
@@ -117,13 +168,12 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/employees",
-                "host": ["{{baseUrl}}"],
+                "raw": "https://public-fede7a.vercel.app/api/employees",
+                "host": ["https://public-fede7a.vercel.app"],
                 "path": ["api", "employees"]
               },
-              "description": "Get all employees"
-            },
-            "response": []
+              "description": "Get all employees (Admin only)"
+            }
           },
           {
             "name": "Get Employee by ID",
@@ -163,11 +213,11 @@
                 "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"department\": \"IT\",\n  \"position\": \"Developer\",\n  \"joinDate\": \"2024-01-01\"\n}"
               },
               "url": {
-                "raw": "{{baseUrl}}/api/employees",
-                "host": ["{{baseUrl}}"],
+                "raw": "https://public-fede7a.vercel.app/api/employees",
+                "host": ["https://public-fede7a.vercel.app"],
                 "path": ["api", "employees"]
               },
-              "description": "Create a new employee"
+              "description": "Create a new employee (Admin only)"
             },
             "response": []
           },
@@ -230,6 +280,47 @@
               "description": "Delete an employee"
             },
             "response": []
+          }
+        ]
+      },
+      {
+        "name": "Employee Routes",
+        "item": [
+          {
+            "name": "Get Own Profile",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer EMPLOYEE_TOKEN"
+                }
+              ],
+              "url": {
+                "raw": "https://public-fede7a.vercel.app/api/employees/me",
+                "host": ["https://public-fede7a.vercel.app"],
+                "path": ["api", "employees", "me"]
+              },
+              "description": "Get own employee profile (Employee only)"
+            }
+          },
+          {
+            "name": "Get Own Health Data",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer EMPLOYEE_TOKEN"
+                }
+              ],
+              "url": {
+                "raw": "https://public-fede7a.vercel.app/api/health/employee/me",
+                "host": ["https://public-fede7a.vercel.app"],
+                "path": ["api", "health", "employee", "me"]
+              },
+              "description": "Get own health data (Employee only)"
+            }
           }
         ]
       },
