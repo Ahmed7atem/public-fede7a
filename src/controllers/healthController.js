@@ -53,51 +53,48 @@ const getHealthDataByYear = async (req, res) => {
   try {
     const { year } = req.params;
     console.log(`Getting health data for year: ${year}`);
-    const currentYear = new Date().getFullYear().toString();
-    
-    // Determine which collection to use
-    let collectionName;
-    if (year === currentYear) {
-      collectionName = 'healthdatas';
-      console.log('Using current year collection:', collectionName);
-    } else {
-      collectionName = `healthdata_${year}`;
-      console.log('Using historical collection:', collectionName);
-    }
-    
-    // Check if collection exists
-    console.log('Checking if collection exists...');
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    const collectionNames = collections.map(col => col.name);
-    console.log('Available collections:', collectionNames);
-    
-    const collectionExists = collections.some(col => col.name === collectionName);
-    console.log(`Collection ${collectionName} exists:`, collectionExists);
-    
-    if (!collectionExists) {
-      console.log(`Collection ${collectionName} not found`);
-      return res.status(404).json({
+
+    // Validate year format
+    if (!/^\d{4}$/.test(year)) {
+      return res.status(400).json({
         success: false,
-        message: `No health data found for year ${year}`
+        message: 'Invalid year format. Please use YYYY format.'
       });
     }
 
-    console.log(`Creating model for collection: ${collectionName}`);
-    const HealthDataModel = mongoose.model(collectionName, healthDataSchema);
-    console.log('Fetching data...');
-    const healthData = await HealthDataModel.find({}).lean();
-    console.log(`Found ${healthData.length} records`);
+    // Validate year range
+    const currentYear = new Date().getFullYear();
+    const yearNum = parseInt(year);
+    if (yearNum < 2020 || yearNum > currentYear) {
+      return res.status(400).json({
+        success: false,
+        message: `Year must be between 2020 and ${currentYear}`
+      });
+    }
 
-    res.json({
-      success: true,
-      data: healthData,
-      count: healthData.length
-    });
+    // Use the specific year function based on the year
+    switch (year) {
+      case '2020':
+        return getHealthData2020(req, res);
+      case '2021':
+        return getHealthData2021(req, res);
+      case '2022':
+        return getHealthData2022(req, res);
+      case '2023':
+        return getHealthData2023(req, res);
+      case '2024':
+        return getHealthData2024(req, res);
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid year'
+        });
+    }
   } catch (error) {
-    console.error('Error fetching health data by year:', error);
+    console.error('Error in getHealthDataByYear:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching health data',
+      message: 'Error fetching health data by year',
       error: error.message
     });
   }
@@ -210,7 +207,7 @@ const deleteHealthData = async (req, res) => {
  */
 const getHealthData2020 = async (req, res) => {
   try {
-    const HealthData2020 = mongoose.model('healthdata_2020', healthDataSchema);
+    const HealthData2020 = mongoose.models.healthdata_2020 || mongoose.model('healthdata_2020', healthDataSchema, 'healthdata_2020');
     const healthData = await HealthData2020.find({}).lean();
     res.json({
       success: true,
@@ -218,6 +215,7 @@ const getHealthData2020 = async (req, res) => {
       count: healthData.length
     });
   } catch (error) {
+    console.error('Error fetching 2020 health data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching 2020 health data',
@@ -233,7 +231,7 @@ const getHealthData2020 = async (req, res) => {
  */
 const getHealthData2021 = async (req, res) => {
   try {
-    const HealthData2021 = mongoose.model('healthdata_2021', healthDataSchema);
+    const HealthData2021 = mongoose.models.healthdata_2021 || mongoose.model('healthdata_2021', healthDataSchema, 'healthdata_2021');
     const healthData = await HealthData2021.find({}).lean();
     res.json({
       success: true,
@@ -241,6 +239,7 @@ const getHealthData2021 = async (req, res) => {
       count: healthData.length
     });
   } catch (error) {
+    console.error('Error fetching 2021 health data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching 2021 health data',
@@ -256,7 +255,7 @@ const getHealthData2021 = async (req, res) => {
  */
 const getHealthData2022 = async (req, res) => {
   try {
-    const HealthData2022 = mongoose.model('healthdata_2022', healthDataSchema);
+    const HealthData2022 = mongoose.models.healthdata_2022 || mongoose.model('healthdata_2022', healthDataSchema, 'healthdata_2022');
     const healthData = await HealthData2022.find({}).lean();
     res.json({
       success: true,
@@ -264,6 +263,7 @@ const getHealthData2022 = async (req, res) => {
       count: healthData.length
     });
   } catch (error) {
+    console.error('Error fetching 2022 health data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching 2022 health data',
@@ -279,7 +279,7 @@ const getHealthData2022 = async (req, res) => {
  */
 const getHealthData2023 = async (req, res) => {
   try {
-    const HealthData2023 = mongoose.model('healthdata_2023', healthDataSchema);
+    const HealthData2023 = mongoose.models.healthdata_2023 || mongoose.model('healthdata_2023', healthDataSchema, 'healthdata_2023');
     const healthData = await HealthData2023.find({}).lean();
     res.json({
       success: true,
@@ -287,6 +287,7 @@ const getHealthData2023 = async (req, res) => {
       count: healthData.length
     });
   } catch (error) {
+    console.error('Error fetching 2023 health data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching 2023 health data',
@@ -302,7 +303,7 @@ const getHealthData2023 = async (req, res) => {
  */
 const getHealthData2024 = async (req, res) => {
   try {
-    const HealthData2024 = mongoose.model('healthdata_2024', healthDataSchema);
+    const HealthData2024 = mongoose.models.healthdata_2024 || mongoose.model('healthdata_2024', healthDataSchema, 'healthdata_2024');
     const healthData = await HealthData2024.find({}).lean();
     res.json({
       success: true,
@@ -310,6 +311,7 @@ const getHealthData2024 = async (req, res) => {
       count: healthData.length
     });
   } catch (error) {
+    console.error('Error fetching 2024 health data:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching 2024 health data',
