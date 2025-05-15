@@ -59,36 +59,170 @@ const employeeSchema = new mongoose.Schema({
 
 // Health Data Schema - Based on actual MongoDB structure
 const healthDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true, index: true }, // Reference to employee UUID
-  recordedAt: { type: Date, default: Date.now },
-  weight: Number,
-  height: Number,
-  bmi: Number,
-  hemoglobin: Number,
-  cholesterol: Number,
-  bloodSugar: Number, 
-  creatinine: Number,
+  employeeId: { 
+    type: String, 
+    required: true, 
+    index: true 
+  },
+  recordedAt: { 
+    type: Date, 
+    default: Date.now,
+    required: true 
+  },
+  bloodPressure: {
+    systolic: {
+      type: Number,
+      min: [60, 'Systolic pressure too low'],
+      max: [200, 'Systolic pressure too high']
+    },
+    diastolic: {
+      type: Number,
+      min: [40, 'Diastolic pressure too low'],
+      max: [120, 'Diastolic pressure too high']
+    }
+  },
+  heartRate: {
+    type: Number,
+    min: [40, 'Heart rate too low'],
+    max: [200, 'Heart rate too high']
+  },
+  temperature: {
+    type: Number,
+    min: [35, 'Temperature too low'],
+    max: [42, 'Temperature too high']
+  },
+  weight: {
+    type: Number,
+    min: [20, 'Weight too low'],
+    max: [300, 'Weight too high']
+  },
+  height: {
+    type: Number,
+    min: [50, 'Height too low'],
+    max: [250, 'Height too high']
+  },
+  bmi: {
+    type: Number,
+    min: [10, 'BMI too low'],
+    max: [50, 'BMI too high']
+  },
+  bloodSugar: {
+    type: Number,
+    min: [50, 'Blood sugar too low'],
+    max: [500, 'Blood sugar too high']
+  },
+  cholesterol: {
+    total: {
+      type: Number,
+      min: [100, 'Total cholesterol too low'],
+      max: [400, 'Total cholesterol too high']
+    },
+    hdl: {
+      type: Number,
+      min: [20, 'HDL too low'],
+      max: [100, 'HDL too high']
+    },
+    ldl: {
+      type: Number,
+      min: [50, 'LDL too low'],
+      max: [200, 'LDL too high']
+    }
+  },
+  hemoglobin: {
+    type: Number,
+    min: [5, 'Hemoglobin too low'],
+    max: [20, 'Hemoglobin too high']
+  },
+  creatinine: {
+    type: Number,
+    min: [0.1, 'Creatinine too low'],
+    max: [10, 'Creatinine too high']
+  },
   chronicDisease: String,
-  chronicDiseaseCount: Number,
+  chronicDiseaseCount: {
+    type: Number,
+    min: 0
+  },
   familyMedicalHistory: String,
-  claimedAmount: Number,
-  insuranceScore: Number,
-  smokerScore: Number,
-  familyScore: Number,
-  lifestyleScore: Number,
-  bmiScore: Number,
-  hemoglobinScore: Number,
-  sugarScore: Number,
-  cholesterolScore: Number,
-  creatinineScore: Number,
-  physicalScore: Number,
-  wellnessScore: Number,
+  claimedAmount: {
+    type: Number,
+    min: 0
+  },
+  insuranceScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  smokerScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  familyScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  lifestyleScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  bmiScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  hemoglobinScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  sugarScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  cholesterolScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  creatinineScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  physicalScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  wellnessScore: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  notes: String,
   version: String,
   policy: Object
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Add validation for BMI calculation
+healthDataSchema.pre('save', function(next) {
+  if (this.weight && this.height) {
+    const heightInMeters = this.height / 100;
+    this.bmi = Number((this.weight / (heightInMeters * heightInMeters)).toFixed(1));
+  }
+  next();
+});
 
 // Add index for faster lookups
-healthDataSchema.index({ employeeId: 1 });
+healthDataSchema.index({ employeeId: 1, recordedAt: -1 });
 
 // Wearable Data Schema - Based on actual MongoDB structure
 const wearableDataSchema = new mongoose.Schema({

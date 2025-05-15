@@ -44,7 +44,10 @@ const {
   getHealthData2021,
   getHealthData2022,
   getHealthData2023,
-  getHealthData2024
+  getHealthData2024,
+  createHealthData,
+  updateHealthData,
+  deleteHealthData
 } = require('../src/controllers/healthController');
 
 const {
@@ -197,6 +200,13 @@ app.get('/api/health/employee/:employeeId', protect, getHealthDataByEmployeeId);
 app.post('/api/health', protect, admin, createHealthData);
 app.put('/api/health/:id', protect, admin, updateHealthData);
 app.delete('/api/health/:id', protect, admin, deleteHealthData);
+
+// Year-specific health data routes
+app.get('/api/health/2020', protect, admin, getHealthData2020);
+app.get('/api/health/2021', protect, admin, getHealthData2021);
+app.get('/api/health/2022', protect, admin, getHealthData2022);
+app.get('/api/health/2023', protect, admin, getHealthData2023);
+app.get('/api/health/2024', protect, admin, getHealthData2024);
 
 // Employee routes
 app.get('/api/employees', protect, admin, getAllEmployees);

@@ -14,32 +14,67 @@ const ITEMS_PER_PAGE = 10;
 const CURRENT_YEAR = new Date().getFullYear();
 const MIN_YEAR = 2020;
 
-// Define the health data schema
-const healthDataSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true },
-  date: { type: Date, required: true },
+// Validation ranges
+const VALIDATION_RANGES = {
   bloodPressure: {
-    systolic: Number,
-    diastolic: Number
+    systolic: { min: 60, max: 200 },
+    diastolic: { min: 40, max: 120 }
   },
-  heartRate: Number,
-  temperature: Number,
-  weight: Number,
-  height: Number,
-  bmi: Number,
-  bloodSugar: Number,
+  heartRate: { min: 40, max: 200 },
+  temperature: { min: 35, max: 42 },
+  weight: { min: 20, max: 300 },
+  height: { min: 50, max: 250 },
+  bloodSugar: { min: 50, max: 500 },
   cholesterol: {
-    total: Number,
-    hdl: Number,
-    ldl: Number
-  },
-  notes: String,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
+    total: { min: 100, max: 400 },
+    hdl: { min: 20, max: 100 },
+    ldl: { min: 50, max: 200 }
+  }
+};
 
-// Create the model only if it doesn't exist
-const HealthDataModel = mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema);
+// Helper function for consistent error responses
+const errorResponse = (res, status, message, error = null) => {
+  const response = {
+    success: false,
+    message
+  };
+  if (error) {
+    response.error = error.message;
+  }
+  return res.status(status).json(response);
+};
+
+// Helper function for validation
+const validateHealthMetrics = (data) => {
+  const errors = [];
+  
+  // Validate blood pressure
+  if (data.bloodPressure) {
+    if (data.bloodPressure.systolic) {
+      const { min, max } = VALIDATION_RANGES.bloodPressure.systolic;
+      if (data.bloodPressure.systolic < min || data.bloodPressure.systolic > max) {
+        errors.push(`Systolic pressure must be between ${min} and ${max}`);
+      }
+    }
+    if (data.bloodPressure.diastolic) {
+      const { min, max } = VALIDATION_RANGES.bloodPressure.diastolic;
+      if (data.bloodPressure.diastolic < min || data.bloodPressure.diastolic > max) {
+        errors.push(`Diastolic pressure must be between ${min} and ${max}`);
+      }
+    }
+  }
+
+  // Validate other metrics
+  for (const [field, range] of Object.entries(VALIDATION_RANGES)) {
+    if (field !== 'bloodPressure' && field !== 'cholesterol' && data[field]) {
+      if (data[field] < range.min || data[field] > range.max) {
+        errors.push(`${field} must be between ${range.min} and ${range.max}`);
+      }
+    }
+  }
+
+  return errors;
+};
 
 /**
  * @desc    Get all health data with pagination
@@ -53,12 +88,12 @@ const getAllHealthData = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [healthData, total] = await Promise.all([
-      HealthDataModel.find({})
+      HealthData.find({})
         .sort({ recordedAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      HealthDataModel.countDocuments({})
+      HealthData.countDocuments({})
     ]);
 
     res.json({
@@ -73,11 +108,7 @@ const getAllHealthData = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching all health data:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching health data',
-      error: error.message
-    });
+    return errorResponse(res, 500, 'Error fetching health data', error);
   }
 };
 
@@ -92,19 +123,13 @@ const getHealthDataByYear = async (req, res) => {
     
     // Validate year format
     if (!/^\d{4}$/.test(year)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid year format. Please use YYYY format.'
-      });
+      return errorResponse(res, 400, 'Invalid year format. Please use YYYY format.');
     }
 
     // Validate year range
     const yearNum = parseInt(year);
     if (yearNum < MIN_YEAR || yearNum > CURRENT_YEAR) {
-      return res.status(400).json({
-        success: false,
-        message: `Year must be between ${MIN_YEAR} and ${CURRENT_YEAR}`
-      });
+      return errorResponse(res, 400, `Year must be between ${MIN_YEAR} and ${CURRENT_YEAR}`);
     }
 
     // Use the specific year function based on the year
@@ -118,10 +143,7 @@ const getHealthDataByYear = async (req, res) => {
 
     const Model = yearModelMap[year];
     if (!Model) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid year'
-      });
+      return errorResponse(res, 400, 'Invalid year');
     }
 
     const page = parseInt(req.query.page) || 1;
@@ -149,11 +171,7 @@ const getHealthDataByYear = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getHealthDataByYear:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching health data by year',
-      error: error.message
-    });
+    return errorResponse(res, 500, 'Error fetching health data by year', error);
   }
 };
 
@@ -165,24 +183,26 @@ const getHealthDataByYear = async (req, res) => {
 const getHealthDataByEmployeeId = async (req, res) => {
   try {
     const { employeeId } = req.params;
+    
+    if (!employeeId) {
+      return errorResponse(res, 400, 'Employee ID is required');
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
     const skip = (page - 1) * limit;
 
     const [healthData, total] = await Promise.all([
-      HealthDataModel.find({ employeeId })
+      HealthData.find({ employeeId })
         .sort({ recordedAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      HealthDataModel.countDocuments({ employeeId })
+      HealthData.countDocuments({ employeeId })
     ]);
 
     if (!healthData || healthData.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Health data not found for this employee'
-      });
+      return errorResponse(res, 404, 'Health data not found for this employee');
     }
 
     res.json({
@@ -197,11 +217,7 @@ const getHealthDataByEmployeeId = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching health data by employee:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching health data',
-      error: error.message
-    });
+    return errorResponse(res, 500, 'Error fetching health data', error);
   }
 };
 
@@ -212,14 +228,24 @@ const getHealthDataByEmployeeId = async (req, res) => {
  */
 const getHealthDataById = async (req, res) => {
   try {
-    const employeeId = req.params.id;
-    const healthData = await HealthDataModel.findOne({ employeeId }).lean();
-    if (!healthData) {
-      return res.status(404).json({ message: 'Health data not found' });
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 400, 'Invalid health data ID');
     }
-    res.json(healthData);
+
+    const healthData = await HealthData.findById(id).lean();
+    if (!healthData) {
+      return errorResponse(res, 404, 'Health data not found');
+    }
+
+    res.json({
+      success: true,
+      data: healthData
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching health data', error: error.message });
+    console.error('Error fetching health data by ID:', error);
+    return errorResponse(res, 500, 'Error fetching health data', error);
   }
 };
 
@@ -233,43 +259,16 @@ const createHealthData = async (req, res) => {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
+      return errorResponse(res, 400, 'Validation error', errors.array());
     }
 
     // Validate health metrics
-    const {
-      weight,
-      height,
-      bloodSugar,
-      cholesterol,
-      hemoglobin,
-      creatinine
-    } = req.body;
-
-    // Validate numeric values
-    const numericFields = {
-      weight: { min: 20, max: 300 }, // kg
-      height: { min: 50, max: 250 }, // cm
-      bloodSugar: { min: 50, max: 500 }, // mg/dL
-      cholesterol: { min: 100, max: 400 }, // mg/dL
-      hemoglobin: { min: 5, max: 20 }, // g/dL
-      creatinine: { min: 0.1, max: 10 } // mg/dL
-    };
-
-    for (const [field, range] of Object.entries(numericFields)) {
-      const value = req.body[field];
-      if (value !== undefined && (isNaN(value) || value < range.min || value > range.max)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid ${field} value. Must be between ${range.min} and ${range.max}`
-        });
-      }
+    const validationErrors = validateHealthMetrics(req.body);
+    if (validationErrors.length > 0) {
+      return errorResponse(res, 400, 'Invalid health metrics', validationErrors);
     }
 
-    const healthData = new HealthDataModel(req.body);
+    const healthData = new HealthData(req.body);
     const savedHealthData = await healthData.save();
 
     res.status(201).json({
@@ -279,11 +278,7 @@ const createHealthData = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating health data:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating health data',
-      error: error.message
-    });
+    return errorResponse(res, 500, 'Error creating health data', error);
   }
 };
 
@@ -294,13 +289,36 @@ const createHealthData = async (req, res) => {
  */
 const updateHealthData = async (req, res) => {
   try {
-    const healthData = await HealthDataModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!healthData) {
-      return res.status(404).json({ message: 'Health data not found' });
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 400, 'Invalid health data ID');
     }
-    res.json(healthData);
+
+    // Validate health metrics
+    const validationErrors = validateHealthMetrics(req.body);
+    if (validationErrors.length > 0) {
+      return errorResponse(res, 400, 'Invalid health metrics', validationErrors);
+    }
+
+    const healthData = await HealthData.findByIdAndUpdate(
+      id,
+      { ...req.body, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    );
+
+    if (!healthData) {
+      return errorResponse(res, 404, 'Health data not found');
+    }
+
+    res.json({
+      success: true,
+      data: healthData,
+      message: 'Health data updated successfully'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating health data', error: error.message });
+    console.error('Error updating health data:', error);
+    return errorResponse(res, 500, 'Error updating health data', error);
   }
 };
 
@@ -311,13 +329,180 @@ const updateHealthData = async (req, res) => {
  */
 const deleteHealthData = async (req, res) => {
   try {
-    const healthData = await HealthDataModel.findByIdAndDelete(req.params.id);
-    if (!healthData) {
-      return res.status(404).json({ message: 'Health data not found' });
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, 400, 'Invalid health data ID');
     }
-    res.json({ message: 'Health data removed' });
+
+    const healthData = await HealthData.findByIdAndDelete(id);
+    if (!healthData) {
+      return errorResponse(res, 404, 'Health data not found');
+    }
+
+    res.json({
+      success: true,
+      message: 'Health data removed successfully'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting health data', error: error.message });
+    console.error('Error deleting health data:', error);
+    return errorResponse(res, 500, 'Error deleting health data', error);
+  }
+};
+
+// Year-specific health data functions
+const getHealthData2020 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [healthData, total] = await Promise.all([
+      HealthData2020.find({})
+        .sort({ recordedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HealthData2020.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      data: healthData,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching 2020 health data:', error);
+    return errorResponse(res, 500, 'Error fetching 2020 health data', error);
+  }
+};
+
+const getHealthData2021 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [healthData, total] = await Promise.all([
+      HealthData2021.find({})
+        .sort({ recordedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HealthData2021.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      data: healthData,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching 2021 health data:', error);
+    return errorResponse(res, 500, 'Error fetching 2021 health data', error);
+  }
+};
+
+const getHealthData2022 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [healthData, total] = await Promise.all([
+      HealthData2022.find({})
+        .sort({ recordedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HealthData2022.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      data: healthData,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching 2022 health data:', error);
+    return errorResponse(res, 500, 'Error fetching 2022 health data', error);
+  }
+};
+
+const getHealthData2023 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [healthData, total] = await Promise.all([
+      HealthData2023.find({})
+        .sort({ recordedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HealthData2023.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      data: healthData,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching 2023 health data:', error);
+    return errorResponse(res, 500, 'Error fetching 2023 health data', error);
+  }
+};
+
+const getHealthData2024 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || ITEMS_PER_PAGE;
+    const skip = (page - 1) * limit;
+
+    const [healthData, total] = await Promise.all([
+      HealthData2024.find({})
+        .sort({ recordedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      HealthData2024.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      data: healthData,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching 2024 health data:', error);
+    return errorResponse(res, 500, 'Error fetching 2024 health data', error);
   }
 };
 
@@ -328,5 +513,10 @@ module.exports = {
   getHealthDataById,
   createHealthData,
   updateHealthData,
-  deleteHealthData
+  deleteHealthData,
+  getHealthData2020,
+  getHealthData2021,
+  getHealthData2022,
+  getHealthData2023,
+  getHealthData2024
 }; 

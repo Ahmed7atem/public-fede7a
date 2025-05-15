@@ -1,8 +1,8 @@
 {
     "info": {
-      "_postman_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+      "_postman_id": "medbond-api-collection",
       "name": "MedBond API",
-      "description": "Complete API collection for MedBond platform",
+      "description": "Complete API collection for MedBond Health Insurance Platform",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -21,16 +21,43 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+                "raw": "{\n  \"email\": \"admin@medbond.com\",\n  \"password\": \"admin123\"\n}"
               },
               "url": {
                 "raw": "{{baseUrl}}/api/auth/login",
                 "host": ["{{baseUrl}}"],
                 "path": ["api", "auth", "login"]
               },
-              "description": "Login user (employee or admin)"
+              "description": "Login to get authentication token"
             },
-            "response": []
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "POST",
+                  "header": [],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"admin@medbond.com\",\n  \"password\": \"admin123\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{baseUrl}}/api/auth/login",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "auth", "login"]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"EMP123\",\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"role\": \"admin\"\n  }\n}"
+              }
+            ]
           },
           {
             "name": "Get Profile",
@@ -47,36 +74,32 @@
                 "host": ["{{baseUrl}}"],
                 "path": ["api", "auth", "profile"]
               },
-              "description": "Get user profile"
+              "description": "Get authenticated user profile"
             },
-            "response": []
-          },
-          {
-            "name": "Update Profile",
-            "request": {
-              "method": "PUT",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/auth/profile",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "auth", "profile"]
+                  }
                 },
-                {
-                  "key": "Authorization",
-                  "value": "Bearer {{token}}"
-                }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\"\n}"
-              },
-              "url": {
-                "raw": "{{baseUrl}}/api/auth/profile",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "auth", "profile"]
-              },
-              "description": "Update user profile"
-            },
-            "response": []
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"EMP123\",\n    \"name\": \"Admin User\",\n    \"email\": \"admin@medbond.com\",\n    \"role\": \"admin\",\n    \"department\": \"IT\",\n    \"joinDate\": \"2023-01-01\"\n  }\n}"
+              }
+            ]
           }
         ]
       },
@@ -231,13 +254,100 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/health",
+                "raw": "{{baseUrl}}/api/health?page=1&limit=10",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "health"]
+                "path": ["api", "health"],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  }
+                ]
               },
-              "description": "Get all health data"
+              "description": "Get all health data with pagination (Admin only)"
             },
-            "response": []
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/health?page=1&limit=10",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "health"],
+                    "query": []
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"employeeId\": \"EMP123\",\n      \"date\": \"2024-03-15\",\n      \"bloodPressure\": {\n        \"systolic\": 120,\n        \"diastolic\": 80\n      },\n      \"heartRate\": 72,\n      \"temperature\": 37.0,\n      \"weight\": 75,\n      \"height\": 180,\n      \"bmi\": 23.1,\n      \"bloodSugar\": 100,\n      \"cholesterol\": {\n        \"total\": 200,\n        \"hdl\": 50,\n        \"ldl\": 100\n      },\n      \"notes\": \"Regular checkup results\",\n      \"createdAt\": \"2024-03-15T10:00:00.000Z\"\n    }\n  ],\n  \"pagination\": {\n    \"total\": 100,\n    \"page\": 1,\n    \"pages\": 10,\n    \"limit\": 10\n  }\n}"
+              }
+            ]
+          },
+          {
+            "name": "Get Health Data by Year",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/health/year/2024?page=1&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "health", "year", "2024"],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  }
+                ]
+              },
+              "description": "Get health data for a specific year (Admin only)"
+            },
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/health/year/2024?page=1&limit=10",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "health", "year", "2024"],
+                    "query": []
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"employeeId\": \"EMP123\",\n      \"date\": \"2024-03-15\",\n      \"bloodPressure\": {\n        \"systolic\": 120,\n        \"diastolic\": 80\n      },\n      \"heartRate\": 72,\n      \"temperature\": 37.0,\n      \"weight\": 75,\n      \"height\": 180,\n      \"bmi\": 23.1,\n      \"bloodSugar\": 100,\n      \"cholesterol\": {\n        \"total\": 200,\n        \"hdl\": 50,\n        \"ldl\": 100\n      },\n      \"notes\": \"Regular checkup results\",\n      \"createdAt\": \"2024-03-15T10:00:00.000Z\"\n    }\n  ],\n  \"pagination\": {\n    \"total\": 100,\n    \"page\": 1,\n    \"pages\": 10,\n    \"limit\": 10\n  }\n}"
+              }
+            ]
           },
           {
             "name": "Get Health Data by Employee ID",
@@ -250,40 +360,70 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/health/employee/:employeeId",
+                "raw": "{{baseUrl}}/api/health/employee/EMP123?page=1&limit=10",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "health", "employee", ":employeeId"],
-                "variable": [
+                "path": ["api", "health", "employee", "EMP123"],
+                "query": [
                   {
-                    "key": "employeeId",
-                    "value": "EMP123",
-                    "description": "Employee ID"
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
                   }
                 ]
               },
-              "description": "Get health data by employee ID"
+              "description": "Get health data for a specific employee"
             },
-            "response": []
-          }
-        ]
-      },
-      {
-        "name": "Sleep Data",
-        "item": [
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/health/employee/EMP123?page=1&limit=10",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "health", "employee", "EMP123"],
+                    "query": []
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"employeeId\": \"EMP123\",\n      \"date\": \"2024-03-15\",\n      \"bloodPressure\": {\n        \"systolic\": 120,\n        \"diastolic\": 80\n      },\n      \"heartRate\": 72,\n      \"temperature\": 37.0,\n      \"weight\": 75,\n      \"height\": 180,\n      \"bmi\": 23.1,\n      \"bloodSugar\": 100,\n      \"cholesterol\": {\n        \"total\": 200,\n        \"hdl\": 50,\n        \"ldl\": 100\n      },\n      \"notes\": \"Regular checkup results\",\n      \"createdAt\": \"2024-03-15T10:00:00.000Z\"\n    }\n  ],\n  \"pagination\": {\n    \"total\": 100,\n    \"page\": 1,\n    \"pages\": 10,\n    \"limit\": 10\n  }\n}"
+              }
+            ]
+          },
           {
-            "name": "Get All Sleep Data",
+            "name": "Create Health Data",
             "request": {
-              "method": "GET",
+              "method": "POST",
               "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
                 {
                   "key": "Authorization",
                   "value": "Bearer {{token}}"
                 }
               ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"employeeId\": \"EMP123\",\n  \"date\": \"2024-03-15\",\n  \"bloodPressure\": {\n    \"systolic\": 120,\n    \"diastolic\": 80\n  },\n  \"heartRate\": 72,\n  \"temperature\": 37.0,\n  \"weight\": 75,\n  \"height\": 180,\n  \"bmi\": 23.1,\n  \"bloodSugar\": 100,\n  \"cholesterol\": {\n    \"total\": 200,\n    \"hdl\": 50,\n    \"ldl\": 100\n  },\n  \"notes\": \"Regular checkup results\"\n}"
+              },
               "url": {
-                "raw": "{{baseUrl}}/api/sleep",
+                "raw": "{{baseUrl}}/api/health",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "sleep"]
+                "path": ["api", "health"]
               },
               "description": "Get all sleep data"
             },
@@ -429,13 +569,47 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/claims",
+                "raw": "{{baseUrl}}/api/claims?page=1&limit=10",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "claims"]
+                "path": ["api", "claims"],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  }
+                ]
               },
-              "description": "Get all claims"
+              "description": "Get all claims with pagination"
             },
-            "response": []
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/claims?page=1&limit=10",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "claims"],
+                    "query": []
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"CLM789\",\n      \"patientId\": \"EMP123\",\n      \"providerId\": \"PRV456\",\n      \"serviceDate\": \"2024-03-15\",\n      \"amount\": 500,\n      \"status\": \"pending\",\n      \"description\": \"Annual health checkup\",\n      \"createdAt\": \"2024-03-15T10:00:00.000Z\"\n    }\n  ],\n  \"pagination\": {\n    \"total\": 100,\n    \"page\": 1,\n    \"pages\": 10,\n    \"limit\": 10\n  }\n}"
+              }
+            ]
           },
           {
             "name": "Get Claim by ID",
@@ -495,26 +669,80 @@
               "method": "POST",
               "header": [
                 {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                },
-                {
                   "key": "Authorization",
                   "value": "Bearer {{token}}"
                 }
               ],
               "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patientId\": \"EMP123\",\n  \"providerId\": \"PRV456\",\n  \"serviceDate\": \"2023-05-15\",\n  \"amount\": 500,\n  \"description\": \"Annual checkup\"\n}"
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "patientId",
+                    "value": "EMP123",
+                    "type": "text"
+                  },
+                  {
+                    "key": "providerId",
+                    "value": "PRV456",
+                    "type": "text"
+                  },
+                  {
+                    "key": "serviceDate",
+                    "value": "2024-03-15",
+                    "type": "text"
+                  },
+                  {
+                    "key": "amount",
+                    "value": "500",
+                    "type": "text"
+                  },
+                  {
+                    "key": "description",
+                    "value": "Annual health checkup",
+                    "type": "text"
+                  },
+                  {
+                    "key": "attachment",
+                    "type": "file",
+                    "src": "/path/to/receipt.pdf"
+                  }
+                ]
               },
               "url": {
                 "raw": "{{baseUrl}}/api/claims",
                 "host": ["{{baseUrl}}"],
                 "path": ["api", "claims"]
               },
-              "description": "Create a new claim"
+              "description": "Create a new claim with attachment"
             },
-            "response": []
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "POST",
+                  "header": [],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": []
+                  },
+                  "url": {
+                    "raw": "{{baseUrl}}/api/claims",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "claims"]
+                  }
+                },
+                "status": "Created",
+                "code": 201,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"CLM789\",\n    \"patientId\": \"EMP123\",\n    \"providerId\": \"PRV456\",\n    \"serviceDate\": \"2024-03-15\",\n    \"amount\": 500,\n    \"status\": \"pending\",\n    \"description\": \"Annual health checkup\",\n    \"attachment\": {\n      \"filename\": \"receipt.pdf\",\n      \"path\": \"/uploads/claims/receipt.pdf\",\n      \"mimetype\": \"application/pdf\",\n      \"size\": 1024000\n    },\n    \"createdAt\": \"2024-03-15T10:00:00.000Z\"\n  },\n  \"message\": \"Claim created successfully\"\n}"
+              }
+            ]
           },
           {
             "name": "Update Claim",
@@ -770,20 +998,36 @@
                 }
               ],
               "url": {
-                "raw": "{{baseUrl}}/api/analytics/employee/:id",
+                "raw": "{{baseUrl}}/api/analytics/employee/EMP123",
                 "host": ["{{baseUrl}}"],
-                "path": ["api", "analytics", "employee", ":id"],
-                "variable": [
-                  {
-                    "key": "id",
-                    "value": "EMP123",
-                    "description": "Employee ID"
-                  }
-                ]
+                "path": ["api", "analytics", "employee", "EMP123"]
               },
               "description": "Get analytics for a specific employee"
             },
-            "response": []
+            "response": [
+              {
+                "name": "Success Response",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{baseUrl}}/api/analytics/employee/EMP123",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "analytics", "employee", "EMP123"]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"success\": true,\n  \"data\": {\n    \"employeeId\": \"EMP123\",\n    \"healthMetrics\": {\n      \"bmi\": 23.1,\n      \"bloodPressure\": {\n        \"average\": {\n          \"systolic\": 120,\n          \"diastolic\": 80\n        },\n        \"trend\": \"stable\"\n      },\n      \"heartRate\": {\n        \"average\": 72,\n        \"trend\": \"normal\"\n      }\n    },\n    \"claims\": {\n      \"total\": 5,\n      \"approved\": 4,\n      \"pending\": 1,\n      \"totalAmount\": 2500\n    },\n    \"healthScore\": 85,\n    \"riskFactors\": [\n      \"High cholesterol\"\n    ],\n    \"recommendations\": [\n      \"Regular exercise\",\n      \"Diet modification\"\n    ]\n  }\n}"
+              }
+            ]
           },
           {
             "name": "Get Organization Analytics",
@@ -859,6 +1103,26 @@
         ]
       }
     ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      }
+    ],
     "variable": [
       {
         "key": "baseUrl",
@@ -867,7 +1131,7 @@
       },
       {
         "key": "token",
-        "value": "your_token_here",
+        "value": "your_jwt_token_here",
         "type": "string"
       }
     ]
