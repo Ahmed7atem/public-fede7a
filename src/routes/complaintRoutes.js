@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { protect, admin } = require('../middlewares/authMiddleware');
+const { protect, admin } = require('../middleware/auth');
 const {
   getAllComplaints,
   getComplaintById,
