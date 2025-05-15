@@ -90,8 +90,9 @@ const getComplaintsByEmployeeId = async (req, res) => {
  */
 const createComplaint = async (req, res) => {
   try {
-    console.log('Received request body:', req.body);
-    console.log('Received file:', req.file);
+    console.log('Full request body:', JSON.stringify(req.body, null, 2));
+    console.log('Request headers:', req.headers);
+    console.log('Content-Type:', req.headers['content-type']);
 
     // Extract form data
     const providerType = req.body.providerType;
@@ -106,7 +107,8 @@ const createComplaint = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields',
-        error: 'providerType and employeeId are required'
+        error: 'providerType and employeeId are required',
+        receivedData: req.body
       });
     }
 
@@ -133,10 +135,12 @@ const createComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating complaint:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error creating complaint',
-      error: error.message
+      error: error.message,
+      details: error.stack
     });
   }
 };

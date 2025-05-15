@@ -27,7 +27,10 @@ const complaintTicketSchema = new mongoose.Schema({
     mimetype: String,
     size: Number
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  collection: 'complainttickets'  // Explicitly set the collection name
+});
 
 // Update the updatedAt timestamp before saving
 complaintTicketSchema.pre('save', function(next) {
