@@ -201,45 +201,65 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database connection with retry logic
+// Import GridFS utilities
+const { GridFSBucket } = require('mongodb');
+
+// Initialize GridFS bucket
+let bucket;
+let isConnecting = false;
+
 const connectDB = async () => {
+  if (isConnecting) return;
+  isConnecting = true;
+
   try {
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI environment variable is not set');
     }
-    await mongoose.connect(process.env.MONGODB_URI, {
+
+    const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-    });
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 5
+    };
+
+    await mongoose.connect(process.env.MONGODB_URI, options);
     console.log('MongoDB Connected');
+
+    // Initialize GridFS bucket after connection
+    bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: 'uploads'
+    });
+    console.log('GridFS bucket initialized');
+
+    isConnecting = false;
   } catch (err) {
     console.error('MongoDB connection error:', err);
-    setTimeout(connectDB, 5000);
+    isConnecting = false;
+    throw err;
   }
 };
 
-if (process.env.NODE_ENV !== 'test') {
-  connectDB();
-}
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected. Attempting to reconnect...');
-  connectDB();
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('MongoDB connection error:', err);
-});
-
-// Initialize GridFS bucket
-let bucket;
-mongoose.connection.once('open', () => {
-  bucket = new GridFSBucket(mongoose.connection.db, {
-    bucketName: 'uploads'
-  });
-});
+// Ensure connection is established before handling requests
+const ensureConnection = async (req, res, next) => {
+  try {
+    if (!mongoose.connection.readyState) {
+      await connectDB();
+    }
+    next();
+  } catch (error) {
+    console.error('Connection error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Database connection error',
+      error: error.message
+    });
+  }
+};
 
 // Root route for testing
 app.get('/', (req, res) => {
@@ -370,7 +390,7 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, uploadMemory.single('file'), async (req, res) => {
+app.post('/api/upload', protect, ensureConnection, uploadMemory.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -391,6 +411,12 @@ app.post('/api/upload', protect, uploadMemory.single('file'), async (req, res) =
       return res.status(400).json({ 
         success: false, 
         message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint' 
+      });
+    }
+
+    if (!bucket) {
+      bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
       });
     }
 
@@ -439,46 +465,65 @@ app.post('/api/upload', protect, uploadMemory.single('file'), async (req, res) =
   }
 });
 
-// Get files by type
-app.get('/api/upload/type/:type', protect, async (req, res) => {
+// Get file by ID
+app.get('/api/upload/:id', protect, ensureConnection, async (req, res) => {
   try {
-    const { type } = req.params;
-    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
-    
-    if (!allowedTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint'
+    if (!bucket) {
+      bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
       });
     }
 
-    const files = await bucket.find({ 'metadata.type': type }).toArray();
+    const fileId = new mongoose.Types.ObjectId(req.params.id);
+    const file = await bucket.find({ _id: fileId }).toArray();
     
-    res.json({
-      success: true,
-      files: files.map(file => ({
-        id: file._id,
-        filename: file.filename,
-        originalName: file.metadata.originalName,
-        contentType: file.metadata.contentType,
-        type: file.metadata.type,
-        uploadDate: file.metadata.uploadDate,
-        size: file.length
-      }))
+    if (!file.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found'
+      });
+    }
+
+    // Get the file metadata
+    const fileMetadata = file[0];
+
+    // Get the file content from chunks
+    const chunks = await mongoose.connection.db.collection('uploads.chunks')
+      .find({ files_id: fileId })
+      .sort({ n: 1 })
+      .toArray();
+
+    // Combine chunks into a single buffer
+    const fileBuffer = Buffer.concat(chunks.map(chunk => chunk.data.buffer));
+
+    // Set appropriate headers
+    res.set({
+      'Content-Type': fileMetadata.metadata?.contentType || 'application/octet-stream',
+      'Content-Disposition': `inline; filename="${fileMetadata.metadata?.originalName || fileMetadata.filename}"`,
+      'Content-Length': fileMetadata.length
     });
+
+    // Send the file
+    res.send(fileBuffer);
   } catch (error) {
-    console.error('Error fetching files:', error);
+    console.error('Error fetching file:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching files',
+      message: 'Error fetching file',
       error: error.message
     });
   }
 });
 
-// Get file by ID
-app.get('/api/upload/:id', protect, async (req, res) => {
+// Get file metadata by ID (without content)
+app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) => {
   try {
+    if (!bucket) {
+      bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
+      });
+    }
+
     const file = await bucket.find({ _id: new mongoose.Types.ObjectId(req.params.id) }).toArray();
     
     if (!file.length) {
@@ -493,18 +538,63 @@ app.get('/api/upload/:id', protect, async (req, res) => {
       file: {
         id: file[0]._id,
         filename: file[0].filename,
-        originalName: file[0].metadata.originalName,
-        contentType: file[0].metadata.contentType,
-        type: file[0].metadata.type,
-        uploadDate: file[0].metadata.uploadDate,
-        size: file[0].length
+        originalName: file[0].metadata?.originalName || file[0].filename,
+        contentType: file[0].metadata?.contentType || 'application/octet-stream',
+        type: file[0].metadata?.type || 'unknown',
+        uploadDate: file[0].metadata?.uploadDate || file[0].uploadDate,
+        size: file[0].length,
+        metadata: file[0].metadata || {}
       }
     });
   } catch (error) {
-    console.error('Error fetching file:', error);
+    console.error('Error fetching file metadata:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching file',
+      message: 'Error fetching file metadata',
+      error: error.message
+    });
+  }
+});
+
+// Get files by type (metadata only)
+app.get('/api/upload/type/:type', protect, ensureConnection, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
+    
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint'
+      });
+    }
+
+    if (!bucket) {
+      bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
+      });
+    }
+
+    const files = await bucket.find({ 'metadata.type': type }).toArray();
+    
+    res.json({
+      success: true,
+      files: files.map(file => ({
+        id: file._id,
+        filename: file.filename,
+        originalName: file.metadata?.originalName || file.filename,
+        contentType: file.metadata?.contentType || 'application/octet-stream',
+        type: file.metadata?.type || 'unknown',
+        uploadDate: file.metadata?.uploadDate || file.uploadDate,
+        size: file.length,
+        metadata: file.metadata || {}
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching files',
       error: error.message
     });
   }
