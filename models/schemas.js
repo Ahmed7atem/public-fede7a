@@ -348,12 +348,12 @@ const preApprovalClaimSchema = new mongoose.Schema({
     required: false,
     trim: true
   },
+  requestedDate: {
+    type: Date,
+    default: Date.now
+  },
   attachments: [{
     fileName: {
-      type: String,
-      required: true
-    },
-    filePath: {
       type: String,
       required: true
     },
@@ -368,6 +368,10 @@ const preApprovalClaimSchema = new mongoose.Schema({
     uploadDate: {
       type: Date,
       default: Date.now
+    },
+    fileData: {
+      type: String,
+      required: true
     }
   }],
   status: { 

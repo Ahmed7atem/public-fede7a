@@ -359,7 +359,7 @@ app.delete('/api/policies/:id/documents/:documentId', protect, admin, deletePoli
 app.get('/api/pre-approvals', protect, admin, getAllPreApprovals);
 app.get('/api/pre-approvals/:id', protect, admin, getPreApprovalById);
 app.get('/api/pre-approvals/provider/:providerId', protect, admin, getPreApprovalsByProviderId);
-app.post('/api/pre-approvals', protect, createPreApproval);
+app.post('/api/pre-approvals', protect, upload.array('attachments', 5), createPreApproval);
 app.put('/api/pre-approvals/:id', protect, admin, updatePreApproval);
 app.delete('/api/pre-approvals/:id', protect, admin, deletePreApproval);
 

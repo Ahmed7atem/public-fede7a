@@ -57,7 +57,7 @@ const getPreApprovalsByPatientId = async (req, res) => {
  */
 const createPreApproval = async (req, res) => {
   try {
-    const { employeeId, providerType, providerName, description } = req.body;
+    const { employeeId, providerType, providerName, description, requestedDate } = req.body;
 
     // Validate required fields
     if (!employeeId || !providerType || !providerName) {
@@ -70,10 +70,10 @@ const createPreApproval = async (req, res) => {
     // Process uploaded files
     const processedAttachments = (req.files || []).map(file => ({
       fileName: file.originalname,
-      filePath: file.path,
       fileType: file.mimetype,
       fileSize: file.size,
-      uploadDate: new Date()
+      uploadDate: new Date(),
+      fileData: file.buffer.toString('base64')
     }));
 
     // Create new pre-approval
@@ -82,6 +82,7 @@ const createPreApproval = async (req, res) => {
       providerType,
       providerName,
       description,
+      requestedDate: requestedDate ? new Date(requestedDate) : new Date(),
       attachments: processedAttachments,
       status: 'Pending'
     });
@@ -158,12 +159,24 @@ const getPreApprovalsByEmployeeId = async (req, res) => {
   try {
     const preApprovals = await PreApprovalClaim.find({ 
       employeeId: req.params.employeeId 
-    }).sort({ createdAt: -1 }).lean();
+    })
+    .select('-attachments') // Exclude attachments field
+    .sort({ createdAt: -1 })
+    .lean();
+
+    if (preApprovals.length === 0) {
+      return res.status(404).json({
+        message: 'No pre-approvals found for this employee'
+      });
+    }
 
     res.json(preApprovals);
   } catch (error) {
     console.error('Error fetching employee pre-approvals:', error);
-    res.status(500).json({ message: 'Error fetching employee pre-approvals', error: error.message });
+    res.status(500).json({ 
+      message: 'Error fetching employee pre-approvals', 
+      error: error.message 
+    });
   }
 };
 
