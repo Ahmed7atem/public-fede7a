@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect } = require('../../api/middlewares/authMiddleware');
 const {
   uploadFile,
   getFile,
