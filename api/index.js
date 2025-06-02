@@ -139,6 +139,9 @@ const complaintRoutes = require('../src/routes/complaintRoutes');
 const { GridFsStorage } = require('multer-gridfs-storage');
 const crypto = require('crypto');
 
+// Import GridFS utilities
+const { GridFSBucket } = require('mongodb');
+
 // Create GridFS storage engine
 const storage = new GridFsStorage({
   url: process.env.MONGODB_URI,
@@ -228,6 +231,14 @@ mongoose.connection.on('disconnected', () => {
 
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
+});
+
+// Initialize GridFS bucket
+let bucket;
+mongoose.connection.once('open', () => {
+  bucket = new GridFSBucket(mongoose.connection.db, {
+    bucketName: 'uploads'
+  });
 });
 
 // Root route for testing
@@ -359,8 +370,144 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, uploadMemory.single('file'), (req, res) => {
-  res.json({ success: true, file: req.file });
+app.post('/api/upload', protect, uploadMemory.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file uploaded' 
+      });
+    }
+
+    if (!req.body.type) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Type is required (special-claim, pre-approval, or complaint)' 
+      });
+    }
+
+    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
+    if (!allowedTypes.includes(req.body.type)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint' 
+      });
+    }
+
+    const uploadStream = bucket.openUploadStream(req.file.originalname, {
+      metadata: {
+        originalName: req.file.originalname,
+        contentType: req.file.mimetype,
+        uploadedBy: req.user?.id || 'anonymous',
+        type: req.body.type,
+        uploadDate: new Date()
+      }
+    });
+
+    uploadStream.end(req.file.buffer);
+
+    uploadStream.on('finish', (file) => {
+      res.status(201).json({
+        success: true,
+        file: {
+          id: file._id,
+          filename: file.filename,
+          originalName: file.metadata.originalName,
+          contentType: file.metadata.contentType,
+          type: file.metadata.type,
+          uploadDate: file.metadata.uploadDate,
+          size: file.length
+        }
+      });
+    });
+
+    uploadStream.on('error', (error) => {
+      console.error('Upload error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error uploading file',
+        error: error.message
+      });
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading file',
+      error: error.message
+    });
+  }
+});
+
+// Get files by type
+app.get('/api/upload/type/:type', protect, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
+    
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint'
+      });
+    }
+
+    const files = await bucket.find({ 'metadata.type': type }).toArray();
+    
+    res.json({
+      success: true,
+      files: files.map(file => ({
+        id: file._id,
+        filename: file.filename,
+        originalName: file.metadata.originalName,
+        contentType: file.metadata.contentType,
+        type: file.metadata.type,
+        uploadDate: file.metadata.uploadDate,
+        size: file.length
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching files',
+      error: error.message
+    });
+  }
+});
+
+// Get file by ID
+app.get('/api/upload/:id', protect, async (req, res) => {
+  try {
+    const file = await bucket.find({ _id: new mongoose.Types.ObjectId(req.params.id) }).toArray();
+    
+    if (!file.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      file: {
+        id: file[0]._id,
+        filename: file[0].filename,
+        originalName: file[0].metadata.originalName,
+        contentType: file[0].metadata.contentType,
+        type: file[0].metadata.type,
+        uploadDate: file[0].metadata.uploadDate,
+        size: file[0].length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching file:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching file',
+      error: error.message
+    });
+  }
 });
 
 // Complaint routes
