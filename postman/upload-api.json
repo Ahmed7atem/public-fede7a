@@ -1,156 +1,209 @@
 {
 	"info": {
-		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-		"name": "Upload API",
-		"description": "Collection for testing the upload API endpoints",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	  "name": "File Upload API",
+	  "description": "Collection for testing file upload endpoints",
+	  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
-		{
-			"name": "Upload File",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}",
-						"type": "text"
-					},
-					{
-						"key": "Accept",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/path/to/your/file.png"
-						},
-						{
-							"key": "type",
-							"value": "special-claim",
-							"type": "text",
-							"description": "Type of upload (special-claim, pre-approval, or complaint)"
-						}
-					]
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/upload",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"upload"
-					]
-				},
-				"description": "Upload a file with type specification"
-			},
-			"response": []
-		},
-		{
-			"name": "Get Files by Type",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}",
-						"type": "text"
-					},
-					{
-						"key": "Accept",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"url": {
-					"raw": "{{baseUrl}}/api/upload/type/special-claim",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"upload",
-						"type",
-						"special-claim"
-					]
-				},
-				"description": "Get all files of a specific type"
-			},
-			"response": []
-		},
-		{
-			"name": "Get File by ID",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}",
-						"type": "text"
-					},
-					{
-						"key": "Accept",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"url": {
-					"raw": "{{baseUrl}}/api/upload/{{fileId}}",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"upload",
-						"{{fileId}}"
-					]
-				},
-				"description": "Get a specific file by ID"
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
+	  {
+		"name": "Upload File",
+		"request": {
+		  "method": "POST",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
 			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
+		  ],
+		  "body": {
+			"mode": "formdata",
+			"formdata": [
+			  {
+				"key": "file",
+				"type": "file",
+				"src": "/path/to/your/file.png"
+			  },
+			  {
+				"key": "type",
+				"value": "special-claim",
+				"type": "text"
+			  },
+			  {
+				"key": "employeeId",
+				"value": "EMP123",
+				"type": "text"
+			  },
+			  {
+				"key": "description",
+				"value": "Test file upload",
+				"type": "text"
+			  },
+			  {
+				"key": "tags",
+				"value": "test,document,claim",
+				"type": "text"
+			  }
+			]
+		  },
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload"]
+		  },
+		  "description": "Upload a new file with metadata"
 		}
+	  },
+	  {
+		"name": "Get All Files",
+		"request": {
+		  "method": "GET",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			}
+		  ],
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload"]
+		  },
+		  "description": "Get all files (metadata only)"
+		}
+	  },
+	  {
+		"name": "Get Files by Type",
+		"request": {
+		  "method": "GET",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			}
+		  ],
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload/type/special-claim",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload", "type", "special-claim"]
+		  },
+		  "description": "Get files by type"
+		}
+	  },
+	  {
+		"name": "Get Files by Employee ID",
+		"request": {
+		  "method": "GET",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			}
+		  ],
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload/employee/EMP123",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload", "employee", "EMP123"]
+		  },
+		  "description": "Get files by employee ID"
+		}
+	  },
+	  {
+		"name": "Get File by ID",
+		"request": {
+		  "method": "GET",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			}
+		  ],
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload/:id",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload", ":id"],
+			"variable": [
+			  {
+				"key": "id",
+				"value": "file_id_here",
+				"description": "ID of the file to retrieve"
+			  }
+			]
+		  },
+		  "description": "Get file content by ID"
+		}
+	  },
+	  {
+		"name": "Update File Metadata",
+		"request": {
+		  "method": "PATCH",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			},
+			{
+			  "key": "Content-Type",
+			  "value": "application/json",
+			  "type": "text"
+			}
+		  ],
+		  "body": {
+			"mode": "raw",
+			"raw": "{\n    \"description\": \"Updated description\",\n    \"tags\": \"updated,test,document\"\n}"
+		  },
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload/:id",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload", ":id"],
+			"variable": [
+			  {
+				"key": "id",
+				"value": "file_id_here",
+				"description": "ID of the file to update"
+			  }
+			]
+		  },
+		  "description": "Update file metadata"
+		}
+	  },
+	  {
+		"name": "Delete File",
+		"request": {
+		  "method": "DELETE",
+		  "header": [
+			{
+			  "key": "Authorization",
+			  "value": "Bearer ADMIN_TOKEN",
+			  "type": "text"
+			}
+		  ],
+		  "url": {
+			"raw": "{{baseUrl}}/api/file-upload/:id",
+			"host": ["{{baseUrl}}"],
+			"path": ["api", "file-upload", ":id"],
+			"variable": [
+			  {
+				"key": "id",
+				"value": "file_id_here",
+				"description": "ID of the file to delete"
+			  }
+			]
+		  },
+		  "description": "Delete a file"
+		}
+	  }
 	],
 	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "https://public-fede7a.vercel.app",
-			"type": "string"
-		},
-		{
-			"key": "token",
-			"value": "YOUR_AUTH_TOKEN",
-			"type": "string"
-		},
-		{
-			"key": "fileId",
-			"value": "FILE_ID_HERE",
-			"type": "string"
-		}
+	  {
+		"key": "baseUrl",
+		"value": "http://localhost:3000",
+		"type": "string"
+	  }
 	]
-} 
+  }

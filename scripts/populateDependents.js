@@ -8,7 +8,7 @@ require('dotenv').config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Import the Dependent model
-const { Dependent } = require('../models/schemas');
+const { Dependent } = require('../models');
 
 // Helper function to parse dates
 function parseDate(dateStr) {

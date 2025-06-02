@@ -2,14 +2,15 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Import models from schemas.js
-const { 
+const {
     Employee,
     HealthData,
     WearableData,
     SleepData,
     Prediction,
-    Claim
-} = require('../models/schemas');
+    Claim,
+    Policy
+} = require('../models');
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)

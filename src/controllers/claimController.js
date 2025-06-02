@@ -391,8 +391,14 @@ const getClaimsByYear = async (req, res) => {
     
     // Determine which collection to use based on year
     if (yearInt === 2023) {
+      if (!Claim2023) {
+        throw new Error('Claim2023 model is not defined');
+      }
       claims = await Claim2023.find({}).sort({ claimDate: -1 }).lean();
     } else if (yearInt === 2024) {
+      if (!Claim2024) {
+        throw new Error('Claim2024 model is not defined');
+      }
       claims = await Claim2024.find({}).sort({ claimDate: -1 }).lean();
     } else {
       claims = await Claim.find({

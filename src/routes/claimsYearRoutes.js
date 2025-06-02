@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Claim2023, Claim2024 } = require('../../models/schemas');
+const { Claim2023, Claim2024 } = require('../../models');
 
 // GET /api/claims/2023 (using model "claims2023" (collection "claims2023"))
 router.get('/2023', async (req, res) => {

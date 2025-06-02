@@ -514,6 +514,7 @@ const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
 const Prediction = mongoose.model('Prediction', predictionSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 const Dependent = mongoose.model('Dependent', dependentSchema);
+const SpecialClaim = mongoose.model('SpecialClaim', specialClaimSchema);
 
 // New schemas for claims2023 and claims2024 (for claims history)
 const claim2023Schema = new mongoose.Schema({
@@ -566,129 +567,7 @@ const claim2024Schema = new mongoose.Schema({
   claimForId: { type: String }
 }, { timestamps: true });
 
-const specialClaimSchema = new mongoose.Schema({
-  policyNumber: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  policyHolderName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  employeeId: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
-  },
-  number: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimFor: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimForId: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  country: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimAmount: {
-    type: Number,
-    required: true,
-    min: [0, 'Claim amount cannot be negative'],
-  },
-  currency: {
-    type: String,
-    required: true,
-    trim: true,
-    enum: ['USD', 'EUR', 'GBP', 'INR', 'AUD'], // Adjust as needed
-  },
-  dateOfTreatment: {
-    type: Date,
-    required: true,
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-    trim: true,
-    enum: ['Bank Transfer', 'Cheque', 'Online Payment'], // Adjust as needed
-  },
-  bankName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  branchName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  accountNumber: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  swiftCode: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  iban: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-    default: '',
-  },
-  attachments: [{
-    fileName: {
-      type: String,
-      required: true,
-    },
-    filePath: {
-      type: String,
-      required: true,
-    },
-    fileType: {
-      type: String,
-      required: true,
-    },
-    fileSize: {
-      type: Number,
-      required: true,
-    },
-    uploadDate: {
-      type: Date,
-      default: Date.now,
-    },
-  }],
-}, {
-  timestamps: true, // Adds createdAt and updatedAt fields
-});
-
-module.exports = mongoose.model('SpecialClaim', specialClaimSchema);
-
-// Register new models (for claims2023 and claims2024 (renamed from claims_2023 and claims_2024) (so that the collection names are "claims2023" and "claims2024"))
+// Register new models (for claims2023 and claims2024)
 const Claim2023 = mongoose.model('claims2023', claim2023Schema);
 const Claim2024 = mongoose.model('claims2024', claim2024Schema);
 
@@ -845,6 +724,125 @@ const HealthData2022 = mongoose.model('HealthData2022', healthData2022Schema);
 const HealthData2023 = mongoose.model('HealthData2023', healthData2023Schema);
 const HealthData2024 = mongoose.model('HealthData2024', healthData2024Schema);
 
+const specialClaimSchema = new mongoose.Schema({
+  policyNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  policyHolderName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  employeeId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+  },
+  number: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimFor: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimForId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  country: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimAmount: {
+    type: Number,
+    required: true,
+    min: [0, 'Claim amount cannot be negative'],
+  },
+  currency: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  dateOfTreatment: {
+    type: Date,
+    required: true,
+  },
+  paymentMethod: {
+    type: String,
+    required: true,
+    trim: true,
+    enum: ['Bank Transfer', 'Cheque', 'Online Payment'], // Adjust as needed
+  },
+  bankName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  branchName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  accountNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  swiftCode: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  iban: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  attachments: [{
+    fileName: {
+      type: String,
+      required: true,
+    },
+    filePath: {
+      type: String,
+      required: true,
+    },
+    fileType: {
+      type: String,
+      required: true,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+    },
+    uploadDate: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+}, {
+  timestamps: true, // Adds createdAt and updatedAt fields
+});
+
 module.exports = {
   Employee,
   HealthData,
@@ -860,6 +858,7 @@ module.exports = {
   Prediction,
   Admin,
   Dependent,
+  SpecialClaim,
   Claim2023,
   Claim2024,
   HealthData2020,

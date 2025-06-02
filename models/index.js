@@ -16,11 +16,13 @@ const {
   HealthData2021,
   HealthData2022,
   HealthData2023,
-  HealthData2024
+  HealthData2024,
+  Claim2023,
+  Claim2024,
+  SpecialClaim
 } = require('./schemas');
 const PreApprovalClaim = require('./schemas').PreApprovalClaim;
 const Provider = require('./Provider');
-const SpecialClaim = require('./SpecialClaim');
 const ComplaintTicket = require('./ComplaintTicket');
 
 // Employee Schema
@@ -90,5 +92,7 @@ module.exports = {
   HealthData2021,
   HealthData2022,
   HealthData2023,
-  HealthData2024
+  HealthData2024,
+  Claim2023,
+  Claim2024
 }; 

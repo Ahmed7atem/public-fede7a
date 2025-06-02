@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const csv = require('csv-parser');
 const fs = require('fs');
 require('dotenv').config();
-const { Claim2023, Claim2024 } = require('../models/schemas');
+const { Claim2023, Claim2024 } = require('../models');
 
 async function populateClaimsFromCSV(csvPath, Model, year) {
   const results = [];

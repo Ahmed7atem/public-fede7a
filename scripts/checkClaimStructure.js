@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { Claim } = require('../models/schemas');
+const { Claim } = require('../models');
 require('dotenv').config();
 
 async function checkClaimStructure() {

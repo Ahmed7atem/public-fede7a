@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { Claim, Dependent } = require('../models/schemas');
+const { Claim, Dependent } = require('../models');
 require('dotenv').config();
 
 async function updateClaimsForDependents() {
