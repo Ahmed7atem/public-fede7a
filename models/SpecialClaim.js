@@ -28,12 +28,19 @@ const specialClaimSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
-    fileData: { type: String, required: true } // Base64 encoded file data
+    filePath: { type: String }, // Optional filePath
+    fileData: { type: String } // Optional fileData
   }]
 }, {
   timestamps: true,
   collection: 'specialclaims'
 });
+
+// Add validation to ensure at least one of filePath or fileData is present
+specialClaimSchema.path('attachments').validate(function(attachments) {
+  if (!attachments || attachments.length === 0) return true;
+  return attachments.every(attachment => attachment.filePath || attachment.fileData);
+}, 'Each attachment must have either a filePath or fileData');
 
 // Check if the model exists before creating a new one
 module.exports = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);

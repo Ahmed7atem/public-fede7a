@@ -3,6 +3,11 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const requestLogger = require('./middlewares/requestLogger');
 const errorHandler = require('./middlewares/errorHandler');
+const mongoose = require('mongoose');
+const { initGridFS } = require('./utils/gridfs');
+
+// Import file upload middleware
+const { singleUpload } = require('./middlewares/fileUpload');
 
 // Route imports
 const employeeRoutes = require('./routes/employeeRoutes');
@@ -79,10 +84,33 @@ app.use('/api/predictions', predictionRoutes);
 app.use('/api/pre-approvals', preApprovalRoutes);
 app.use('/api/dependents', dependentRoutes);
 
+// Upload route
+app.post('/api/upload', singleUpload, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    res.status(201).json({
+      message: 'File uploaded successfully',
+      file: {
+        id: req.file.id,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        contentType: req.file.contentType,
+        size: req.file.size,
+        metadata: req.file.metadata
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ message: 'Error uploading file', error: error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
-    const mongoose = require('mongoose');
     const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
     
     let collections = [];
@@ -157,9 +185,7 @@ const startServer = async () => {
     }
   } catch (error) {
     console.error('Failed to start server:', error);
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 

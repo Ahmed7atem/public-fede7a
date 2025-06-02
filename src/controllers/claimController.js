@@ -215,7 +215,8 @@ const createSpecialClaim = async (req, res) => {
       fileType: file.mimetype,
       fileSize: file.size,
       uploadDate: new Date(),
-      fileData: file.buffer.toString('base64')
+      filePath: file.path || '',
+      fileData: file.buffer ? file.buffer.toString('base64') : ''
     }));
 
     // Validate and parse numeric values

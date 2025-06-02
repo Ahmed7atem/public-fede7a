@@ -28,7 +28,8 @@ const connectDB = async () => {
     const sanitizedUri = uri.replace(/(mongodb(\+srv)?:\/\/[^:]+:)([^@]+)(@.*)/, '$1****$4');
     console.log('Attempting to connect to MongoDB with URI:', sanitizedUri);
     
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
@@ -40,12 +41,22 @@ const connectDB = async () => {
       waitQueueTimeoutMS: 10000
     });
     
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    // Wait for connection to be ready
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error('MongoDB connection not ready');
+    }
+    
+    console.log(`MongoDB Connected: ${mongoose.connection.host}`);
     console.log('Connection state:', mongoose.connection.readyState);
     
     // Test the connection by logging collection stats
     try {
-      const collections = await mongoose.connection.db.collections();
+      const db = mongoose.connection.db;
+      if (!db) {
+        throw new Error('Database instance not available');
+      }
+      
+      const collections = await db.collections();
       console.log('Available collections:', collections.map(c => c.collectionName));
       
       // Log the number of documents in the employees collection if it exists
@@ -61,9 +72,10 @@ const connectDB = async () => {
       }
     } catch (error) {
       console.error('Error checking collections:', error);
+      // Don't throw the error, just log it
     }
     
-    return conn;
+    return mongoose.connection;
   } catch (error) {
     console.error('MongoDB connection error:', error);
     // Log more detailed error information
@@ -77,7 +89,6 @@ const connectDB = async () => {
     }
     // Log connection state
     console.log('Connection state at error:', mongoose.connection.readyState);
-    // Don't exit the process, let the application handle the error
     throw error;
   }
 };
