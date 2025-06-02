@@ -138,21 +138,7 @@ const uploadRoutes = require('../src/routes/uploadRoutes');
 const fileUploadRoutes = require('../src/routes/fileUploadRoutes');
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, 'uploads');
-    // Create uploads directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename with original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,

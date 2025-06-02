@@ -648,10 +648,6 @@ const specialClaimSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    filePath: {
-      type: String,
-      required: true,
-    },
     fileType: {
       type: String,
       required: true,
@@ -664,6 +660,10 @@ const specialClaimSchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
+    fileData: {
+      type: String,
+      required: true
+    }
   }],
 }, {
   timestamps: true,
