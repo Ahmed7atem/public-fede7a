@@ -18,7 +18,8 @@ const complaintTicketSchema = new mongoose.Schema({
     filename: String,
     path: String,
     mimetype: String,
-    size: Number
+    size: Number,
+    fileData: String
   }]
 }, { 
   timestamps: true,

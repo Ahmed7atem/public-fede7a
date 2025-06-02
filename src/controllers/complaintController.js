@@ -61,12 +61,13 @@ const createComplaint = async (req, res) => {
     // Handle file upload
     let attachments = [];
     if (req.file) {
-      // Store file metadata
+      // Store file metadata and data
       attachments.push({
         filename: req.file.originalname,
         mimetype: req.file.mimetype,
-        path: req.file.path || 'memory-storage',
-        size: req.file.size
+        path: 'memory-storage',
+        size: req.file.size,
+        fileData: req.file.buffer.toString('base64')
       });
     }
 

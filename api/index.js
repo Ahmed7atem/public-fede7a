@@ -297,10 +297,6 @@ app.delete('/api/employees/:id', protect, admin, deleteEmployee);
 
 // Claims routes
 app.get('/api/claims', protect, admin, getAllClaims);
-app.get('/api/claims/:id', protect, admin, getClaimById);
-app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
-app.put('/api/claims/:id', protect, admin, updateClaim);
-app.delete('/api/claims/:id', protect, admin, deleteClaim);
 
 // Special claims routes
 app.get('/api/claims/special', protect, admin, getSpecialClaims);
@@ -314,6 +310,12 @@ app.get('/api/claims/2023/employee/:employeeId', protect, getClaimsByEmployeeId2
 app.get('/api/claims/2024/employee/:employeeId', protect, getClaimsByEmployeeId2024);
 app.get('/api/claims/year/:year', protect, admin, getClaimsByYear);
 app.get('/api/claims/year/:year/employee/:employeeId', protect, getEmployeeClaimsByYear);
+
+// Generic claim routes (moved to the end)
+app.get('/api/claims/:id', protect, admin, getClaimById);
+app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
+app.put('/api/claims/:id', protect, admin, updateClaim);
+app.delete('/api/claims/:id', protect, admin, deleteClaim);
 
 // Dependents routes
 app.get('/api/dependents', protect, admin, getAllDependents);

@@ -364,10 +364,30 @@ const getSpecialClaims = async (req, res) => {
  */
 const getSpecialClaimsByEmployeeId = async (req, res) => {
   try {
-    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId }).lean();
-    res.json(claims);
+    const claims = await SpecialClaim.find({ employeeId: req.params.employeeId })
+      .select('-attachments') // Exclude attachments field
+      .lean();
+    
+    if (claims.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No special claims found for this employee'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: claims,
+      count: claims.length,
+      message: 'Special claims retrieved successfully'
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching employee special claims:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching employee special claims', 
+      error: error.message 
+    });
   }
 };
 
