@@ -1,244 +1,147 @@
 {
-    "info": {
-      "name": "MedBond API - Key Endpoints",
-      "description": "Focused collection for key MedBond API endpoints",
-      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "name": "Healthcare Providers API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Search Providers",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"longitude\": 31.4217,\n    \"latitude\": 30.0444,\n    \"radius\": 5,\n    \"area\": \"Nasr City\",\n    \"providerName\": \"Saudi German\",\n    \"type\": \"Hospital\",\n    \"speciality\": \"Cardiology\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search healthcare providers with various filters"
+      }
     },
-    "item": [
-      {
-        "name": "Dependents",
-        "item": [
+    {
+      "name": "Search by Location",
+      "request": {
+        "method": "POST",
+        "header": [
           {
-            "name": "Get All Dependents",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/dependents",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "dependents"]
-              }
-            }
-          },
-          {
-            "name": "Get Dependents by Employee ID",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/dependents/employee/:employeeId",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "dependents", "employee", ":employeeId"],
-                "variable": [
-                  {
-                    "key": "employeeId",
-                    "value": "123456"
-                  }
-                ]
-              }
-            }
+            "key": "Content-Type",
+            "value": "application/json"
           }
-        ]
-      },
-      {
-        "name": "Historical Claims",
-        "item": [
-          {
-            "name": "Get 2023 Claims by Employee ID",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/claims/2023/employee/:employeeId",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "2023", "employee", ":employeeId"],
-                "variable": [
-                  {
-                    "key": "employeeId",
-                    "value": "123456"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "Get 2024 Claims by Employee ID",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/claims/2024/employee/:employeeId",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "2024", "employee", ":employeeId"],
-                "variable": [
-                  {
-                    "key": "employeeId",
-                    "value": "123456"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-      {
-        "name": "Special Claims",
-        "item": [
-          {
-            "name": "Create Special Claim",
-            "request": {
-              "method": "POST",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "multipart/form-data"
-                }
-              ],
-              "body": {
-                "mode": "formdata",
-                "formdata": [
-                  {
-                    "key": "policyNumber",
-                    "value": "POL12345",
-                    "type": "text"
-                  },
-                  {
-                    "key": "policyHolderName",
-                    "value": "John Doe",
-                    "type": "text"
-                  },
-                  {
-                    "key": "employeeId",
-                    "value": "123456",
-                    "type": "text"
-                  },
-                  {
-                    "key": "email",
-                    "value": "john.doe@example.com",
-                    "type": "text"
-                  },
-                  {
-                    "key": "number",
-                    "value": "1234567890",
-                    "type": "text"
-                  },
-                  {
-                    "key": "claimFor",
-                    "value": "employee",
-                    "type": "text"
-                  },
-                  {
-                    "key": "claimForId",
-                    "value": "123456",
-                    "type": "text"
-                  },
-                  {
-                    "key": "country",
-                    "value": "USA",
-                    "type": "text"
-                  },
-                  {
-                    "key": "claimAmount",
-                    "value": "1000",
-                    "type": "text"
-                  },
-                  {
-                    "key": "currency",
-                    "value": "USD",
-                    "type": "text"
-                  },
-                  {
-                    "key": "dateOfTreatment",
-                    "value": "2023-05-15",
-                    "type": "text"
-                  },
-                  {
-                    "key": "paymentMethod",
-                    "value": "Bank Transfer",
-                    "type": "text"
-                  },
-                  {
-                    "key": "bankName",
-                    "value": "Example Bank",
-                    "type": "text"
-                  },
-                  {
-                    "key": "branchName",
-                    "value": "Main Branch",
-                    "type": "text"
-                  },
-                  {
-                    "key": "accountNumber",
-                    "value": "1234567890",
-                    "type": "text"
-                  },
-                  {
-                    "key": "swiftCode",
-                    "value": "EXAMPLECODE",
-                    "type": "text"
-                  },
-                  {
-                    "key": "iban",
-                    "value": "US1234567890",
-                    "type": "text"
-                  },
-                  {
-                    "key": "description",
-                    "value": "Special treatment claim",
-                    "type": "text"
-                  },
-                  {
-                    "key": "attachments",
-                    "type": "file",
-                    "src": "/path/to/file1.pdf"
-                  }
-                ]
-              },
-              "url": {
-                "raw": "{{baseUrl}}/api/claims/special-claims",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "special-claims"]
-              }
-            }
-          },
-          {
-            "name": "Get All Special Claims",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/claims/special",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "special"]
-              }
-            }
-          },
-          {
-            "name": "Get Special Claims by Employee ID",
-            "request": {
-              "method": "GET",
-              "header": [],
-              "url": {
-                "raw": "{{baseUrl}}/api/claims/special/employee/:employeeId",
-                "host": ["{{baseUrl}}"],
-                "path": ["api", "claims", "special", "employee", ":employeeId"],
-                "variable": [
-                  {
-                    "key": "employeeId",
-                    "value": "123456"
-                  }
-                ]
-              }
-            }
-          }
-        ]
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"longitude\": 31.4217,\n    \"latitude\": 30.0444,\n    \"radius\": 5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search providers within a specific radius"
       }
-    ],
-    "variable": [
-      {
-        "key": "baseUrl",
-        "value": "http://localhost:3000",
-        "type": "string"
+    },
+    {
+      "name": "Search by Area",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"area\": \"Maadi\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search providers in a specific area"
       }
-    ]
-  }
+    },
+    {
+      "name": "Search by Provider Name",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"providerName\": \"Saudi German\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search providers by name"
+      }
+    },
+    {
+      "name": "Search by Type",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"type\": \"Hospital\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search providers by type (Hospital, Clinic, Labs)"
+      }
+    },
+    {
+      "name": "Search by Speciality",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"speciality\": \"Cardiology\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/providers/search",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers", "search"]
+        },
+        "description": "Search providers by medical speciality"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://public-fede7a.vercel.app",
+      "type": "string"
+    }
+  ]
+}
