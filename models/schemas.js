@@ -499,22 +499,22 @@ const dependentSchema = new mongoose.Schema({
 // Add index for faster lookups
 dependentSchema.index({ employeeId: 1 });
 
-// Register models
-const Employee = mongoose.model('Employee', employeeSchema);
-const HealthData = mongoose.model('HealthData', healthDataSchema);
-const WearableData = mongoose.model('WearableData', wearableDataSchema);
-const SleepData = mongoose.model('SleepData', sleepDataSchema);
-const Policy = mongoose.model('Policy', policySchema);
-const Claim = mongoose.model('Claim', claimSchema);
-const PreApprovalClaim = mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
-const Doctor = mongoose.model('Doctor', doctorSchema);
-const Feedback = mongoose.model('Feedback', feedbackSchema);
-const Attachment = mongoose.model('Attachment', attachmentSchema);
-const PolicyDocument = mongoose.model('PolicyDocument', policyDocumentSchema);
-const Prediction = mongoose.model('Prediction', predictionSchema);
-const Admin = mongoose.model('Admin', adminSchema);
-const Dependent = mongoose.model('Dependent', dependentSchema);
-const SpecialClaim = mongoose.model('SpecialClaim', specialClaimSchema);
+// Register models with checks to prevent overwriting
+const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
+const HealthData = mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema);
+const WearableData = mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema);
+const SleepData = mongoose.models.SleepData || mongoose.model('SleepData', sleepDataSchema);
+const Policy = mongoose.models.Policy || mongoose.model('Policy', policySchema);
+const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
+const PreApprovalClaim = mongoose.models.PreApprovalClaim || mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
+const Doctor = mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema);
+const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema);
+const Attachment = mongoose.models.Attachment || mongoose.model('Attachment', attachmentSchema);
+const PolicyDocument = mongoose.models.PolicyDocument || mongoose.model('PolicyDocument', policyDocumentSchema);
+const Prediction = mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema);
+const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
+const Dependent = mongoose.models.Dependent || mongoose.model('Dependent', dependentSchema);
+const SpecialClaim = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);
 
 // New schemas for claims2023 and claims2024 (for claims history)
 const claim2023Schema = new mongoose.Schema({
@@ -568,8 +568,8 @@ const claim2024Schema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Register new models (for claims2023 and claims2024)
-const Claim2023 = mongoose.model('claims2023', claim2023Schema);
-const Claim2024 = mongoose.model('claims2024', claim2024Schema);
+const Claim2023 = mongoose.models.claims2023 || mongoose.model('claims2023', claim2023Schema);
+const Claim2024 = mongoose.models.claims2024 || mongoose.model('claims2024', claim2024Schema);
 
 // Yearly Health Data Schemas
 const healthData2020Schema = new mongoose.Schema({
@@ -718,11 +718,11 @@ const healthData2024Schema = new mongoose.Schema({
 }, { timestamps: true, collection: 'healthdata_2024' });
 
 // Register yearly health data models
-const HealthData2020 = mongoose.model('HealthData2020', healthData2020Schema);
-const HealthData2021 = mongoose.model('HealthData2021', healthData2021Schema);
-const HealthData2022 = mongoose.model('HealthData2022', healthData2022Schema);
-const HealthData2023 = mongoose.model('HealthData2023', healthData2023Schema);
-const HealthData2024 = mongoose.model('HealthData2024', healthData2024Schema);
+const HealthData2020 = mongoose.models.HealthData2020 || mongoose.model('HealthData2020', healthData2020Schema);
+const HealthData2021 = mongoose.models.HealthData2021 || mongoose.model('HealthData2021', healthData2021Schema);
+const HealthData2022 = mongoose.models.HealthData2022 || mongoose.model('HealthData2022', healthData2022Schema);
+const HealthData2023 = mongoose.models.HealthData2023 || mongoose.model('HealthData2023', healthData2023Schema);
+const HealthData2024 = mongoose.models.HealthData2024 || mongoose.model('HealthData2024', healthData2024Schema);
 
 const specialClaimSchema = new mongoose.Schema({
   policyNumber: {
