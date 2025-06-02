@@ -1,19 +1,8 @@
 const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Use /tmp for serverless compatibility
-    cb(null, '/tmp');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-const upload = multer({ storage });
+// Use memory storage instead of disk storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Upload a file
 const uploadFile = async (req, res) => {
@@ -42,11 +31,11 @@ const uploadFile = async (req, res) => {
 
     // Create a new file document
     const fileDoc = {
-      filename: req.file.filename,
+      filename: req.file.originalname,
       originalName: req.file.originalname,
       contentType: req.file.mimetype,
       size: req.file.size,
-      path: req.file.path,
+      buffer: req.file.buffer,
       type: req.body.type,
       uploadedBy: req.user?.id || 'anonymous',
       uploadDate: new Date()
@@ -69,12 +58,6 @@ const uploadFile = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload error:', error);
-    // Clean up the uploaded file if there was an error
-    if (req.file && req.file.path) {
-      fs.unlink(req.file.path, (err) => {
-        if (err) console.error('Error deleting file:', err);
-      });
-    }
     res.status(500).json({
       success: false,
       message: 'Error uploading file',
@@ -96,14 +79,6 @@ const getFile = async (req, res) => {
       });
     }
 
-    // Check if file exists on disk
-    if (!fs.existsSync(file.path)) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found on disk'
-      });
-    }
-
     // Set appropriate headers
     res.set({
       'Content-Type': file.contentType,
@@ -111,9 +86,8 @@ const getFile = async (req, res) => {
       'Content-Length': file.size
     });
 
-    // Stream the file
-    const fileStream = fs.createReadStream(file.path);
-    fileStream.pipe(res);
+    // Send the file buffer
+    res.send(file.buffer);
   } catch (error) {
     console.error('Error fetching file:', error);
     res.status(500).json({
@@ -211,11 +185,6 @@ const deleteFile = async (req, res) => {
         success: false,
         message: 'File not found'
       });
-    }
-
-    // Delete file from disk
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
     }
 
     // Delete metadata from database
