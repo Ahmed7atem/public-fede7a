@@ -5,7 +5,154 @@
   },
   "item": [
     {
-      "name": "Search Providers",
+      "name": "Get All Providers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"]
+        },
+        "description": "Get all healthcare providers"
+      }
+    },
+    {
+      "name": "Get Providers with Filters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?type=Hospital&area=Nasr%20City&speciality=Cardiology&providerName=Saudi%20German",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "type",
+              "value": "Hospital"
+            },
+            {
+              "key": "area",
+              "value": "Nasr City"
+            },
+            {
+              "key": "speciality",
+              "value": "Cardiology"
+            },
+            {
+              "key": "providerName",
+              "value": "Saudi German"
+            }
+          ]
+        },
+        "description": "Get providers with multiple filters using query parameters"
+      }
+    },
+    {
+      "name": "Get Providers by Type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?type=Hospital",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "type",
+              "value": "Hospital"
+            }
+          ]
+        },
+        "description": "Get providers filtered by type (Hospital, Clinic, Labs)"
+      }
+    },
+    {
+      "name": "Get Providers by Area",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?area=Maadi",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "area",
+              "value": "Maadi"
+            }
+          ]
+        },
+        "description": "Get providers in a specific area"
+      }
+    },
+    {
+      "name": "Get Providers by Speciality",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?speciality=Cardiology",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "speciality",
+              "value": "Cardiology"
+            }
+          ]
+        },
+        "description": "Get providers by medical speciality"
+      }
+    },
+    {
+      "name": "Get Providers by Name",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?providerName=Saudi%20German",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "providerName",
+              "value": "Saudi German"
+            }
+          ]
+        },
+        "description": "Get providers by name"
+      }
+    },
+    {
+      "name": "Get Providers by Location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/providers?longitude=31.4217&latitude=30.0444&radius=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "providers"],
+          "query": [
+            {
+              "key": "longitude",
+              "value": "31.4217"
+            },
+            {
+              "key": "latitude",
+              "value": "30.0444"
+            },
+            {
+              "key": "radius",
+              "value": "5"
+            }
+          ]
+        },
+        "description": "Get providers within a specific radius (in kilometers)"
+      }
+    },
+    {
+      "name": "Search Providers (POST)",
       "request": {
         "method": "POST",
         "header": [
@@ -23,117 +170,7 @@
           "host": ["{{baseUrl}}"],
           "path": ["api", "providers", "search"]
         },
-        "description": "Search healthcare providers with various filters"
-      }
-    },
-    {
-      "name": "Search by Location",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"longitude\": 31.4217,\n    \"latitude\": 30.0444,\n    \"radius\": 5\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/providers/search",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "providers", "search"]
-        },
-        "description": "Search providers within a specific radius"
-      }
-    },
-    {
-      "name": "Search by Area",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"area\": \"Maadi\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/providers/search",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "providers", "search"]
-        },
-        "description": "Search providers in a specific area"
-      }
-    },
-    {
-      "name": "Search by Provider Name",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"providerName\": \"Saudi German\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/providers/search",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "providers", "search"]
-        },
-        "description": "Search providers by name"
-      }
-    },
-    {
-      "name": "Search by Type",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"type\": \"Hospital\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/providers/search",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "providers", "search"]
-        },
-        "description": "Search providers by type (Hospital, Clinic, Labs)"
-      }
-    },
-    {
-      "name": "Search by Speciality",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"speciality\": \"Cardiology\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/providers/search",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "providers", "search"]
-        },
-        "description": "Search providers by medical speciality"
+        "description": "Search healthcare providers with various filters (POST method)"
       }
     }
   ],

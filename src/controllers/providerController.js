@@ -84,20 +84,119 @@ const transformProviderData = (provider) => {
  */
 const getAllProviders = async (req, res) => {
   try {
-    const { type, specialty, city, rating } = req.query;
+    const { type, specialty, city, rating, longitude, latitude, radius } = req.query;
     const query = {};
 
-    if (type) query.type = type;
-    if (specialty) query.specialties = specialty;
-    if (city) query.city = city;
+    // Basic filters
+    if (type) query.type = { $regex: type, $options: 'i' };
+    if (specialty) query.specialties = { $regex: specialty, $options: 'i' };
+    if (city) query.city = { $regex: city, $options: 'i' };
     if (rating) query.rating = { $gte: parseFloat(rating) };
 
-    const providers = await Provider.find(query);
-    const transformedProviders = providers.map(transformProviderData);
-    res.json(transformedProviders);
+    let providers;
+    
+    // If location parameters are provided, use $geoNear aggregation
+    if (longitude && latitude && radius) {
+      providers = await Provider.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: 'Point',
+              coordinates: [parseFloat(longitude), parseFloat(latitude)]
+            },
+            distanceField: 'distance', // Distance in meters
+            maxDistance: parseFloat(radius) * 1000, // Convert km to meters
+            spherical: true,
+            query: query // Apply other filters
+          }
+        },
+        {
+          $addFields: {
+            distanceInKm: { $divide: ['$distance', 1000] } // Convert meters to kilometers
+          }
+        }
+      ]);
+    } else {
+      // Regular find query without geospatial search
+      providers = await Provider.find(query);
+    }
+
+    // Transform the results
+    const transformedProviders = providers.map(provider => {
+      const transformed = provider.toObject ? provider.toObject() : provider;
+      
+      // Transform coordinates if they exist
+      if (transformed.location?.coordinates) {
+        transformed.latitude = transformed.location.coordinates[1];
+        transformed.longitude = transformed.location.coordinates[0];
+        delete transformed.location;
+      }
+
+      // Add distance if it exists
+      if (transformed.distanceInKm) {
+        transformed.distance = `${transformed.distanceInKm.toFixed(2)} km`;
+      }
+
+      // Format arrays as comma-separated strings
+      const arrayFields = [
+        'phone',
+        'specialties',
+        'departments',
+        'diagnosticServices',
+        'acceptedPlans',
+        'paymentMethods',
+        'languages',
+        'amenities'
+      ];
+
+      arrayFields.forEach(field => {
+        if (Array.isArray(transformed[field])) {
+          transformed[field] = transformed[field].join(', ');
+        }
+      });
+
+      // Format boolean fields
+      const booleanFields = [
+        'emergencyAvailable',
+        'icu',
+        'parking',
+        'internationalServices',
+        'medicalTourism',
+        'translationServices',
+        'isInNetwork'
+      ];
+      
+      booleanFields.forEach(field => {
+        if (field in transformed) {
+          transformed[field] = transformed[field] ? 'Yes' : 'No';
+        }
+      });
+
+      // Format currency values
+      if (transformed.averageClaimAmount) {
+        transformed.averageClaimAmount = `EGP ${transformed.averageClaimAmount.toLocaleString()}`;
+      }
+
+      // Format rating display
+      if (transformed.rating && transformed.ratingCount) {
+        transformed.ratingDisplay = `${transformed.rating.toFixed(1)} (${transformed.ratingCount} reviews)`;
+      }
+
+      return transformed;
+    });
+
+    res.json({
+      success: true,
+      count: transformedProviders.length,
+      data: transformedProviders
+    });
   } catch (error) {
     console.error('Error fetching providers:', error);
-    res.status(500).json({ message: 'Error fetching providers', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching providers', 
+      error: error.message 
+    });
   }
 };
 
