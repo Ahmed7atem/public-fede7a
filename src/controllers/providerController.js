@@ -97,26 +97,36 @@ const getAllProviders = async (req, res) => {
     
     // If location parameters are provided, use $geoNear aggregation
     if (longitude && latitude && radius) {
-      providers = await Provider.aggregate([
-        {
-          $geoNear: {
-            near: {
-              type: 'Point',
-              coordinates: [parseFloat(longitude), parseFloat(latitude)]
-            },
-            distanceField: 'distance', // Distance in meters
-            maxDistance: parseFloat(radius) * 1000, // Convert km to meters
-            spherical: true,
-            query: query, // Apply other filters
-            key: 'coordinates' // Use the flat coordinates field
-          }
-        },
-        {
-          $addFields: {
-            distanceInKm: { $divide: ['$distance', 1000] } // Convert meters to kilometers
-          }
-        }
-      ]);
+      // Convert radius from km to degrees (approximate)
+      const radiusInDegrees = radius / 111.32; // 1 degree is approximately 111.32 km at the equator
+      
+      // Add location filter to query
+      query.latitude = {
+        $gte: parseFloat(latitude) - radiusInDegrees,
+        $lte: parseFloat(latitude) + radiusInDegrees
+      };
+      query.longitude = {
+        $gte: parseFloat(longitude) - radiusInDegrees,
+        $lte: parseFloat(longitude) + radiusInDegrees
+      };
+
+      // Find providers within the bounding box
+      providers = await Provider.find(query);
+
+      // Calculate exact distances and filter
+      providers = providers.filter(provider => {
+        const distance = calculateDistance(
+          parseFloat(latitude),
+          parseFloat(longitude),
+          provider.latitude,
+          provider.longitude
+        );
+        provider.distanceInKm = distance;
+        return distance <= parseFloat(radius);
+      });
+
+      // Sort by distance
+      providers.sort((a, b) => a.distanceInKm - b.distanceInKm);
     } else {
       // Regular find query without geospatial search
       providers = await Provider.find(query);
@@ -126,29 +136,6 @@ const getAllProviders = async (req, res) => {
     const transformedProviders = providers.map(provider => {
       const transformed = provider.toObject ? provider.toObject() : provider;
       
-      // Flatten the location object
-      if (transformed.location?.coordinates) {
-        transformed.latitude = transformed.location.coordinates[1];
-        transformed.longitude = transformed.location.coordinates[0];
-        transformed.address = transformed.location.address;
-        delete transformed.location;
-      }
-
-      // Flatten contact info
-      if (transformed.contactInfo) {
-        transformed.phone = transformed.contactInfo.phone;
-        transformed.email = transformed.contactInfo.email;
-        transformed.website = transformed.contactInfo.website;
-        delete transformed.contactInfo;
-      }
-
-      // Flatten availability
-      if (transformed.availability) {
-        transformed.availability = transformed.availability.map(slot => 
-          `${slot.day}: ${slot.startTime}-${slot.endTime}`
-        ).join(', ');
-      }
-
       // Add distance if it exists
       if (transformed.distanceInKm) {
         transformed.distance = `${transformed.distanceInKm.toFixed(2)} km`;
@@ -199,12 +186,6 @@ const getAllProviders = async (req, res) => {
         transformed.ratingDisplay = `${transformed.rating.toFixed(1)} (${transformed.ratingCount} reviews)`;
       }
 
-      // Clean up MongoDB specific fields
-      delete transformed.__v;
-      delete transformed.createdAt;
-      delete transformed.updatedAt;
-      delete transformed._id;
-
       return transformed;
     });
 
@@ -222,6 +203,24 @@ const getAllProviders = async (req, res) => {
     });
   }
 };
+
+// Helper function to calculate distance between two points using the Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180);
+}
 
 /**
  * @desc    Get providers by type (Hospital, Doctor, Lab)
