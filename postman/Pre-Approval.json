@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "Pre-approvals API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Pre-approval",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "providerType",
+              "value": "Hospital",
+              "type": "text",
+              "description": "Type of provider (Hospital, Clinic, Labs, Pharmacy, Other)"
+            },
+            {
+              "key": "providerName",
+              "value": "Mohamed Ramadan No. 1",
+              "type": "text",
+              "description": "Name of the provider"
+            },
+            {
+              "key": "description",
+              "value": "Service description",
+              "type": "text",
+              "description": "Description of the service"
+            },
+            {
+              "key": "requestedDate",
+              "value": "2024-03-20",
+              "type": "text",
+              "description": "Date of the request (YYYY-MM-DD)"
+            },
+            {
+              "key": "employeeId",
+              "value": "8f7b7927-6c04-401a-ab0b-61000132f970",
+              "type": "text",
+              "description": "Employee ID"
+            },
+            {
+              "key": "attachments",
+              "type": "file",
+              "src": "",
+              "description": "Supporting documents (up to 5 files)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/pre-approvals",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "pre-approvals"]
+        },
+        "description": "Create a new pre-approval request with optional attachments"
+      }
+    },
+    {
+      "name": "Get Pre-approvals by Employee ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/pre-approvals/employee/8f7b7927-6c04-401a-ab0b-61000132f970",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "pre-approvals", "employee", "8f7b7927-6c04-401a-ab0b-61000132f970"]
+        },
+        "description": "Get all pre-approvals for a specific employee (without attachment data)"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://public-fede7a.vercel.app",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your-auth-token-here",
+      "type": "string"
+    }
+  ]
+}

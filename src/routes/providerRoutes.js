@@ -57,4 +57,7 @@ router.get('/categories', getCategories);
 // @access  Public
 router.get('/specializations', getSpecializations);
 
+// Search providers
+router.post('/search', providerController.searchProviders);
+
 module.exports = router; 
