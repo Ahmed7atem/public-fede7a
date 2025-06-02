@@ -3,7 +3,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 // Import middleware
@@ -135,42 +134,8 @@ const {
 // Import routes
 const complaintRoutes = require('../src/routes/complaintRoutes');
 
-// Import GridFS storage configuration
-const { GridFsStorage } = require('multer-gridfs-storage');
-const crypto = require('crypto');
-
-// Import GridFS utilities
-const { GridFSBucket } = require('mongodb');
-
-// Create GridFS storage engine
-const storage = new GridFsStorage({
-  url: process.env.MONGODB_URI,
-  options: { useNewUrlParser: true, useUnifiedTopology: true },
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) {
-          return reject(err);
-        }
-        const filename = buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads',
-          metadata: {
-            originalName: file.originalname,
-            uploadedBy: req.user?.id || 'anonymous',
-            type: 'special-claim',
-            contentType: file.mimetype,
-            uploadDate: new Date()
-          }
-        };
-        resolve(fileInfo);
-      });
-    });
-  }
-});
-
-// Create multer upload instance
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
@@ -179,16 +144,6 @@ const upload = multer({
 });
 
 const app = express();
-
-// Configure multer for file uploads using memory storage
-const uploadMemory = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: function (req, file, cb) {
-    // Accept all file types for now
-    cb(null, true);
-  }
-});
 
 // Basic middleware
 app.use(cors());
@@ -201,17 +156,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Import GridFS utilities
-const { GridFSBucket } = require('mongodb');
-
-// Initialize GridFS bucket
-let bucket;
-let isConnecting = false;
-
+// Database connection
 const connectDB = async () => {
-  if (isConnecting) return;
-  isConnecting = true;
-
   try {
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI environment variable is not set');
@@ -229,17 +175,8 @@ const connectDB = async () => {
 
     await mongoose.connect(process.env.MONGODB_URI, options);
     console.log('MongoDB Connected');
-
-    // Initialize GridFS bucket after connection
-    bucket = new GridFSBucket(mongoose.connection.db, {
-      bucketName: 'uploads'
-    });
-    console.log('GridFS bucket initialized');
-
-    isConnecting = false;
   } catch (err) {
     console.error('MongoDB connection error:', err);
-    isConnecting = false;
     throw err;
   }
 };
@@ -260,6 +197,11 @@ const ensureConnection = async (req, res, next) => {
     });
   }
 };
+
+// Connect to database
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
 
 // Root route for testing
 app.get('/', (req, res) => {
@@ -309,7 +251,7 @@ app.delete('/api/employees/:id', protect, admin, deleteEmployee);
 // Claims routes
 app.get('/api/claims', protect, admin, getAllClaims);
 app.get('/api/claims/:id', protect, admin, getClaimById);
-app.post('/api/claims', protect, admin, uploadMemory.single('attachment'), createClaim);
+app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
 app.put('/api/claims/:id', protect, admin, updateClaim);
 app.delete('/api/claims/:id', protect, admin, deleteClaim);
 
@@ -361,7 +303,7 @@ app.post('/api/policies', protect, admin, createPolicy);
 app.put('/api/policies/:id', protect, admin, updatePolicy);
 app.delete('/api/policies/:id', protect, admin, deletePolicy);
 app.get('/api/policies/:id/documents', protect, admin, getPolicyDocuments);
-app.post('/api/policies/:id/documents', protect, admin, uploadMemory.single('document'), uploadPolicyDocument);
+app.post('/api/policies/:id/documents', protect, admin, upload.single('document'), uploadPolicyDocument);
 app.delete('/api/policies/:id/documents/:documentId', protect, admin, deletePolicyDocument);
 
 // Pre-approval routes
@@ -390,7 +332,7 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, upload.single('file'), async (req, res) => {
+app.post('/api/upload', protect, ensureConnection, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -450,7 +392,7 @@ app.post('/api/upload', protect, upload.single('file'), async (req, res) => {
 });
 
 // Get file by ID
-app.get('/api/upload/:id', protect, async (req, res) => {
+app.get('/api/upload/:id', protect, ensureConnection, async (req, res) => {
   try {
     const file = await mongoose.connection.db.collection('files')
       .findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
@@ -482,7 +424,7 @@ app.get('/api/upload/:id', protect, async (req, res) => {
 });
 
 // Get file metadata by ID
-app.get('/api/upload/metadata/:id', protect, async (req, res) => {
+app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) => {
   try {
     const file = await mongoose.connection.db.collection('files')
       .findOne(
@@ -520,7 +462,7 @@ app.get('/api/upload/metadata/:id', protect, async (req, res) => {
 });
 
 // Get files by type
-app.get('/api/upload/type/:type', protect, async (req, res) => {
+app.get('/api/upload/type/:type', protect, ensureConnection, async (req, res) => {
   try {
     const { type } = req.params;
     const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
