@@ -499,23 +499,6 @@ const dependentSchema = new mongoose.Schema({
 // Add index for faster lookups
 dependentSchema.index({ employeeId: 1 });
 
-// Register models with checks to prevent overwriting
-const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
-const HealthData = mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema);
-const WearableData = mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema);
-const SleepData = mongoose.models.SleepData || mongoose.model('SleepData', sleepDataSchema);
-const Policy = mongoose.models.Policy || mongoose.model('Policy', policySchema);
-const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
-const PreApprovalClaim = mongoose.models.PreApprovalClaim || mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
-const Doctor = mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema);
-const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema);
-const Attachment = mongoose.models.Attachment || mongoose.model('Attachment', attachmentSchema);
-const PolicyDocument = mongoose.models.PolicyDocument || mongoose.model('PolicyDocument', policyDocumentSchema);
-const Prediction = mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema);
-const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
-const Dependent = mongoose.models.Dependent || mongoose.model('Dependent', dependentSchema);
-const SpecialClaim = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);
-
 // New schemas for claims2023 and claims2024 (for claims history)
 const claim2023Schema = new mongoose.Schema({
   id: { type: String, required: true },
@@ -567,9 +550,125 @@ const claim2024Schema = new mongoose.Schema({
   claimForId: { type: String }
 }, { timestamps: true });
 
-// Register new models (for claims2023 and claims2024)
-const Claim2023 = mongoose.models.claims2023 || mongoose.model('claims2023', claim2023Schema);
-const Claim2024 = mongoose.models.claims2024 || mongoose.model('claims2024', claim2024Schema);
+// Special Claim Schema
+const specialClaimSchema = new mongoose.Schema({
+  policyNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  policyHolderName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  employeeId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+  },
+  number: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimFor: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimForId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  country: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  claimAmount: {
+    type: Number,
+    required: true,
+    min: [0, 'Claim amount cannot be negative'],
+  },
+  currency: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  dateOfTreatment: {
+    type: Date,
+    required: true,
+  },
+  paymentMethod: {
+    type: String,
+    required: true,
+    trim: true,
+    enum: ['Bank Transfer', 'Cheque', 'Online Payment'],
+  },
+  bankName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  branchName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  accountNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  swiftCode: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  iban: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  attachments: [{
+    fileName: {
+      type: String,
+      required: true,
+    },
+    filePath: {
+      type: String,
+      required: true,
+    },
+    fileType: {
+      type: String,
+      required: true,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+    },
+    uploadDate: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+}, {
+  timestamps: true,
+});
 
 // Yearly Health Data Schemas
 const healthData2020Schema = new mongoose.Schema({
@@ -717,131 +816,31 @@ const healthData2024Schema = new mongoose.Schema({
   policy: Object
 }, { timestamps: true, collection: 'healthdata_2024' });
 
+// Register models with checks to prevent overwriting
+const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
+const HealthData = mongoose.models.HealthData || mongoose.model('HealthData', healthDataSchema);
+const WearableData = mongoose.models.WearableData || mongoose.model('WearableData', wearableDataSchema);
+const SleepData = mongoose.models.SleepData || mongoose.model('SleepData', sleepDataSchema);
+const Policy = mongoose.models.Policy || mongoose.model('Policy', policySchema);
+const Claim = mongoose.models.Claim || mongoose.model('Claim', claimSchema);
+const PreApprovalClaim = mongoose.models.PreApprovalClaim || mongoose.model('PreApprovalClaim', preApprovalClaimSchema);
+const Doctor = mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema);
+const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', feedbackSchema);
+const Attachment = mongoose.models.Attachment || mongoose.model('Attachment', attachmentSchema);
+const PolicyDocument = mongoose.models.PolicyDocument || mongoose.model('PolicyDocument', policyDocumentSchema);
+const Prediction = mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema);
+const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
+const Dependent = mongoose.models.Dependent || mongoose.model('Dependent', dependentSchema);
+const SpecialClaim = mongoose.models.SpecialClaim || mongoose.model('SpecialClaim', specialClaimSchema);
+const Claim2023 = mongoose.models.claims2023 || mongoose.model('claims2023', claim2023Schema);
+const Claim2024 = mongoose.models.claims2024 || mongoose.model('claims2024', claim2024Schema);
+
 // Register yearly health data models
 const HealthData2020 = mongoose.models.HealthData2020 || mongoose.model('HealthData2020', healthData2020Schema);
 const HealthData2021 = mongoose.models.HealthData2021 || mongoose.model('HealthData2021', healthData2021Schema);
 const HealthData2022 = mongoose.models.HealthData2022 || mongoose.model('HealthData2022', healthData2022Schema);
 const HealthData2023 = mongoose.models.HealthData2023 || mongoose.model('HealthData2023', healthData2023Schema);
 const HealthData2024 = mongoose.models.HealthData2024 || mongoose.model('HealthData2024', healthData2024Schema);
-
-const specialClaimSchema = new mongoose.Schema({
-  policyNumber: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  policyHolderName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  employeeId: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
-  },
-  number: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimFor: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimForId: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  country: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  claimAmount: {
-    type: Number,
-    required: true,
-    min: [0, 'Claim amount cannot be negative'],
-  },
-  currency: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  dateOfTreatment: {
-    type: Date,
-    required: true,
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-    trim: true,
-    enum: ['Bank Transfer', 'Cheque', 'Online Payment'], // Adjust as needed
-  },
-  bankName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  branchName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  accountNumber: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  swiftCode: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  iban: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-    default: '',
-  },
-  attachments: [{
-    fileName: {
-      type: String,
-      required: true,
-    },
-    filePath: {
-      type: String,
-      required: true,
-    },
-    fileType: {
-      type: String,
-      required: true,
-    },
-    fileSize: {
-      type: Number,
-      required: true,
-    },
-    uploadDate: {
-      type: Date,
-      default: Date.now,
-    },
-  }],
-}, {
-  timestamps: true, // Adds createdAt and updatedAt fields
-});
 
 module.exports = {
   Employee,
