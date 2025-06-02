@@ -390,7 +390,7 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, ensureConnection, uploadMemory.single('file'), async (req, res) => {
+app.post('/api/upload', protect, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -414,46 +414,30 @@ app.post('/api/upload', protect, ensureConnection, uploadMemory.single('file'), 
       });
     }
 
-    if (!bucket) {
-      bucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: 'uploads'
-      });
-    }
+    // Create a new file document
+    const fileDoc = {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+      size: req.file.size,
+      data: req.file.buffer,
+      type: req.body.type,
+      uploadedBy: req.user?.id || 'anonymous',
+      uploadDate: new Date()
+    };
 
-    const uploadStream = bucket.openUploadStream(req.file.originalname, {
-      metadata: {
-        originalName: req.file.originalname,
-        contentType: req.file.mimetype,
-        uploadedBy: req.user?.id || 'anonymous',
-        type: req.body.type,
-        uploadDate: new Date()
+    // Save to MongoDB
+    const result = await mongoose.connection.db.collection('files').insertOne(fileDoc);
+
+    res.status(201).json({
+      success: true,
+      file: {
+        id: result.insertedId,
+        filename: fileDoc.filename,
+        contentType: fileDoc.contentType,
+        type: fileDoc.type,
+        uploadDate: fileDoc.uploadDate,
+        size: fileDoc.size
       }
-    });
-
-    uploadStream.end(req.file.buffer);
-
-    uploadStream.on('finish', (file) => {
-      res.status(201).json({
-        success: true,
-        file: {
-          id: file._id,
-          filename: file.filename,
-          originalName: file.metadata.originalName,
-          contentType: file.metadata.contentType,
-          type: file.metadata.type,
-          uploadDate: file.metadata.uploadDate,
-          size: file.length
-        }
-      });
-    });
-
-    uploadStream.on('error', (error) => {
-      console.error('Upload error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error uploading file',
-        error: error.message
-      });
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -466,45 +450,27 @@ app.post('/api/upload', protect, ensureConnection, uploadMemory.single('file'), 
 });
 
 // Get file by ID
-app.get('/api/upload/:id', protect, ensureConnection, async (req, res) => {
+app.get('/api/upload/:id', protect, async (req, res) => {
   try {
-    if (!bucket) {
-      bucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: 'uploads'
-      });
-    }
+    const file = await mongoose.connection.db.collection('files')
+      .findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
 
-    const fileId = new mongoose.Types.ObjectId(req.params.id);
-    const file = await bucket.find({ _id: fileId }).toArray();
-    
-    if (!file.length) {
+    if (!file) {
       return res.status(404).json({
         success: false,
         message: 'File not found'
       });
     }
 
-    // Get the file metadata
-    const fileMetadata = file[0];
-
-    // Get the file content from chunks
-    const chunks = await mongoose.connection.db.collection('uploads.chunks')
-      .find({ files_id: fileId })
-      .sort({ n: 1 })
-      .toArray();
-
-    // Combine chunks into a single buffer
-    const fileBuffer = Buffer.concat(chunks.map(chunk => chunk.data.buffer));
-
     // Set appropriate headers
     res.set({
-      'Content-Type': fileMetadata.metadata?.contentType || 'application/octet-stream',
-      'Content-Disposition': `inline; filename="${fileMetadata.metadata?.originalName || fileMetadata.filename}"`,
-      'Content-Length': fileMetadata.length
+      'Content-Type': file.contentType,
+      'Content-Disposition': `inline; filename="${file.filename}"`,
+      'Content-Length': file.size
     });
 
     // Send the file
-    res.send(fileBuffer);
+    res.send(file.data.buffer);
   } catch (error) {
     console.error('Error fetching file:', error);
     res.status(500).json({
@@ -515,18 +481,16 @@ app.get('/api/upload/:id', protect, ensureConnection, async (req, res) => {
   }
 });
 
-// Get file metadata by ID (without content)
-app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) => {
+// Get file metadata by ID
+app.get('/api/upload/metadata/:id', protect, async (req, res) => {
   try {
-    if (!bucket) {
-      bucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: 'uploads'
-      });
-    }
+    const file = await mongoose.connection.db.collection('files')
+      .findOne(
+        { _id: new mongoose.Types.ObjectId(req.params.id) },
+        { projection: { data: 0 } } // Exclude the file data
+      );
 
-    const file = await bucket.find({ _id: new mongoose.Types.ObjectId(req.params.id) }).toArray();
-    
-    if (!file.length) {
+    if (!file) {
       return res.status(404).json({
         success: false,
         message: 'File not found'
@@ -536,14 +500,13 @@ app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) 
     res.json({
       success: true,
       file: {
-        id: file[0]._id,
-        filename: file[0].filename,
-        originalName: file[0].metadata?.originalName || file[0].filename,
-        contentType: file[0].metadata?.contentType || 'application/octet-stream',
-        type: file[0].metadata?.type || 'unknown',
-        uploadDate: file[0].metadata?.uploadDate || file[0].uploadDate,
-        size: file[0].length,
-        metadata: file[0].metadata || {}
+        id: file._id,
+        filename: file.filename,
+        contentType: file.contentType,
+        type: file.type,
+        uploadDate: file.uploadDate,
+        size: file.size,
+        uploadedBy: file.uploadedBy
       }
     });
   } catch (error) {
@@ -556,8 +519,8 @@ app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) 
   }
 });
 
-// Get files by type (metadata only)
-app.get('/api/upload/type/:type', protect, ensureConnection, async (req, res) => {
+// Get files by type
+app.get('/api/upload/type/:type', protect, async (req, res) => {
   try {
     const { type } = req.params;
     const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
@@ -569,25 +532,23 @@ app.get('/api/upload/type/:type', protect, ensureConnection, async (req, res) =>
       });
     }
 
-    if (!bucket) {
-      bucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: 'uploads'
-      });
-    }
-
-    const files = await bucket.find({ 'metadata.type': type }).toArray();
+    const files = await mongoose.connection.db.collection('files')
+      .find(
+        { type: type },
+        { projection: { data: 0 } } // Exclude the file data
+      )
+      .toArray();
     
     res.json({
       success: true,
       files: files.map(file => ({
         id: file._id,
         filename: file.filename,
-        originalName: file.metadata?.originalName || file.filename,
-        contentType: file.metadata?.contentType || 'application/octet-stream',
-        type: file.metadata?.type || 'unknown',
-        uploadDate: file.metadata?.uploadDate || file.uploadDate,
-        size: file.length,
-        metadata: file.metadata || {}
+        contentType: file.contentType,
+        type: file.type,
+        uploadDate: file.uploadDate,
+        size: file.size,
+        uploadedBy: file.uploadedBy
       }))
     });
   } catch (error) {
