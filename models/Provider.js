@@ -10,7 +10,7 @@ const providerSchema = new mongoose.Schema({
   specialization: { type: String, required: true },
   category: { type: String, required: true },
   city: { type: String, required: true },
-  location: {
+  coordinates: {
     type: {
       type: String,
       enum: ['Point'],
@@ -19,9 +19,9 @@ const providerSchema = new mongoose.Schema({
     coordinates: {
       type: [Number], // [longitude, latitude]
       required: true
-    },
-    address: { type: String, required: true }
+    }
   },
+  address: { type: String, required: true },
   availability: [{
     day: { 
       type: String, 
@@ -50,7 +50,7 @@ const providerSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Create a single 2dsphere index for location-based queries
-providerSchema.index({ 'location.coordinates': '2dsphere' });
+providerSchema.index({ coordinates: '2dsphere' });
 
 // Check if the model exists before creating a new one
 module.exports = mongoose.models.Provider || mongoose.model('Provider', providerSchema); 

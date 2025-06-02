@@ -108,7 +108,7 @@ const getAllProviders = async (req, res) => {
             maxDistance: parseFloat(radius) * 1000, // Convert km to meters
             spherical: true,
             query: query, // Apply other filters
-            key: 'location.coordinates' // Specify the field path for the 2dsphere index
+            key: 'coordinates' // Use the flat coordinates field
           }
         },
         {
