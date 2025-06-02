@@ -370,21 +370,14 @@ const getSpecialClaimsByEmployeeId = async (req, res) => {
     
     if (claims.length === 0) {
       return res.status(404).json({
-        success: false,
         message: 'No special claims found for this employee'
       });
     }
 
-    res.status(200).json({
-      success: true,
-      data: claims,
-      count: claims.length,
-      message: 'Special claims retrieved successfully'
-    });
+    res.status(200).json(claims);
   } catch (error) {
     console.error('Error fetching employee special claims:', error);
     res.status(500).json({ 
-      success: false,
       message: 'Error fetching employee special claims', 
       error: error.message 
     });
