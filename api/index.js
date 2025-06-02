@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // Import middleware
@@ -133,9 +134,25 @@ const {
 
 // Import routes
 const complaintRoutes = require('../src/routes/complaintRoutes');
+const uploadRoutes = require('../src/routes/uploadRoutes');
 
 // Configure multer for file uploads
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({
   storage: storage,
   limits: {
@@ -332,176 +349,7 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, ensureConnection, upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No file uploaded' 
-      });
-    }
-
-    if (!req.body.type) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Type is required (special-claim, pre-approval, or complaint)' 
-      });
-    }
-
-    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
-    if (!allowedTypes.includes(req.body.type)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint' 
-      });
-    }
-
-    // Create a new file document
-    const fileDoc = {
-      filename: req.file.originalname,
-      contentType: req.file.mimetype,
-      size: req.file.size,
-      data: req.file.buffer,
-      type: req.body.type,
-      uploadedBy: req.user?.id || 'anonymous',
-      uploadDate: new Date()
-    };
-
-    // Save to MongoDB
-    const result = await mongoose.connection.db.collection('files').insertOne(fileDoc);
-
-    res.status(201).json({
-      success: true,
-      file: {
-        id: result.insertedId,
-        filename: fileDoc.filename,
-        contentType: fileDoc.contentType,
-        type: fileDoc.type,
-        uploadDate: fileDoc.uploadDate,
-        size: fileDoc.size
-      }
-    });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error uploading file',
-      error: error.message
-    });
-  }
-});
-
-// Get file by ID
-app.get('/api/upload/:id', protect, ensureConnection, async (req, res) => {
-  try {
-    const file = await mongoose.connection.db.collection('files')
-      .findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
-
-    if (!file) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found'
-      });
-    }
-
-    // Set appropriate headers
-    res.set({
-      'Content-Type': file.contentType,
-      'Content-Disposition': `inline; filename="${file.filename}"`,
-      'Content-Length': file.size
-    });
-
-    // Send the file
-    res.send(file.data.buffer);
-  } catch (error) {
-    console.error('Error fetching file:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching file',
-      error: error.message
-    });
-  }
-});
-
-// Get file metadata by ID
-app.get('/api/upload/metadata/:id', protect, ensureConnection, async (req, res) => {
-  try {
-    const file = await mongoose.connection.db.collection('files')
-      .findOne(
-        { _id: new mongoose.Types.ObjectId(req.params.id) },
-        { projection: { data: 0 } } // Exclude the file data
-      );
-
-    if (!file) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      file: {
-        id: file._id,
-        filename: file.filename,
-        contentType: file.contentType,
-        type: file.type,
-        uploadDate: file.uploadDate,
-        size: file.size,
-        uploadedBy: file.uploadedBy
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching file metadata:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching file metadata',
-      error: error.message
-    });
-  }
-});
-
-// Get files by type
-app.get('/api/upload/type/:type', protect, ensureConnection, async (req, res) => {
-  try {
-    const { type } = req.params;
-    const allowedTypes = ['special-claim', 'pre-approval', 'complaint'];
-    
-    if (!allowedTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid type. Must be one of: special-claim, pre-approval, complaint'
-      });
-    }
-
-    const files = await mongoose.connection.db.collection('files')
-      .find(
-        { type: type },
-        { projection: { data: 0 } } // Exclude the file data
-      )
-      .toArray();
-    
-    res.json({
-      success: true,
-      files: files.map(file => ({
-        id: file._id,
-        filename: file.filename,
-        contentType: file.contentType,
-        type: file.type,
-        uploadDate: file.uploadDate,
-        size: file.size,
-        uploadedBy: file.uploadedBy
-      }))
-    });
-  } catch (error) {
-    console.error('Error fetching files:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching files',
-      error: error.message
-    });
-  }
-});
+app.use('/api/upload', uploadRoutes);
 
 // Complaint routes
 app.use('/api/complaints', complaintRoutes);
