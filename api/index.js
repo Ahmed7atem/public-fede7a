@@ -183,30 +183,58 @@ const connectDB = async () => {
     const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000, // Increased timeout
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 30000, // Increased timeout
       maxPoolSize: 10,
-      minPoolSize: 5
+      minPoolSize: 5,
+      retryWrites: true,
+      retryReads: true,
+      w: 'majority',
+      wtimeoutMS: 2500,
+      family: 4 // Force IPv4
     };
 
+    // Check if we're already connected
+    if (mongoose.connection.readyState === 1) {
+      console.log('Already connected to MongoDB');
+      return;
+    }
+
+    // Close any existing connection
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
+
     await mongoose.connect(process.env.MONGODB_URI, options);
-    console.log('MongoDB Connected');
+    console.log('MongoDB Connected Successfully');
   } catch (err) {
     console.error('MongoDB connection error:', err);
-    throw err;
+    // Don't throw the error, just log it
+    console.error('Connection error details:', {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      state: mongoose.connection.readyState
+    });
   }
 };
 
 // Ensure connection is established before handling requests
 const ensureConnection = async (req, res, next) => {
   try {
-    if (!mongoose.connection.readyState) {
+    if (mongoose.connection.readyState !== 1) {
+      console.log('Attempting to connect to MongoDB...');
       await connectDB();
+      
+      // Check if connection was successful
+      if (mongoose.connection.readyState !== 1) {
+        throw new Error('Failed to establish database connection');
+      }
     }
     next();
   } catch (error) {
-    console.error('Connection error:', error);
+    console.error('Connection error in middleware:', error);
     res.status(500).json({
       success: false,
       message: 'Database connection error',
@@ -215,10 +243,25 @@ const ensureConnection = async (req, res, next) => {
   }
 };
 
-// Connect to database
+// Connect to database on startup
 if (process.env.NODE_ENV !== 'test') {
-  connectDB();
+  connectDB().catch(err => {
+    console.error('Initial connection error:', err);
+  });
 }
+
+// Handle connection errors
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
 
 // Root route for testing
 app.get('/', (req, res) => {
