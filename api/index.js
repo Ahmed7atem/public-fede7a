@@ -135,10 +135,50 @@ const {
 // Import routes
 const complaintRoutes = require('../src/routes/complaintRoutes');
 
+// Import GridFS storage configuration
+const { GridFsStorage } = require('multer-gridfs-storage');
+const crypto = require('crypto');
+
+// Create GridFS storage engine
+const storage = new GridFsStorage({
+  url: process.env.MONGODB_URI,
+  options: { useNewUrlParser: true, useUnifiedTopology: true },
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(16, (err, buf) => {
+        if (err) {
+          return reject(err);
+        }
+        const filename = buf.toString('hex') + path.extname(file.originalname);
+        const fileInfo = {
+          filename: filename,
+          bucketName: 'uploads',
+          metadata: {
+            originalName: file.originalname,
+            uploadedBy: req.user?.id || 'anonymous',
+            type: 'special-claim',
+            contentType: file.mimetype,
+            uploadDate: new Date()
+          }
+        };
+        resolve(fileInfo);
+      });
+    });
+  }
+});
+
+// Create multer upload instance
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
 const app = express();
 
 // Configure multer for file uploads using memory storage
-const upload = multer({ 
+const uploadMemory = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: function (req, file, cb) {
@@ -238,14 +278,14 @@ app.delete('/api/employees/:id', protect, admin, deleteEmployee);
 // Claims routes
 app.get('/api/claims', protect, admin, getAllClaims);
 app.get('/api/claims/:id', protect, admin, getClaimById);
-app.post('/api/claims', protect, admin, upload.single('attachment'), createClaim);
+app.post('/api/claims', protect, admin, uploadMemory.single('attachment'), createClaim);
 app.put('/api/claims/:id', protect, admin, updateClaim);
 app.delete('/api/claims/:id', protect, admin, deleteClaim);
 
 // Special claims routes
 app.get('/api/claims/special', protect, admin, getSpecialClaims);
+app.post('/api/claims/special-claims', protect, upload.array('attachments', 5), createSpecialClaim);
 app.get('/api/claims/special/employee/:employeeId', protect, getSpecialClaimsByEmployeeId);
-app.post('/api/claims/special', protect, upload.array('attachments'), createSpecialClaim);
 
 // Year-specific claims routes
 app.get('/api/claims/2023', protect, admin, getClaims2023);
@@ -290,7 +330,7 @@ app.post('/api/policies', protect, admin, createPolicy);
 app.put('/api/policies/:id', protect, admin, updatePolicy);
 app.delete('/api/policies/:id', protect, admin, deletePolicy);
 app.get('/api/policies/:id/documents', protect, admin, getPolicyDocuments);
-app.post('/api/policies/:id/documents', protect, admin, upload.single('document'), uploadPolicyDocument);
+app.post('/api/policies/:id/documents', protect, admin, uploadMemory.single('document'), uploadPolicyDocument);
 app.delete('/api/policies/:id/documents/:documentId', protect, admin, deletePolicyDocument);
 
 // Pre-approval routes
@@ -319,7 +359,7 @@ app.get('/api/analytics/organization', protect, admin, getOrganizationAnalytics)
 app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
-app.post('/api/upload', protect, upload.single('file'), (req, res) => {
+app.post('/api/upload', protect, uploadMemory.single('file'), (req, res) => {
   res.json({ success: true, file: req.file });
 });
 
