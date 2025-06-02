@@ -9,12 +9,29 @@ const testUpload = async () => {
     
     // Create form data
     const form = new FormData();
-    const imagePath = path.join(__dirname, 'Screenshot 2025-04-23 at 11.19.27 PM.png');
     
-    // Check if file exists
+    // List directory contents to find the exact file
+    const files = fs.readdirSync(__dirname);
+    console.log('Available files:', files);
+    
+    // Find the screenshot file
+    const screenshotFile = files.find(f => f.includes('Screenshot') && f.endsWith('.png'));
+    if (!screenshotFile) {
+      console.error('Could not find screenshot file in directory');
+      return;
+    }
+    
+    const imagePath = path.join(__dirname, screenshotFile);
+    console.log('Using file:', screenshotFile);
+    
+    // Check if file exists with detailed error
     console.log('Checking file path:', imagePath);
-    if (!fs.existsSync(imagePath)) {
-      console.error('Error: Image file not found at:', imagePath);
+    try {
+      await fs.promises.access(imagePath, fs.constants.R_OK);
+      console.log('File exists and is readable');
+    } catch (err) {
+      console.error('File access error:', err);
+      console.error('Current directory:', __dirname);
       return;
     }
     
@@ -23,7 +40,14 @@ const testUpload = async () => {
     console.log('File size:', stats.size, 'bytes');
     
     console.log('Found image file, preparing upload...');
-    form.append('file', fs.createReadStream(imagePath));
+    const fileStream = fs.createReadStream(imagePath);
+    
+    // Handle stream errors
+    fileStream.on('error', (err) => {
+      console.error('Error reading file stream:', err);
+    });
+    
+    form.append('file', fileStream);
     form.append('type', 'special-claim');
 
     console.log('Sending upload request to: https://public-fede7a.vercel.app/api/upload');
