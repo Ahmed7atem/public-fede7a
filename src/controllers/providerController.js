@@ -107,7 +107,8 @@ const getAllProviders = async (req, res) => {
             distanceField: 'distance', // Distance in meters
             maxDistance: parseFloat(radius) * 1000, // Convert km to meters
             spherical: true,
-            query: query // Apply other filters
+            query: query, // Apply other filters
+            key: 'location.coordinates' // Specify the field path for the 2dsphere index
           }
         },
         {
@@ -125,11 +126,27 @@ const getAllProviders = async (req, res) => {
     const transformedProviders = providers.map(provider => {
       const transformed = provider.toObject ? provider.toObject() : provider;
       
-      // Transform coordinates if they exist
+      // Flatten the location object
       if (transformed.location?.coordinates) {
         transformed.latitude = transformed.location.coordinates[1];
         transformed.longitude = transformed.location.coordinates[0];
+        transformed.address = transformed.location.address;
         delete transformed.location;
+      }
+
+      // Flatten contact info
+      if (transformed.contactInfo) {
+        transformed.phone = transformed.contactInfo.phone;
+        transformed.email = transformed.contactInfo.email;
+        transformed.website = transformed.contactInfo.website;
+        delete transformed.contactInfo;
+      }
+
+      // Flatten availability
+      if (transformed.availability) {
+        transformed.availability = transformed.availability.map(slot => 
+          `${slot.day}: ${slot.startTime}-${slot.endTime}`
+        ).join(', ');
       }
 
       // Add distance if it exists
@@ -181,6 +198,12 @@ const getAllProviders = async (req, res) => {
       if (transformed.rating && transformed.ratingCount) {
         transformed.ratingDisplay = `${transformed.rating.toFixed(1)} (${transformed.ratingCount} reviews)`;
       }
+
+      // Clean up MongoDB specific fields
+      delete transformed.__v;
+      delete transformed.createdAt;
+      delete transformed.updatedAt;
+      delete transformed._id;
 
       return transformed;
     });
