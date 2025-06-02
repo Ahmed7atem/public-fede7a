@@ -135,6 +135,7 @@ const {
 // Import routes
 const complaintRoutes = require('../src/routes/complaintRoutes');
 const uploadRoutes = require('../src/routes/uploadRoutes');
+const fileUploadRoutes = require('../src/routes/fileUploadRoutes');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -393,6 +394,9 @@ app.get('/api/analytics/health-alerts', protect, admin, getHealthAlerts);
 
 // Upload routes
 app.use('/api/upload', uploadRoutes);
+
+// File upload routes
+app.use('/api/file-upload', fileUploadRoutes);
 
 // Complaint routes
 app.use('/api/complaints', complaintRoutes);
