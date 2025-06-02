@@ -611,8 +611,7 @@ const specialClaimSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    trim: true,
-    enum: ['Bank Transfer', 'Cheque', 'Online Payment'],
+    trim: true
   },
   bankName: {
     type: String,

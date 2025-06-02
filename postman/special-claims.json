@@ -1,56 +1,9 @@
 {
   "info": {
-    "_postman_id": "a1b2c3d4-e5f6-7890",
     "name": "Special Claims API",
-    "description": "API collection for managing special claims",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
-    {
-      "name": "Get All Special Claims",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/claims/special",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "claims", "special"]
-        },
-        "description": "Get all special claims (requires admin access)"
-      }
-    },
-    {
-      "name": "Get Special Claims by Employee ID",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/claims/special/employee/:employeeId",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "claims", "special", "employee", ":employeeId"],
-          "variable": [
-            {
-              "key": "employeeId",
-              "value": "EMP789",
-              "description": "Employee ID"
-            }
-          ]
-        },
-        "description": "Get special claims for a specific employee"
-      }
-    },
     {
       "name": "Create Special Claim",
       "request": {
@@ -97,7 +50,7 @@
             },
             {
               "key": "claimFor",
-              "value": "Medical",
+              "value": "employee",
               "type": "text",
               "description": "Type of claim"
             },
@@ -121,7 +74,7 @@
             },
             {
               "key": "currency",
-              "value": "USD",
+              "value": "EGP",
               "type": "text",
               "description": "Currency code"
             },
@@ -141,31 +94,31 @@
               "key": "bankName",
               "value": "Bank of America",
               "type": "text",
-              "description": "Bank name (required for bank transfer)"
+              "description": "Bank name"
             },
             {
               "key": "branchName",
               "value": "Main Branch",
               "type": "text",
-              "description": "Branch name (required for bank transfer)"
+              "description": "Branch name"
             },
             {
               "key": "accountNumber",
               "value": "123456789012",
               "type": "text",
-              "description": "Account number (required for bank transfer)"
+              "description": "Account number"
             },
             {
               "key": "swiftCode",
               "value": "BOFAUS3N",
               "type": "text",
-              "description": "SWIFT code (required for bank transfer)"
+              "description": "SWIFT code"
             },
             {
               "key": "iban",
               "value": "US12345678901234567890",
               "type": "text",
-              "description": "IBAN (required for bank transfer)"
+              "description": "IBAN"
             },
             {
               "key": "description",
@@ -182,31 +135,10 @@
           ]
         },
         "url": {
-          "raw": "{{baseUrl}}/api/claims/special",
+          "raw": "{{baseUrl}}/api/claims/special-claims",
           "host": ["{{baseUrl}}"],
-          "path": ["api", "claims", "special"]
-        },
-        "description": "Create a new special claim with attachments"
-      }
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          ""
-        ]
+          "path": ["api", "claims", "special-claims"]
+        }
       }
     }
   ],
@@ -214,14 +146,12 @@
     {
       "key": "baseUrl",
       "value": "https://public-fede7a.vercel.app",
-      "type": "string",
-      "description": "Base URL for the API"
+      "type": "string"
     },
     {
       "key": "token",
-      "value": "your-auth-token-here",
-      "type": "string",
-      "description": "Authentication token"
+      "value": "your_auth_token_here",
+      "type": "string"
     }
   ]
 }
